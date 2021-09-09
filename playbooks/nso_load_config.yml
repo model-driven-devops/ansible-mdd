@@ -1,0 +1,33 @@
+- hosts: localhost
+  gather_facts: no
+  vars:
+    nso_hostname: "{{ groups.nso_hosts | first }}"
+    nso_host: "{{ hostvars[nso_hostname].ansible_host | default (nso_hostname) }}"
+    config_dir: "{{ lookup('env', 'PWD') }}/configs"
+    config_extention: "cfg"
+  tasks:
+    - name: Find /var/log files equal or greater than 10 megabytes ending with .old or .log.gz via regex
+      find:
+        paths: "{{ config_dir }}"
+        patterns: "^.*\\.{{ config_extention }}$"
+        use_regex: yes
+      register: config_files
+
+    # - debug:
+    #     msg: "{{ device_name }}, {{ device_config_file }}"
+    #   loop: "{{ config_files.files }}"
+    #   vars:
+    #     device_name: "{{ item.path }}"
+    #     device_config_file: "{{ item.path | regex_search('/([^\\/\\.]+)\\.cfg$', '\\1') | first }}"
+
+    - name: Load Config
+      include_role:
+        name: ciscops.devops.nso
+        tasks_from: load_config
+      vars:
+        device_name: "{{ item.path | regex_search('/([^\\/\\.]+)\\.cfg$', '\\1') | first }}"
+        device_config: "{{ lookup('file', item.path) }}"
+      loop: "{{ config_files.files }}"
+
+    # - debug:
+    #     var: device_config

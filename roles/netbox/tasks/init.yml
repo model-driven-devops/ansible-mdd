@@ -1,0 +1,47 @@
+- name: Create manufacturer within Netbox with only required information
+  netbox.netbox.netbox_manufacturer:
+    netbox_url: "{{ netbox_url }}"
+    netbox_token: "{{ netbox_token }}"
+    data: "{{ item }}"
+    state: present
+    validate_certs: "{{ netbox_validate_certs }}"
+  loop: "{{ netbox_manufacturers }}"
+
+- name: Create device type within Netbox with only required information
+  netbox.netbox.netbox_device_type:
+    netbox_url: "{{ netbox_url }}"
+    netbox_token: "{{ netbox_token }}"
+    data: "{{ item }}"
+    state: present
+    validate_certs: "{{ netbox_validate_certs }}"
+  loop: "{{ netbox_device_types }}"
+
+- name: Create site within Netbox with only required information
+  netbox.netbox.netbox_site:
+    netbox_url: "{{ netbox_url }}"
+    netbox_token: "{{ netbox_token }}"
+    data:
+      name: "{{ item }}"
+    state: present
+    validate_certs: "{{ netbox_validate_certs }}"
+  loop: "{{ netbox_sites }}"
+
+- name: Create device role within netbox
+  netbox.netbox.netbox_device_role:
+    netbox_url: "{{ netbox_url }}"
+    netbox_token: "{{ netbox_token }}"
+    data:
+      name: "{{ item }}"
+    state: present
+    validate_certs: "{{ netbox_validate_certs }}"
+  loop: "{{ netbox_device_roles }}"
+
+- name: Create platform within Netbox with only required information
+  netbox.netbox.netbox_platform:
+    netbox_url: "{{ netbox_url }}"
+    netbox_token: "{{ netbox_token }}"
+    data:
+      name: "{{ item }}"
+    state: present
+    validate_certs: "{{ netbox_validate_certs }}"
+  loop: "{{ netbox_platforms }}"

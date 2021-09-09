@@ -1,0 +1,26 @@
+- name: Add host in NSO
+  cisco.nso.nso_config:
+    url: "{{ nso_url }}"
+    username: "{{ nso_username }}"
+    password: "{{ nso_password }}"
+    data:
+      tailf-ncs:devices:
+        device:
+        - address: "{{ ansible_host }}"
+          description: CONFIGURED BY ANSIBLE!
+          name: "{{ device_name | default(inventory_hostname) }}"
+          authgroup: "{{ nso_auth_group | default('default') }}"
+          device-type:
+            cli:
+              ned-id: "{{ device_ned | default(nso_default_ned) }}"
+          port: "22"
+          state:
+            admin-state: "{{ device_admin_state | default('unlocked') }}"
+
+- name: Fetch Host Keys
+  cisco.nso.nso_action:
+    url: "{{ nso_url }}"
+    username: "{{ nso_username }}"
+    password: "{{ nso_password }}"
+    path: '/ncs:devices/device{"{{ device_name | default(inventory_hostname) }}"}/ssh/fetch-host-keys'
+    input: {}

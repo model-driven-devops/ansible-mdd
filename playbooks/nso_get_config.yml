@@ -1,0 +1,16 @@
+- hosts: ios:&cml_hosts
+  connection: local
+  gather_facts: no
+  vars:
+    nso_hostname: "{{ groups.nso_hosts | first }}"
+    nso_host: "{{ hostvars[nso_hostname].ansible_host | default (nso_hostname) }}"
+  tasks:
+    - name: Get Config
+      include_role:
+        name: ciscops.devops.nso
+        tasks_from: get_device_config
+      vars:
+        device_name: "{{ inventory_hostname }}"
+
+    - debug:
+        var: device_config

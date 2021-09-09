@@ -1,0 +1,27 @@
+---
+nso_host: "{{ ansible_host | default(inventory_hostname) }}"
+nso_url: "http://{{ nso_host }}:8080/jsonrpc"
+nso_install_dir: /pkgs/nso-install
+nso_run_dir: /home/ubuntu/ncs-run
+nso_java_opts: "-Xmx2G -Xms1G"
+nso_devices_seed_template: "nso-deviceSetup.xml.j2"
+# Default username/password for the NSO host
+# admin_user: ubuntu
+# admin_password: admin
+# ansible_user: "{{ admin_user }}"
+# ansible_password: "{{ admin_password }}"
+nso_username: admin
+nso_password: admin
+# The auth groups to add.  Override in the inventory
+nso_auth_groups:
+  default:
+    remote_name: admin
+    remote_password: admin
+nso_default_ned: cisco-ios-cli-6.69
+nso_ned_dict:
+  ios: "cisco-ios-cli-6.69"
+nso_package_repos:
+  - name: mdd
+    repo: https://github.com/model-driven-devops/nso-oc-services.git
+    service_list:
+      - mdd

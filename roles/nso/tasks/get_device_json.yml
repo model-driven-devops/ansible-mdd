@@ -1,0 +1,11 @@
+- name: Get device config for {{ device_name }}
+  cisco.nso.nso_show:
+    url: "{{ nso_host_url }}"
+    username: "{{ nso_username }}"
+    password: "{{ nso_password }}"
+    path: '/ncs:devices/device{"{{ device_name }}"}/config'
+    operational: true
+  register: nso_show_results
+
+- set_fact:
+    device_json: "{{ nso_show_results['output']['data']['tailf-ncs:devices']['device'][0] }}"

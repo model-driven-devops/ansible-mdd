@@ -1,0 +1,19 @@
+- hosts: all
+  connection: local
+  gather_facts: no
+  vars:
+    nso_hostname: "{{ groups.nso_hosts | first }}"
+    nso_host: "{{ hostvars[nso_hostname].ansible_host | default (nso_hostname) }}"
+    json_dir: "{{ lookup('env', 'PWD') }}/json"
+  tasks:
+    - name: Get JSON Config
+      include_role:
+        name: ciscops.devops.nso
+        tasks_from: get_device_json
+      vars:
+        device_name: "{{ inventory_hostname }}"
+
+    - name: Writing device config to {{ device_json_file }}
+      copy:
+        content: "{{ device_json | to_nice_yaml(indent=4) }}"
+        dest: "{{ json_dir }}/{{ inventory_hostname }}.json"

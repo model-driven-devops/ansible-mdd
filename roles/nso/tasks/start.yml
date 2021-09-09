@@ -1,0 +1,11 @@
+---
+- name: Check to see if NSO is running
+  shell: /pkgs/nso-install/bin/ncs --status
+  register: ncs_status
+  ignore_errors: yes
+
+- name: Launch main NSO process  # noqa no-changed-when
+  command:
+    chdir: "{{ nso_run_dir }}"
+    cmd: '/bin/bash -c "source {{ nso_install_dir }}/ncsrc; NCS_JAVA_VM_OPTIONS=\"{{ nso_java_opts }}\" ncs"'
+  when: ncs_status.rc

@@ -1,0 +1,25 @@
+- name: Start NSO
+  hosts: nso_hosts
+  gather_facts: no
+  tasks:
+    - name: Start NSO
+      include_role:
+        name: ciscops.devops.nso
+        tasks_from: start
+      tags:
+        - start
+
+    - name: Install MDD packages
+      include_role:
+        name: ciscops.devops.nso
+        tasks_from: install_packages
+      tags:
+        - packages
+
+    - name: Add Auth Groups
+      include_role:
+        name: ciscops.devops.nso
+        tasks_from: add_auth_groups
+      tags:
+        - auth_groups
+

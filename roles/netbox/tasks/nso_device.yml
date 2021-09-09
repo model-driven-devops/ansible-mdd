@@ -1,0 +1,31 @@
+- debug:
+    msg: "{{ device_type }}, {{ device_type | lower }}"
+
+- name: Create device type within Netbox with only required information
+  netbox.netbox.netbox_device_type:
+    netbox_url: "https://{{ netbox_host }}"
+    netbox_token: "{{ netbox_token }}"
+    data:
+      slug: "{{ device_type | lower }}"
+      model: "{{ device_type }}"
+      manufacturer: "{{ device_manufacturer | default('Cisco') }}"
+    state: present
+    validate_certs: false
+  when: device_type
+
+- name: Create device within Netbox with only required information
+  netbox.netbox.netbox_device:
+    netbox_url: "https://{{ netbox_host }}"
+    netbox_token: "{{ netbox_token }}"
+    data:
+      name: "{{ device_name }}"
+      device_type: "{{ device_type | default(netbox_device_type) }}"
+      device_role: "{{ device_role | default(netbox_device_role) }}"
+      site: "{{ netbox_site }}"
+      serial: "{{ device_serial | default(omit) }}"
+      primary_ip4: "{{ device_ip4 | default(omit) }}"
+      platform: "{{ device_platform | default(netbox_device_platform) }}"
+      custom_fields:
+        nso_host: "{{ nso_host }}"
+    state: present
+    validate_certs: false

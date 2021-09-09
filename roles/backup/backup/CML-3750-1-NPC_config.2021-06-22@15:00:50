@@ -1,0 +1,447 @@
+Building configuration...
+
+Current configuration : 10925 bytes
+!
+! Last configuration change at 17:10:11 UTC Sat May 22 2021
+!
+version 15.2
+service nagle
+no service pad
+service tcp-keepalives-in
+service tcp-keepalives-out
+service timestamps debug datetime msec
+service timestamps log datetime msec
+service password-encryption
+service compress-config
+service sequence-numbers
+!
+hostname 3750-1-NPC
+!
+boot-start-marker
+boot-end-marker
+!
+!
+vrf definition Mgmt-intf
+ !
+ address-family ipv4
+ exit-address-family
+ !
+ address-family ipv6
+ exit-address-family
+!
+logging discriminator SYSLOGD mnemonics drops UPD.|IEEE.|ILP.|POW.|DETE.|CONTRO. 
+logging buffered 16384 notifications
+logging console critical
+logging monitor critical
+!
+username admin privilege 15 secret 5 $1$Suxb$t0N0Bp3DE3aRAbcLCbKg00
+aaa new-model
+!
+!
+aaa authentication login default local
+aaa authorization exec default local 
+!
+!
+!
+!
+!
+!
+aaa session-id common
+!
+!
+!
+!
+!
+vtp mode transparent
+udld enable
+
+udld message time 7
+
+no ip source-route
+no ip gratuitous-arps
+!
+ip dhcp bootp ignore
+!
+!
+no ip domain-lookup
+ip domain-name net.va.gov
+ip device tracking probe delay 90
+ip cef
+login on-success log
+no ipv6 cef
+authentication mac-move permit
+authentication critical recovery delay 500
+mab request format attribute 32 vlan access-vlan
+!
+!
+errdisable recovery cause udld
+errdisable recovery cause pagp-flap
+errdisable recovery cause link-flap
+errdisable recovery cause psecure-violation
+errdisable recovery cause loopback
+archive
+ log config
+  logging enable
+  logging size 300
+  notify syslog contenttype plaintext
+  hidekeys
+ path scp://archive:archive@10.184.165.200/Archive/Z03/$h^
+ write-memory
+!
+spanning-tree mode rapid-pvst
+spanning-tree portfast edge bpduguard default
+spanning-tree extend system-id
+spanning-tree uplinkfast
+spanning-tree pathcost method long
+!
+vlan group L3-USER-PC vlan-list 744
+vlan group L3-WLAN-AP vlan-list 116
+!
+vlan 8
+ name L3-WLAN-RTLS
+!
+vlan 11
+ name L3-USER-PC_11
+!
+vlan 12
+ name L3-NET-Switch_Mgmt
+!
+vlan 40
+ name L3-USER-Printer_40
+!
+vlan 44
+ name L3-SERV-Servers_44
+!
+vlan 49
+ name L3-MISC-Locks_49
+!
+vlan 65
+ name L3-MDIA-Pyxis
+!
+vlan 90
+ name L3-NET-NetBotz
+!
+vlan 94
+ name L3-WLAN-Unencrypt_24
+!
+vlan 116
+ name L3-WLAN-AP_116
+!
+vlan 123
+ name L3-WLAN-mobile1vd
+!
+vlan 201
+ name L3-MISC-Sec_Vid_201
+!
+vlan 554
+ name L3-MDIA-RALS
+!
+vlan 651
+ name L3-MISC-CheckPoint
+!
+vlan 725
+ name L3-VOIP-Phone_725
+!
+vlan 744
+ name L3-USER-PC_744
+!
+vlan 905
+ name L3-WLAN-AP_905
+!
+vlan 941
+ name L3-WLAN-MedDev
+!
+vlan 942
+ name L3-WLAN-IVPumps
+!
+vlan 994
+ name L3-WLAN-Encrypt_994
+!
+vlan 995
+ name L3-WLAN-MedDev-Encr
+!
+vlan 999
+ name L2-NET-Parked
+!
+vlan 1000
+ name L2-NET-Trunk_Native
+!
+vlan 1100
+ name L3-MDIA-Env_Cntrl
+no lldp tlv-select management-address
+no lldp tlv-select port-description
+no lldp tlv-select system-capabilities
+no lldp tlv-select system-description
+lldp run
+!
+! 
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+interface Port-channel1
+!
+interface GigabitEthernet0/0
+ description EtherChannel to VSS Cores
+ switchport trunk encapsulation dot1q
+ switchport trunk native vlan 1000
+ switchport mode trunk
+ negotiation auto
+ channel-group 1 mode active
+!
+interface GigabitEthernet0/1
+ description Data/VoIP
+ switchport access vlan 554
+ switchport trunk encapsulation dot1q
+ switchport mode access
+ switchport voice vlan 725
+ negotiation auto
+ authentication control-direction in
+ authentication event server dead action authorize vlan 999
+ authentication event server dead action authorize voice
+ authentication event server alive action reinitialize 
+ authentication host-mode multi-auth
+ authentication order mab dot1x
+ authentication priority dot1x mab
+ authentication port-control auto
+ authentication periodic
+ authentication timer reauthenticate server
+ authentication timer inactivity server
+ authentication violation restrict
+ mab
+ dot1x pae authenticator
+ dot1x timeout tx-period 10
+ spanning-tree portfast edge
+!
+interface GigabitEthernet0/2
+ negotiation auto
+!
+interface GigabitEthernet0/3
+ negotiation auto
+!
+interface GigabitEthernet1/0
+ negotiation auto
+!
+interface GigabitEthernet1/1
+ negotiation auto
+!
+interface GigabitEthernet1/2
+ negotiation auto
+!
+interface GigabitEthernet1/3
+ negotiation auto
+!
+interface GigabitEthernet2/0
+ negotiation auto
+!
+interface GigabitEthernet2/1
+ negotiation auto
+!
+interface GigabitEthernet2/2
+ negotiation auto
+!
+interface GigabitEthernet2/3
+ negotiation auto
+!
+interface GigabitEthernet3/0
+ negotiation auto
+!
+interface GigabitEthernet3/1
+ negotiation auto
+!
+interface GigabitEthernet3/2
+ negotiation auto
+!
+interface GigabitEthernet3/3
+ no switchport
+ vrf forwarding Mgmt-intf
+ ip address dhcp
+ negotiation auto
+!
+interface Vlan1
+ no ip address
+ shutdown
+!
+interface Vlan12
+ description management vlan
+ ip address 10.90.64.201 255.255.255.0
+ no ip proxy-arp
+!
+ip default-gateway 10.90.64.1
+ip forward-protocol nd
+!
+ip tcp synwait-time 10
+no ip http server
+no ip http secure-server
+!
+ip ssh time-out 60
+ip ssh version 2
+ip ssh server algorithm encryption aes128-ctr aes192-ctr aes256-ctr
+ip ssh client algorithm encryption aes128-ctr aes192-ctr aes256-ctr
+!
+ip access-list standard CDM_SNMP
+ permit 10.0.0.0 0.255.255.255
+ip access-list standard ISE_SNMP
+ permit 10.204.1.251
+ remark ISE Server
+ permit 10.90.139.23
+ deny   any
+ip access-list standard LAN_ESL_SNMP
+ remark *** New Denver Jump Server ****
+ permit 10.184.165.200
+ remark *** Old Orlando Jump Server ****
+ permit 10.187.147.203
+ deny   any
+ip access-list standard ORION_SNMP
+ permit 10.0.0.0 0.255.255.255
+ deny   any
+ip access-list standard VA_CA-SPECT_SNMP
+ remark **Vanjhappmon200
+ permit 10.186.224.69
+ remark **Vacrrappmon07
+ permit 10.208.153.28
+ remark **Vaausmonapp204
+ permit 10.224.74.201
+ remark **Vaausmonapp205
+ permit 10.224.74.202
+ remark **Vaausmonapp206
+ permit 10.224.74.203
+ remark **Vasmoappmon200
+ permit 10.185.231.36
+ remark **Vahinmonapp22
+ permit 10.204.74.7
+ remark **Vascrappmon200
+ permit 10.184.2.98
+ remark **Vaausappmon213
+ permit 10.224.74.115
+ remark **Vaausappmon214
+ permit 10.224.74.116
+ remark **Vaausappmon215
+ permit 10.224.74.117
+ remark **Vaphimonapp27
+ permit 10.205.4.40
+ip access-list standard VA_CISCO_CSCP
+ remark *** Cisco Collector Philadelphia ***
+ permit 10.205.145.11
+ remark *** Cisco Collector Denver ***
+ permit 10.184.165.250
+ deny   any
+!
+ip access-list extended SSH-VTY
+ remark *** FO Standardized SSH ACL ***
+ permit tcp 10.0.0.0 0.255.255.255 any eq 22
+ deny   ip any any
+!
+ip sla enable reaction-alerts
+logging origin-id hostname
+logging host 10.187.134.28 transport udp port 513
+access-list 88 remark ntp.va.gov
+access-list 88 permit 10.237.6.40
+access-list 88 permit 10.236.6.41
+access-list 88 permit 10.239.6.40
+access-list 88 permit 10.238.6.41
+access-list 88 deny   any
+!
+!
+!
+snmp-server group fsgroup v3 priv read fsview 
+snmp-server group fsgroup v3 priv context vlan- match prefix 
+snmp-server group VAISESNMP v3 auth 
+snmp-server group VACNCGROUP v3 priv read VACNCVIEW 
+snmp-server group VAISEGROUP v3 auth read ISEVIEW notify ISEVIEW 
+snmp-server group VAISEGROUP v3 auth context vlan- match prefix read ISEVIEW 
+snmp-server group VALANGROUP v3 priv read VALANVIEW write VALANVIEW 
+snmp-server group VALANGROUP v3 priv context vlan- match prefix 
+snmp-server group VAORIONGROUP v3 priv read VAORIONVIEW 
+snmp-server group VAORIONGROUP v3 priv context vlan- match prefix 
+snmp-server group VACASPECTGROUP v3 priv read VACASPECTVIEW 
+snmp-server group VACASPECTGROUP v3 priv context vlan- match prefix 
+snmp-server view fsview mib-2.* included
+snmp-server view fsview enterprises.* included
+snmp-server view fsview internet.6.3.* included
+snmp-server view fsview lldpLocalSystemData.* included
+snmp-server view fsview lldpRemoteSystemsData.* included
+snmp-server view ISEVIEW iso included
+snmp-server view R03Read internet included
+snmp-server view VACNCVIEW internet included
+snmp-server view VACNCVIEW ip.21 excluded
+snmp-server view VACNCVIEW ip.22 excluded
+snmp-server view VALANVIEW internet included
+snmp-server view VALANVIEW ip.21 excluded
+snmp-server view VAORIONVIEW iso included
+snmp-server view VAORIONVIEW internet included
+snmp-server view VAORIONVIEW ip.21 excluded
+snmp-server view VACASPECTVIEW iso included
+snmp-server view VACASPECTVIEW internet included
+snmp-server view VACASPECTVIEW ip.21 excluded
+snmp-server contact ESL LAN EMAIL: OITITOPSSOIONETWORKFOLAN@va.gov
+snmp-server enable traps snmp authentication linkdown linkup coldstart warmstart
+snmp-server enable traps syslog
+snmp-server host 10.90.125.245 fsuser 
+tacacs-server key 7 0059365737772B133F15441D1B4A58
+!
+!
+!
+control-plane
+!
+banner exec ^C
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************^C
+banner incoming ^C
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************^C
+banner login ^C
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************^C
+!
+line con 0
+line aux 0
+line vty 0 4
+ logging synchronous
+ transport input ssh
+ transport output ssh
+!
+ntp logging
+ntp authentication-key 9 md5 110A1016141D 7
+ntp authentication-key 10 md5 0822455D0A16 7
+ntp authentication-key 11 md5 121A0C041104 7
+ntp authentication-key 12 md5 094F471A1A0A 7
+ntp authenticate
+ntp trusted-key 9
+ntp trusted-key 10
+ntp trusted-key 11
+ntp trusted-key 12
+ntp source Vlan12
+ntp access-group peer 88
+ntp server 10.237.6.40 key 9
+ntp server 10.239.6.40 key 10
+ntp server 10.238.6.41 key 11
+ntp server 10.236.6.41 key 12
+!
+end

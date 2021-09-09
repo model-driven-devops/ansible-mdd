@@ -1,0 +1,36 @@
+---
+# defaults file for netbox
+netbox_url: "https://{{ netbox_host }}"
+netbox_validate_certs: no
+netbox_manufacturers:
+  - name: Cisco
+    description: Cisco Systems
+    slug: cisco
+netbox_device_type: switch
+netbox_device_types:
+  - model: router
+    slug: router
+    manufacturer: Cisco
+  - model: switch
+    slug: switch
+    manufacturer: Cisco
+# Default Netbox Site
+netbox_site: main
+netbox_sites:
+  - default
+  - "{{ netbox_site }}"
+netbox_device_role: switch
+netbox_device_roles:
+  - "{{ netbox_device_role }}"
+  - router
+netbox_device_platform: ios
+netbox_platforms:
+  - "{{ netbox_device_platform }}"
+  - nxos
+netbox_interface_type_lookup:
+  'vlan': Virtual
+  'loopback': Virtual
+  'null': Virtual
+  'vasileft': Virtual
+  'vasiright': Virtual
+  'port-channel': LAG

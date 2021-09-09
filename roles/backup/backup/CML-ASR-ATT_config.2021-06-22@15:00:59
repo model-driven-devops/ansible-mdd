@@ -1,0 +1,3040 @@
+Building configuration...
+
+Current configuration : 160024 bytes
+!
+! Last configuration change at 14:23:16 UTC Thu Jun 17 2021 by admin
+!
+version 17.1
+service tcp-keepalives-in
+service tcp-keepalives-out
+service timestamps debug datetime localtime show-timezone
+service timestamps log datetime localtime show-timezone
+service password-encryption
+service call-home
+platform qfp utilization monitor load 80
+no platform punt-keepalive disable-kernel-core
+platform console serial
+!
+hostname CML-ASR-ATT
+!
+boot-start-marker
+boot-end-marker
+!
+!
+vrf definition Mgmt-intf
+ !
+ address-family ipv4
+ exit-address-family
+ !
+ address-family ipv6
+ exit-address-family
+!
+vrf definition VAVRF
+ rd 172.23.117.3:1
+ !
+ address-family ipv4
+  route-target export 64891:1
+  route-target import 64891:1
+ exit-address-family
+ !
+ address-family ipv6
+  route-target export 64891:1
+  route-target import 64891:1
+ exit-address-family
+!
+logging buffered 16000 informational
+logging rate-limit 6
+no logging console
+logging monitor informational
+!
+aaa new-model
+!
+!
+aaa authentication login default local
+aaa authorization exec default local 
+!
+!
+!
+!
+!
+!
+aaa session-id common
+call-home
+ ! If contact email address in call-home is configured as sch-smart-licensing@cisco.com
+ ! the email address configured in Cisco Smart License Portal will be used as contact email address to send SCH notifications.
+ contact-email-addr sch-smart-licensing@cisco.com
+ profile "CiscoTAC-1"
+  active
+  destination transport-method http
+no ip gratuitous-arps
+no ip icmp rate-limit unreachable
+!
+ip multicast-routing distributed
+!
+!
+!
+!
+!
+!
+no ip domain lookup
+ip domain name www.cisco.com
+ip dhcp bootp ignore
+!
+!
+!
+login on-success log
+ipv6 unicast-routing
+!
+!
+!
+!
+!
+!
+!
+subscriber templating
+! 
+! 
+! 
+! 
+!
+!
+!
+flow record NET-ANALYSIS-INGRESS
+ match transport tcp flags
+ match flow direction
+ match interface output
+ match ipv4 destination address
+ match ipv4 protocol
+ match ipv4 source address
+ match ipv4 tos
+ match transport destination-port
+ match transport source-port
+ collect application name
+ collect counter bytes
+ collect counter packets
+ collect flow sampler
+ collect interface input
+ collect ipv4 destination mask
+ collect ipv4 dscp
+ collect ipv4 id
+ collect ipv4 source mask
+ collect ipv4 source prefix
+ collect ipv4 ttl maximum
+ collect ipv4 ttl minimum
+ collect routing destination as
+ collect routing next-hop address ipv4
+ collect routing source as
+ collect timestamp sys-uptime first
+ collect timestamp sys-uptime last
+!
+!
+flow record NET-ANALYSIS-EGRESS
+ match flow sampler
+ match transport tcp flags
+ match interface input
+ match ipv4 destination address
+ match ipv4 protocol
+ match ipv4 source address
+ match ipv4 tos
+ match transport destination-port
+ match transport source-port
+ collect application name
+ collect counter bytes
+ collect counter packets
+ collect interface output
+ collect ipv4 destination mask
+ collect ipv4 dscp
+ collect ipv4 id
+ collect ipv4 source mask
+ collect ipv4 source prefix
+ collect ipv4 ttl maximum
+ collect ipv4 ttl minimum
+ collect routing destination as
+ collect routing next-hop address ipv4
+ collect routing source as
+ collect timestamp sys-uptime first
+ collect timestamp sys-uptime last
+!
+!
+flow exporter EXPORT-TO-101871195
+ description flexible Netflow V11 10.187.1.195
+ destination 10.187.1.195 vrf VAVRF
+ transport udp 2055
+ template data timeout 60
+ option interface-table
+ option exporter-stats
+!
+!
+flow exporter FLOW-EXPORTER-NP
+ description Netprofiler to fR3 flow gateways
+ destination 10.187.133.238 vrf VAVRF
+ transport udp 2055
+!
+!
+flow exporter FLOW-EXPORTER-LIVEACTION
+ destination 10.239.13.116 vrf VAVRF
+ transport udp 2055
+ export-protocol ipfix
+ option interface-table
+ option vrf-table
+ option application-table
+ option c3pl-class-table
+ option c3pl-policy-table
+!
+!
+flow monitor FLOW-MONITOR-11
+ exporter EXPORT-TO-101871195
+ record netflow-original
+!
+!
+flow monitor NET-ANALYSIS-INGRESS
+ exporter FLOW-EXPORTER-NP
+ exporter FLOW-EXPORTER-LIVEACTION
+ exporter EXPORT-TO-101871195
+ cache timeout inactive 10
+ cache timeout active 60
+ record NET-ANALYSIS-INGRESS
+!
+!
+flow monitor NET-ANALYSIS-EGRESS
+ exporter FLOW-EXPORTER-NP
+ exporter FLOW-EXPORTER-LIVEACTION
+ exporter EXPORT-TO-101871195
+ cache timeout inactive 10
+ cache timeout active 60
+ record NET-ANALYSIS-EGRESS
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+crypto pki trustpoint SLA-TrustPoint
+ enrollment pkcs12
+ revocation-check crl
+!
+!
+crypto pki certificate chain SLA-TrustPoint
+ certificate ca 01
+  30820321 30820209 A0030201 02020101 300D0609 2A864886 F70D0101 0B050030 
+  32310E30 0C060355 040A1305 43697363 6F312030 1E060355 04031317 43697363 
+  6F204C69 63656E73 696E6720 526F6F74 20434130 1E170D31 33303533 30313934 
+  3834375A 170D3338 30353330 31393438 34375A30 32310E30 0C060355 040A1305 
+  43697363 6F312030 1E060355 04031317 43697363 6F204C69 63656E73 696E6720 
+  526F6F74 20434130 82012230 0D06092A 864886F7 0D010101 05000382 010F0030 
+  82010A02 82010100 A6BCBD96 131E05F7 145EA72C 2CD686E6 17222EA1 F1EFF64D 
+  CBB4C798 212AA147 C655D8D7 9471380D 8711441E 1AAF071A 9CAE6388 8A38E520 
+  1C394D78 462EF239 C659F715 B98C0A59 5BBB5CBD 0CFEBEA3 700A8BF7 D8F256EE 
+  4AA4E80D DB6FD1C9 60B1FD18 FFC69C96 6FA68957 A2617DE7 104FDC5F EA2956AC 
+  7390A3EB 2B5436AD C847A2C5 DAB553EB 69A9A535 58E9F3E3 C0BD23CF 58BD7188 
+  68E69491 20F320E7 948E71D7 AE3BCC84 F10684C7 4BC8E00F 539BA42B 42C68BB7 
+  C7479096 B4CB2D62 EA2F505D C7B062A4 6811D95B E8250FC4 5D5D5FB8 8F27D191 
+  C55F0D76 61F9A4CD 3D992327 A8BB03BD 4E6D7069 7CBADF8B DF5F4368 95135E44 
+  DFC7C6CF 04DD7FD1 02030100 01A34230 40300E06 03551D0F 0101FF04 04030201 
+  06300F06 03551D13 0101FF04 05300301 01FF301D 0603551D 0E041604 1449DC85 
+  4B3D31E5 1B3E6A17 606AF333 3D3B4C73 E8300D06 092A8648 86F70D01 010B0500 
+  03820101 00507F24 D3932A66 86025D9F E838AE5C 6D4DF6B0 49631C78 240DA905 
+  604EDCDE FF4FED2B 77FC460E CD636FDB DD44681E 3A5673AB 9093D3B1 6C9E3D8B 
+  D98987BF E40CBD9E 1AECA0C2 2189BB5C 8FA85686 CD98B646 5575B146 8DFC66A8 
+  467A3DF4 4D565700 6ADF0F0D CF835015 3C04FF7C 21E878AC 11BA9CD2 55A9232C 
+  7CA7B7E6 C1AF74F6 152E99B7 B1FCF9BB E973DE7F 5BDDEB86 C71E3B49 1765308B 
+  5FB0DA06 B92AFE7F 494E8A9E 07B85737 F3A58BE1 1A48A229 C37C1E69 39F08678 
+  80DDCD16 D6BACECA EEBC7CF9 8428787B 35202CDC 60E4616A B623CDBD 230E3AFB 
+  418616A9 4093E049 4D10AB75 27E86F73 932E35B5 8862FDAE 0275156F 719BB2F0 
+  D697DF7F 28
+  	quit
+!
+license udi pid CSR1000V sn 9A34J15ILFV
+diagnostic bootup level minimal
+memory free low-watermark processor 71556
+!
+!
+spanning-tree extend system-id
+!
+username admin privilege 15 secret 9 $9$tcz116qOBeTt.k$vhZOb2wXp2tFiZoWhjHfMD8jGYeYFO7FGCtw40daEXg
+!
+redundancy
+!
+!
+!
+!
+!
+cdp run
+!
+!
+class-map match-any VIDEO-ADMIN-EGRESS
+  description EVTN administrative video and Multicast marked at source setting enforced by EVTN system
+ match dscp af42 
+class-map match-any VIDEO-CLIN-INGRESS
+  description EVTN clinical video marked at source setting enforced by EVTN system
+ match dscp af41 
+ match access-group name QOS-VIDEO-CLIN
+class-map match-any VOIP-CONTROL-INGRESS
+  description VoIP control signaling protocols
+ match dscp cs3 
+ match access-group name QOS-VOIP-CONTROL
+class-map match-any BDN-VACOLS-INGRESS
+  description Benefits Delivery Network - VACOLS  AF21
+ match access-group name QOS-BDN-VACOLS
+class-map match-any NET-MANAGEMENT-INGRESS
+  description Net Mgmt/ssh/snmp/tacacs/syslog/NetTime (NTP)/RADIUS  CS2
+ match access-group name QOS-NET-MANAGEMENT
+class-map match-any PAK-PRIORITY-INGRESS
+  description Network-Control Traffic such as Keepalives and Routing Protocols CS6
+ match dscp cs6 
+class-map match-any AD-TRAFFIC-INGRESS
+  description Windows OS login and AD replication traffic CS2
+ match access-group name QOS-AD-TRAFFIC
+class-map match-any VISTA-INGRESS
+  description VistA and CCOW  AF21
+ match access-group name QOS-VISTA
+class-map match-any SCAVENGER-INGRESS
+  description CS1 - Internet any 10. to non 10. CS1
+ match access-group name QOS-TEN-TO-NON-TEN
+class-map match-any IMAGING-MULTIMEDIA-STREAM-INGRESS
+  description PACS/Imaging/NTP/Virtual VA  AF31
+ match access-group name QOS-IMAGING
+class-map match-any POWERSCRIBE-INGRESS
+  description POWERSCRIBE  AF21
+ match access-group name QOS-POWERSCRIBE
+class-map match-any QOS-NCA-Web-Applications-INGRESS
+  description Grave Locator  AF21
+ match access-group name QOS-NCA-Web-Applications
+class-map match-any VOIP-EGRESS
+  description LLQ for VOIP
+ match dscp ef 
+class-map match-any VIDEO-ADMIN-INGRESS
+  description EVTN administrative video marked at source setting enforced by EVTN system
+ match dscp af42 
+ match access-group name QOS-VIDEO-ADMIN
+class-map match-any VIDEO-CLIN-EGRESS
+  description EVTN clinical video and Multicast marked at source setting enforced by EVTN system
+ match dscp af41 
+class-map match-any TRANSACTIONAL-DATA-EGRESS
+  description Prioritized Applications and Net Mgmt/ssh/snmp/tacacs/syslog/NetTime (NTP)/RADIUS
+ match dscp af21 
+ match dscp cs2 
+class-map match-any BULK-DATA-INGRESS
+  description FTP/Backup traffic/SCCM/Sensage/NX4 replication AF11
+ match access-group name QOS-BULK-DATA
+class-map match-any PAK-PRIORITY-EGRESS
+  description Network-Control Traffic such as Keepalives and Routing Protocols and BGP
+ match access-group name QOS-BGP
+ match dscp cs6 
+class-map match-any BULK-DATA-SCAVENGER-EGRESS
+  description Internet any 10. to non 10. and FTP/Backup traffic/SCCM/Sensage/NX4 replication
+ match dscp af11 
+ match dscp cs1 
+class-map match-any CITRIX-RDP-CAG-INGRESS
+  description Citrix Remote Desktop CAG  AF21
+ match access-group name QOS-CITRIX-RDP-CAG
+class-map match-any VIDEO-EGRESS
+  description Parent video class
+ match dscp af41  af42 
+class-map match-any IMAGING-MULTIMEDIA-STREAM-EGRESS
+  description Radiology Imaging and multimedia streaming
+ match dscp af31 
+ match dscp cs3 
+class-map match-any TUXEDO-INGRESS
+  description TUXEDO  AF21
+ match access-group name QOS-TUXEDO
+class-map match-any BIZ-INET-TRAFFIC-INGRESS
+  description Business Internet Traffic
+ match access-group name QOS-BIZ-INTERNET
+class-map match-any VOIP-INGRESS
+  description LLQ for VOIP
+ match dscp ef 
+ match dscp cs5 
+ match access-group name QOS-VOIP
+!
+policy-map QOS-WAN-HBW-EGRESS
+ class VOIP-EGRESS
+  priority percent 10
+ class VIDEO-EGRESS
+  bandwidth percent 27 
+ class PAK-PRIORITY-EGRESS
+  bandwidth percent 1 
+  set dscp cs6
+ class IMAGING-MULTIMEDIA-STREAM-EGRESS
+  bandwidth percent 14 
+  queue-limit 256 packets
+  random-detect dscp-based
+  random-detect dscp 24 150 160
+ class TRANSACTIONAL-DATA-EGRESS
+  bandwidth percent 18 
+  queue-limit 256 packets
+  random-detect dscp-based
+ class BULK-DATA-SCAVENGER-EGRESS
+  bandwidth percent 5 
+  queue-limit 768 packets
+  random-detect dscp-based
+ class class-default
+  bandwidth percent 25 
+  queue-limit 1024 packets
+  random-detect dscp-based
+policy-map QOS-PARENT-SHAPER-200M
+ class class-default
+  shape average 200000000   
+   service-policy QOS-WAN-HBW-EGRESS
+policy-map QOS-LAN-INGRESS
+ description Mark and Police egress traffic to WAN routers
+ class VOIP-INGRESS
+  set dscp ef
+ class VIDEO-CLIN-INGRESS
+  set dscp af41
+ class VIDEO-ADMIN-INGRESS
+  set dscp af42
+ class VOIP-CONTROL-INGRESS
+  set dscp cs3
+ class IMAGING-MULTIMEDIA-STREAM-INGRESS
+  set dscp af31
+ class PAK-PRIORITY-INGRESS
+  set dscp cs6
+ class BDN-VACOLS-INGRESS
+  set dscp af21
+ class QOS-NCA-Web-Applications-INGRESS
+  set dscp af21
+ class TUXEDO-INGRESS
+  set dscp af21
+ class VISTA-INGRESS
+  set dscp af21
+ class POWERSCRIBE-INGRESS
+  set dscp af21
+ class CITRIX-RDP-CAG-INGRESS
+  set dscp af21
+ class NET-MANAGEMENT-INGRESS
+  set dscp cs2
+ class AD-TRAFFIC-INGRESS
+  set dscp cs2
+ class BULK-DATA-INGRESS
+  set dscp af11
+ class BIZ-INET-TRAFFIC-INGRESS
+  set dscp default
+ class SCAVENGER-INGRESS
+  set dscp cs1
+ class class-default
+  set dscp default
+!
+! 
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+! 
+! 
+!
+!
+interface Null0
+ no ip unreachables
+!
+interface Loopback0
+ description Loopback
+ vrf forwarding VAVRF
+ ip address 10.90.167.196 255.255.255.255
+ no ip proxy-arp
+ ipv6 address 2600:8020:7264:1::1/128
+!
+interface Loopback10
+ description MPLS OVER MGRE TUNNEL ENDPOINT
+ ip address 172.23.117.3 255.255.255.255
+ no ip proxy-arp
+!
+interface GigabitEthernet1
+ description Routed to 6500-VSS-Core
+ vrf forwarding VAVRF
+ ip flow monitor NET-ANALYSIS-INGRESS input
+ ip flow monitor NET-ANALYSIS-EGRESS output
+ ip address 10.90.67.50 255.255.255.248
+ no ip proxy-arp
+ ip nbar protocol-discovery
+ ip verify unicast source reachable-via any allow-default allow-self-ping
+ ip tcp adjust-mss 1300
+ negotiation auto
+ cdp enable
+ no mop enabled
+ no mop sysid
+ service-policy input QOS-LAN-INGRESS
+!
+interface GigabitEthernet2
+ description ASR-ASR iBGP
+ vrf forwarding VAVRF
+ ip address 10.90.205.241 255.255.255.252
+ no ip proxy-arp
+ ip verify unicast source reachable-via any allow-default allow-self-ping
+ ip tcp adjust-mss 1300
+ negotiation auto
+ cdp enable
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet3
+ vrf forwarding Mgmt-intf
+ ip address dhcp
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet4
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+l3vpn encapsulation ip RR-IN__VAVPN
+ transport ipv4 source Loopback10
+ protocol gre key 9172016
+ mpls mtu max
+!
+router eigrp NIN610BY
+ !
+ address-family ipv6 unicast vrf VAVRF autonomous-system 1212
+  !
+  af-interface default
+   passive-interface
+  exit-af-interface
+  !
+  af-interface GigabitEthernet1
+   no passive-interface
+  exit-af-interface
+  !
+  af-interface GigabitEthernet2
+   no passive-interface
+  exit-af-interface
+  !
+  topology base
+   distribute-list prefix-list VAORT-IGP-IN-IPV6__FROM-CORE in 
+   redistribute bgp 64893 route-map VAORT-IGP-IN-IPV6__FROM-BGP
+  exit-af-topology
+  eigrp router-id 10.90.167.196
+ exit-address-family
+ !
+ address-family ipv4 unicast vrf VAVRF autonomous-system 1212
+  !
+  af-interface default
+   passive-interface
+  exit-af-interface
+  !
+  af-interface GigabitEthernet1
+   no passive-interface
+  exit-af-interface
+  !
+  af-interface GigabitEthernet2
+   no passive-interface
+  exit-af-interface
+  !
+  topology base
+   distribute-list route-map VAORT-IGP-IN__FROM-CORE in 
+   redistribute bgp 64893 route-map VAORT-IGP-IN__FROM-BGP
+  exit-af-topology
+  network 10.0.0.0
+  eigrp router-id 10.90.167.196
+ exit-address-family
+!
+router bgp 64893
+ bgp router-id 172.23.117.3
+ bgp log-neighbor-changes
+ bgp bestpath med missing-as-worst
+ bgp bestpath cost-community ignore
+ no bgp default ipv4-unicast
+ timers bgp 15 45
+ neighbor mGRE-iBGP peer-group
+ neighbor mGRE-iBGP remote-as 64893
+ neighbor mGRE-iBGP password 7 045802150C2E
+ neighbor mGRE-iBGP update-source Loopback10
+ neighbor 10.250.92.92 peer-group mGRE-iBGP
+ neighbor 10.250.93.93 peer-group mGRE-iBGP
+ neighbor 10.250.94.94 peer-group mGRE-iBGP
+ neighbor 10.250.95.95 peer-group mGRE-iBGP
+ neighbor 10.250.231.98 remote-as 13979
+ !
+ address-family ipv4
+  network 10.250.231.96 mask 255.255.255.252
+  network 172.23.117.3 mask 255.255.255.255
+  neighbor 10.250.231.98 activate
+  neighbor 10.250.231.98 send-community
+  neighbor 10.250.231.98 soft-reconfiguration inbound
+  neighbor 10.250.231.98 route-map GLBL-eBGP-IN__PROVIDER in
+  neighbor 10.250.231.98 route-map GLBL-eBGP-OUT__PROVIDER out
+ exit-address-family
+ !
+ address-family vpnv4
+  neighbor mGRE-iBGP send-community both
+  neighbor mGRE-iBGP route-map RR-IN__VAVPN in
+  neighbor mGRE-iBGP route-map RR-OUT__VAVPN out
+  neighbor 10.250.92.92 activate
+  neighbor 10.250.93.93 activate
+  neighbor 10.250.94.94 activate
+  neighbor 10.250.95.95 activate
+ exit-address-family
+ !
+ address-family vpnv6
+  neighbor mGRE-iBGP send-community both
+  neighbor mGRE-iBGP route-map RR-IN-IPV6__VAVPN in
+  neighbor mGRE-iBGP route-map RR-OUT-IPV6__VAVPN out
+  neighbor 10.250.92.92 activate
+  neighbor 10.250.93.93 activate
+  neighbor 10.250.94.94 activate
+  neighbor 10.250.95.95 activate
+ exit-address-family
+ !
+ address-family ipv4 vrf VAVRF
+  bgp router-id 10.90.167.196
+  network 10.90.167.196 mask 255.255.255.255
+  network 10.90.167.197 mask 255.255.255.255
+  network 10.90.196.0 mask 255.255.252.0
+  network 10.90.200.0 mask 255.255.252.0
+  network 10.90.204.0 mask 255.255.254.0
+ exit-address-family
+ !
+ address-family ipv6 vrf VAVRF
+  bgp router-id 10.90.167.196
+  network 2600:8020:7264::/48
+ exit-address-family
+!
+ip forward-protocol nd
+ip forward-protocol udp bootpc
+ip tcp mss 1300
+ip tcp synwait-time 10
+no ip http server
+ip http authentication local
+no ip http secure-server
+!
+ip bgp-community new-format
+ip community-list standard GLBL-eBGP-IN__RTBHR permit 64666:666
+ip community-list standard VAORT-IGP-IN__BPE-PRI permit 65096:302
+ip community-list standard VAORT-IGP-IN__BPE-PRI permit 65098:304
+ip community-list standard VAORT-IGP-IN__BPE-PRI permit 65098:306
+ip community-list standard VAORT-IGP-IN__BPE-PRI permit 65098:320
+ip community-list standard VAORT-IGP-IN__BPE-PRI permit 65096:3261
+ip community-list standard VAORT-IGP-IN__BPE-PRI permit 65098:3262
+ip community-list standard VAORT-IGP-IN__BPE-PRI permit 65097:3072
+ip community-list standard VAORT-IGP-IN__BPE-PRI permit 65097:3082
+ip community-list standard VAORT-IGP-IN__BPE-PRI permit 65097:3092
+ip community-list standard VAORT-IGP-IN__BPE-PRI permit 65096:3073
+ip community-list standard VAORT-IGP-IN__BPE-PRI permit 65096:3083
+ip community-list standard VAORT-IGP-IN__BPE-PRI permit 65096:3093
+ip community-list standard VAORT-IGP-IN__BPE-PRI permit 65098:327
+ip community-list standard VAORT-IGP-IN__BPE-SEC permit 65097:302
+ip community-list standard VAORT-IGP-IN__BPE-SEC permit 65099:304
+ip community-list standard VAORT-IGP-IN__BPE-SEC permit 65099:306
+ip community-list standard VAORT-IGP-IN__BPE-SEC permit 65099:320
+ip community-list standard VAORT-IGP-IN__BPE-SEC permit 65096:3262
+ip community-list standard VAORT-IGP-IN__BPE-SEC permit 65098:3261
+ip community-list standard VAORT-IGP-IN__BPE-SEC permit 65096:3072
+ip community-list standard VAORT-IGP-IN__BPE-SEC permit 65096:3082
+ip community-list standard VAORT-IGP-IN__BPE-SEC permit 65096:3092
+ip community-list standard VAORT-IGP-IN__BPE-SEC permit 65097:3073
+ip community-list standard VAORT-IGP-IN__BPE-SEC permit 65097:3083
+ip community-list standard VAORT-IGP-IN__BPE-SEC permit 65097:3093
+ip community-list standard VAORT-IGP-IN__BPE-SEC permit 65099:327
+ip community-list standard VAORT-IGP-IN__BPE-TIR permit 65097:304
+ip community-list standard VAORT-IGP-IN__BPE-TIR permit 65097:306
+ip community-list standard VAORT-IGP-IN__BPE-TIR permit 65097:320
+ip community-list standard VAORT-IGP-IN__BPE-TIR permit 65097:327
+ip community-list standard VAORT-IGP-IN__BPE-QUA permit 65096:304
+ip community-list standard VAORT-IGP-IN__BPE-QUA permit 65096:306
+ip community-list standard VAORT-IGP-IN__BPE-QUA permit 65096:320
+ip community-list standard VAORT-IGP-IN__BPE-QUA permit 65096:327
+ip community-list standard VAORT-IGP-IN__TRANSIT-E permit 65092:209
+ip community-list standard VAORT-IGP-IN__TRANSIT-N permit 65093:209
+ip community-list standard VAORT-IGP-IN__TRANSIT-S permit 65094:209
+ip community-list standard VAORT-IGP-IN__TRANSIT-W permit 65095:209
+ip community-list standard VAORT-IGP-IN__DEFAULT-E permit 65096:0
+ip community-list standard VAORT-IGP-IN__DEFAULT-N permit 65097:0
+ip community-list standard VAORT-IGP-IN__DEFAULT-S permit 65098:0
+ip community-list standard VAORT-IGP-IN__DEFAULT-W permit 65099:0
+ip community-list standard VAORT-IGP-IN__SINGLE-ATT permit 222:13979
+ip community-list standard VAORT-IGP-IN__POISON permit 64555:66
+ip community-list standard VAORT-IGP-IN__RTBHR permit 64666:666
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-PRI permit 65096:302
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-PRI permit 65098:304
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-PRI permit 65098:306
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-PRI permit 65098:320
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-PRI permit 65096:3261
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-PRI permit 65098:3262
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-PRI permit 65097:3072
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-PRI permit 65097:3082
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-PRI permit 65097:3092
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-PRI permit 65096:3073
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-PRI permit 65096:3083
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-PRI permit 65096:3093
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-PRI permit 65098:327
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-SEC permit 65097:302
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-SEC permit 65099:304
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-SEC permit 65099:306
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-SEC permit 65099:320
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-SEC permit 65096:3262
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-SEC permit 65098:3261
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-SEC permit 65096:3072
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-SEC permit 65096:3082
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-SEC permit 65096:3092
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-SEC permit 65097:3073
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-SEC permit 65097:3083
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-SEC permit 65097:3093
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-SEC permit 65099:327
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-TIR permit 65097:304
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-TIR permit 65097:306
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-TIR permit 65097:320
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-TIR permit 65097:327
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-QUA permit 65096:304
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-QUA permit 65096:306
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-QUA permit 65096:320
+ip community-list standard VAORT-IGP-IN-IPV6__BPE-QUA permit 65096:327
+ip community-list standard VAORT-IGP-IN-IPV6__TRANSIT-E permit 65092:209
+ip community-list standard VAORT-IGP-IN-IPV6__TRANSIT-N permit 65093:209
+ip community-list standard VAORT-IGP-IN-IPV6__TRANSIT-S permit 65094:209
+ip community-list standard VAORT-IGP-IN-IPV6__TRANSIT-W permit 65095:209
+ip community-list standard VAORT-IGP-IN-IPV6__DEFAULT-E permit 65096:0
+ip community-list standard VAORT-IGP-IN-IPV6__DEFAULT-N permit 65097:0
+ip community-list standard VAORT-IGP-IN-IPV6__DEFAULT-S permit 65098:0
+ip community-list standard VAORT-IGP-IN-IPV6__DEFAULT-W permit 65099:0
+ip community-list standard VAORT-IGP-IN-IPV6__RTBHR permit 64666:666
+ip community-list standard VAORT-IGP-IN-IPV6__POISON permit 64555:66
+ip community-list standard VAORT-IGP-IN-IPV6__SINGLE-ATT permit 222:13979
+ip community-list standard RR-IN__BPE-PRI permit 65096:302
+ip community-list standard RR-IN__BPE-PRI permit 65098:304
+ip community-list standard RR-IN__BPE-PRI permit 65098:306
+ip community-list standard RR-IN__BPE-PRI permit 65098:320
+ip community-list standard RR-IN__BPE-PRI permit 65096:3261
+ip community-list standard RR-IN__BPE-PRI permit 65098:3262
+ip community-list standard RR-IN__BPE-PRI permit 65097:3072
+ip community-list standard RR-IN__BPE-PRI permit 65097:3082
+ip community-list standard RR-IN__BPE-PRI permit 65097:3092
+ip community-list standard RR-IN__BPE-PRI permit 65096:3073
+ip community-list standard RR-IN__BPE-PRI permit 65096:3083
+ip community-list standard RR-IN__BPE-PRI permit 65096:3093
+ip community-list standard RR-IN__BPE-PRI permit 65098:327
+ip community-list standard RR-IN__BPE-SEC permit 65097:302
+ip community-list standard RR-IN__BPE-SEC permit 65099:304
+ip community-list standard RR-IN__BPE-SEC permit 65099:306
+ip community-list standard RR-IN__BPE-SEC permit 65099:320
+ip community-list standard RR-IN__BPE-SEC permit 65096:3262
+ip community-list standard RR-IN__BPE-SEC permit 65098:3261
+ip community-list standard RR-IN__BPE-SEC permit 65096:3072
+ip community-list standard RR-IN__BPE-SEC permit 65096:3082
+ip community-list standard RR-IN__BPE-SEC permit 65096:3092
+ip community-list standard RR-IN__BPE-SEC permit 65097:3073
+ip community-list standard RR-IN__BPE-SEC permit 65097:3083
+ip community-list standard RR-IN__BPE-SEC permit 65097:3093
+ip community-list standard RR-IN__BPE-SEC permit 65099:327
+ip community-list standard RR-IN__BPE-TIR permit 65097:304
+ip community-list standard RR-IN__BPE-TIR permit 65097:306
+ip community-list standard RR-IN__BPE-TIR permit 65097:320
+ip community-list standard RR-IN__BPE-TIR permit 65097:327
+ip community-list standard RR-IN__BPE-QUA permit 65096:304
+ip community-list standard RR-IN__BPE-QUA permit 65096:306
+ip community-list standard RR-IN__BPE-QUA permit 65096:320
+ip community-list standard RR-IN__BPE-QUA permit 65096:327
+ip community-list standard RR-IN__DEFAULT-E permit 65096:0
+ip community-list standard RR-IN__DEFAULT-N permit 65097:0
+ip community-list standard RR-IN__DEFAULT-S permit 65098:0
+ip community-list standard RR-IN__DEFAULT-W permit 65099:0
+ip community-list standard RR-IN__RTBHR permit 64666:666
+ip community-list standard RR-IN-IPV6__BPE-PRI permit 65096:302
+ip community-list standard RR-IN-IPV6__BPE-PRI permit 65098:304
+ip community-list standard RR-IN-IPV6__BPE-PRI permit 65098:306
+ip community-list standard RR-IN-IPV6__BPE-PRI permit 65098:320
+ip community-list standard RR-IN-IPV6__BPE-PRI permit 65096:3261
+ip community-list standard RR-IN-IPV6__BPE-PRI permit 65098:3262
+ip community-list standard RR-IN-IPV6__BPE-PRI permit 65097:3072
+ip community-list standard RR-IN-IPV6__BPE-PRI permit 65097:3082
+ip community-list standard RR-IN-IPV6__BPE-PRI permit 65097:3092
+ip community-list standard RR-IN-IPV6__BPE-PRI permit 65096:3073
+ip community-list standard RR-IN-IPV6__BPE-PRI permit 65096:3083
+ip community-list standard RR-IN-IPV6__BPE-PRI permit 65096:3093
+ip community-list standard RR-IN-IPV6__BPE-PRI permit 65098:327
+ip community-list standard RR-IN-IPV6__BPE-SEC permit 65097:302
+ip community-list standard RR-IN-IPV6__BPE-SEC permit 65099:304
+ip community-list standard RR-IN-IPV6__BPE-SEC permit 65099:306
+ip community-list standard RR-IN-IPV6__BPE-SEC permit 65099:320
+ip community-list standard RR-IN-IPV6__BPE-SEC permit 65096:3262
+ip community-list standard RR-IN-IPV6__BPE-SEC permit 65098:3261
+ip community-list standard RR-IN-IPV6__BPE-SEC permit 65096:3072
+ip community-list standard RR-IN-IPV6__BPE-SEC permit 65096:3082
+ip community-list standard RR-IN-IPV6__BPE-SEC permit 65096:3092
+ip community-list standard RR-IN-IPV6__BPE-SEC permit 65097:3073
+ip community-list standard RR-IN-IPV6__BPE-SEC permit 65097:3083
+ip community-list standard RR-IN-IPV6__BPE-SEC permit 65097:3093
+ip community-list standard RR-IN-IPV6__BPE-SEC permit 65099:327
+ip community-list standard RR-IN-IPV6__BPE-TIR permit 65097:304
+ip community-list standard RR-IN-IPV6__BPE-TIR permit 65097:306
+ip community-list standard RR-IN-IPV6__BPE-TIR permit 65097:320
+ip community-list standard RR-IN-IPV6__BPE-TIR permit 65097:327
+ip community-list standard RR-IN-IPV6__BPE-QUA permit 65096:304
+ip community-list standard RR-IN-IPV6__BPE-QUA permit 65096:306
+ip community-list standard RR-IN-IPV6__BPE-QUA permit 65096:320
+ip community-list standard RR-IN-IPV6__BPE-QUA permit 65096:327
+ip community-list standard RR-IN-IPV6__DEFAULT-E permit 65096:0
+ip community-list standard RR-IN-IPV6__DEFAULT-N permit 65097:0
+ip community-list standard RR-IN-IPV6__DEFAULT-S permit 65098:0
+ip community-list standard RR-IN-IPV6__DEFAULT-W permit 65099:0
+ip community-list standard RR-IN-IPV6__RTBHR permit 64666:666
+ip community-list expanded VAORT-IGP-IN__PRI permit 6509[6-9]:4000
+ip community-list expanded VAORT-IGP-IN__SEC permit 6509[6-9]:3000
+ip community-list expanded VAORT-IGP-IN__TER permit 6509[6-9]:2000
+ip community-list expanded VAORT-IGP-IN__QUA permit 6509[6-9]:1000
+ip community-list expanded VAORT-IGP-IN-IPV6__PRI permit 6509[6-9]:4000
+ip community-list expanded VAORT-IGP-IN-IPV6__SEC permit 6509[6-9]:3000
+ip community-list expanded VAORT-IGP-IN-IPV6__TER permit 6509[6-9]:2000
+ip community-list expanded VAORT-IGP-IN-IPV6__QUA permit 6509[6-9]:1000
+ip community-list expanded RR-IN__PRI permit 6509[6-9]:4000
+ip community-list expanded RR-IN__SEC permit 6509[6-9]:3000
+ip community-list expanded RR-IN__TER permit 6509[6-9]:2000
+ip community-list expanded RR-IN__QUA permit 6509[6-9]:1000
+ip community-list expanded RR-IN-IPV6__PRI permit 6509[6-9]:4000
+ip community-list expanded RR-IN-IPV6__SEC permit 6509[6-9]:3000
+ip community-list expanded RR-IN-IPV6__TER permit 6509[6-9]:2000
+ip community-list expanded RR-IN-IPV6__QUA permit 6509[6-9]:1000
+ip as-path access-list 1 permit ^$
+ip as-path access-list 10 permit ^$
+ip tftp source-interface GigabitEthernet1
+ip route 0.0.0.0 0.0.0.0 10.250.231.98 250 name GLBL-BCKP-DFLT
+ip route 0.0.0.0 0.0.0.0 10.187.255.2 254
+ip route 192.0.2.2 255.255.255.255 Null0 name RTBH
+ip route vrf VAVRF 0.0.0.0 0.0.0.0 10.90.205.226 250 tag 5555 name BCKP-DFLT
+ip route vrf VAVRF 0.0.0.0 0.0.0.0 10.90.205.242 250 tag 5555 name BCKP-DFLT
+ip route vrf VAVRF 192.0.2.2 255.255.255.255 Null0 name RTBH
+ip ssh time-out 60
+ip ssh authentication-retries 2
+ip ssh source-interface Loopback0
+ip ssh version 2
+!
+ip access-list standard EOSNMPV3NETPROFILER
+ 10 remark ***Orlando Flow Gateways
+ 10 permit 10.187.133.238 0.0.0.1
+ip access-list standard FO_WAN_SNMP
+ 10 remark *** Orlando Jump Server ****
+ 10 permit 10.187.147.46
+ 20 remark *** Durham Solarwinds Toolset - VHADURNMS01 ****
+ 20 permit 10.48.138.89
+ 30 deny   any
+ip access-list standard LAN_ESL_SNMP
+ 10 remark *** New Denver Jump Server ****
+ 10 permit 10.184.165.200
+ 20 remark *** Old Orlando Jump Server ****
+ 20 permit 10.187.147.203
+ 30 deny   any
+ip access-list standard NSOC_MDPP_SNMP
+ 10 permit 10.254.24.233
+ 20 permit 10.254.24.234
+ 30 permit 10.254.24.235
+ 40 permit 10.254.129.233
+ 50 permit 10.254.129.235
+ 60 permit 10.254.129.234
+ 70 deny   any
+ip access-list standard NTP-PEER
+ 10 remark NTP-PEER - ntp peers/servers we sync to/with
+ 10 permit 10.254.100.230
+ 20 permit 10.254.100.231
+ 30 permit 10.254.100.232
+ 40 permit 10.254.100.233
+ 50 deny   any
+ip access-list standard NTP-SERVE-ONLY
+ 10 remark NTP-SERVE-ONLY - Hosts/Networks we allow to get ntp from us
+ 10 permit 10.0.0.0 0.255.255.255
+ 20 deny   any
+ip access-list standard ORION_SNMP
+ 10 permit 10.184.3.45
+ 20 permit 10.184.3.13
+ 30 remark *** Enterprise Orion Servers ***
+ 30 permit 10.184.166.208 0.0.0.15
+ 40 permit 10.184.3.32 0.0.0.31
+ 50 permit 10.185.3.192 0.0.0.31
+ 60 permit 10.186.42.224 0.0.0.15
+ 70 permit 10.187.1.192 0.0.0.31
+ 80 permit 10.204.16.64 0.0.0.7
+ 90 permit 10.206.22.16 0.0.0.7
+ 100 permit 10.222.123.152 0.0.0.7
+ 110 permit 10.224.133.160 0.0.0.31
+ 120 permit 10.228.214.140 0.0.0.3
+ 130 permit 10.228.214.144 0.0.0.7
+ 140 deny   any
+ip access-list standard VA_CA-SPECT_SNMP
+ 10 remark **Vanjhappmon200
+ 10 permit 10.186.224.69
+ 20 remark **Vacrrappmon07
+ 20 permit 10.208.153.28
+ 30 remark **Vaausmonapp204
+ 30 permit 10.224.74.201
+ 40 remark **Vaausmonapp205
+ 40 permit 10.224.74.202
+ 50 remark **Vaausmonapp206
+ 50 permit 10.224.74.203
+ 60 remark **Vasmoappmon200
+ 60 permit 10.185.231.36
+ 70 remark **Vahinmonapp22
+ 70 permit 10.204.74.7
+ 80 remark **Vascrappmon200
+ 80 permit 10.184.2.98
+ 90 remark **Vaausappmon213
+ 90 permit 10.224.74.115
+ 100 remark **Vaausappmon214
+ 100 permit 10.224.74.116
+ 110 remark **Vaausappmon215
+ 110 permit 10.224.74.117
+ 120 remark **Vaphimonapp27
+ 120 permit 10.205.4.40
+ip access-list standard VA_CISCO_CSCP
+ 10 remark *** Cisco Collector Philadelphia ***
+ 10 permit 10.205.145.11
+ 20 permit 10.84.44.14
+ 30 permit 10.84.44.15
+ 40 permit 10.236.13.115
+ 50 permit 10.237.13.114
+ 60 permit 10.238.13.113
+ 70 permit 10.239.13.112
+ 80 permit 10.236.13.114
+ 90 permit 10.237.13.115
+ 100 permit 10.238.13.112
+ 110 permit 10.239.13.113
+ 120 permit 10.236.13.113
+ 130 permit 10.237.13.112
+ 140 permit 10.238.13.115
+ 150 permit 10.239.13.114
+ 160 remark *** LiveAction ***
+ 160 permit 10.236.13.112
+ 170 permit 10.237.13.113
+ 180 permit 10.238.13.114
+ 190 permit 10.239.13.115
+ 200 permit 10.205.14.9
+ 210 permit 10.205.14.10
+ 220 remark *** Cisco Collector Denver ***
+ 220 permit 10.184.165.250
+ 230 permit 10.224.14.28
+ 240 permit 10.224.14.29
+ 250 remark *** Infoblox ***
+ 250 permit 10.224.14.27
+ 260 deny   any
+!
+ip access-list extended QOS-AD-TRAFFIC
+ 10 remark Protocols that support AD authentication
+ 10 remark DNS
+ 10 permit tcp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq domain
+ 20 permit udp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq domain
+ 30 remark Kerberos
+ 30 permit tcp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq 88
+ 40 permit udp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq 88
+ 50 remark RPC
+ 50 permit tcp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq msrpc
+ 60 remark NTLM NetBIOS
+ 60 permit udp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq netbios-ns
+ 70 permit udp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq netbios-dgm
+ 80 permit udp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq netbios-ss
+ 90 remark LDAP
+ 90 permit tcp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq 389
+ 100 permit udp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq 389
+ 110 remark Secure LDAP
+ 110 permit tcp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq 636
+ 120 permit udp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq 636
+ 130 remark Global Catalog
+ 130 permit tcp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq 3268
+ 140 permit udp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq 3268
+ 150 remark Secure Global Catalog
+ 150 permit tcp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq 3269
+ 160 permit udp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq 3269
+ 170 remark JLV - SSOi to AWS
+ 170 remark JLV - Interactive CS2
+ 170 permit tcp 10.0.0.0 0.255.255.255 host 10.244.90.18 eq 44441 44442 44443 44444
+ 180 permit tcp host 10.244.90.18 eq 44441 44442 44443 44444 10.0.0.0 0.255.255.255
+ 190 permit tcp 10.0.0.0 0.255.255.255 host 10.244.90.20 eq 44441 44442 44443 44444
+ 200 permit tcp host 10.244.90.20 eq 44441 44442 44443 44444 10.0.0.0 0.255.255.255
+ 210 permit tcp 10.0.0.0 0.255.255.255 host 10.244.90.21 eq 44441 44442 44443 44444
+ 220 permit tcp host 10.244.90.21 eq 44441 44442 44443 44444 10.0.0.0 0.255.255.255
+ 230 permit tcp 10.0.0.0 0.255.255.255 host 10.244.90.29 eq 44441 44442 44443 44444
+ 240 permit tcp host 10.244.90.29 eq 44441 44442 44443 44444 10.0.0.0 0.255.255.255
+ 250 permit tcp 10.0.0.0 0.255.255.255 host 10.245.134.211 eq 44441 44442 44443 44444
+ 260 permit tcp host 10.245.134.211 eq 44441 44442 44443 44444 10.0.0.0 0.255.255.255
+ 270 permit tcp 10.0.0.0 0.255.255.255 host 10.245.134.212 eq 44441 44442 44443 44444
+ 280 permit tcp host 10.245.134.212 eq 44441 44442 44443 44444 10.0.0.0 0.255.255.255
+ 290 permit tcp 10.0.0.0 0.255.255.255 host 10.245.134.213 eq 44441 44442 44443 44444
+ 300 permit tcp host 10.245.134.213 eq 44441 44442 44443 44444 10.0.0.0 0.255.255.255
+ 310 permit tcp 10.0.0.0 0.255.255.255 host 10.245.134.214 eq 44441 44442 44443 44444
+ 320 permit tcp host 10.245.134.214 eq 44441 44442 44443 44444 10.0.0.0 0.255.255.255
+ 330 permit tcp 10.0.0.0 0.255.255.255 host 10.245.134.215 eq 44441 44442 44443 44444
+ 340 permit tcp host 10.245.134.215 eq 44441 44442 44443 44444 10.0.0.0 0.255.255.255
+ 350 permit tcp 10.0.0.0 0.255.255.255 host 10.245.134.216 eq 44441 44442 44443 44444
+ 360 permit tcp host 10.245.134.216 eq 44441 44442 44443 44444 10.0.0.0 0.255.255.255
+ 370 permit tcp 10.0.0.0 0.255.255.255 host 10.245.134.217 eq 44441 44442 44443 44444
+ 380 permit tcp host 10.245.134.217 eq 44441 44442 44443 44444 10.0.0.0 0.255.255.255
+ 390 permit tcp 10.0.0.0 0.255.255.255 host 10.245.134.218 eq 44441 44442 44443 44444
+ 400 permit tcp host 10.245.134.218 eq 44441 44442 44443 44444 10.0.0.0 0.255.255.255
+ 410 permit tcp 10.0.0.0 0.255.255.255 host 10.245.134.219 eq 44441 44442 44443 44444
+ 420 permit tcp host 10.245.134.219 eq 44441 44442 44443 44444 10.0.0.0 0.255.255.255
+ 430 remark IAM (SSOi) - Interactive CS2
+ 430 permit tcp 10.0.0.0 0.255.255.255 host 10.245.139.156 eq 443
+ 440 permit tcp host 10.245.139.156 eq 443 10.0.0.0 0.255.255.255
+ 450 permit tcp 10.0.0.0 0.255.255.255 host 10.245.143.143 eq 443
+ 460 permit tcp host 10.245.143.143 eq 443 10.0.0.0 0.255.255.255
+ 470 permit tcp 10.0.0.0 0.255.255.255 host 10.245.135.143 eq 443
+ 480 permit tcp host 10.245.135.143 eq 443 10.0.0.0 0.255.255.255
+ 490 permit tcp 10.0.0.0 0.255.255.255 host 10.245.155.149 eq 443
+ 500 permit tcp host 10.245.155.149 eq 443 10.0.0.0 0.255.255.255
+ 510 permit tcp 10.0.0.0 0.255.255.255 host 10.245.139.149 eq 443
+ 520 permit tcp host 10.245.139.149 eq 443 10.0.0.0 0.255.255.255
+ 530 permit tcp 10.0.0.0 0.255.255.255 host 10.245.135.149 eq 443
+ 540 permit tcp host 10.245.135.149 eq 443 10.0.0.0 0.255.255.255
+ 550 permit tcp 10.0.0.0 0.255.255.255 host 10.245.143.142 eq 9303 9304
+ 560 permit tcp host 10.245.143.142 eq 9303 9304 10.0.0.0 0.255.255.255
+ 570 permit tcp 10.0.0.0 0.255.255.255 host 152.132.105.162 eq 8443
+ 580 permit tcp host 152.132.105.162 eq 8443 10.0.0.0 0.255.255.255
+ 590 remark TELE-ICU WAVE FORMS
+ 590 permit tcp 10.0.0.0 0.255.255.255 eq 8000 8050 www 10.104.227.128 0.0.0.63 gt 1024
+ 600 permit tcp 10.0.0.0 0.255.255.255 eq 8000 8050 www 10.148.219.192 0.0.0.31 gt 1024
+ 610 permit tcp 10.0.0.0 0.255.255.255 eq 8000 8050 www 10.93.82.192 0.0.0.63 gt 1024
+ 620 permit tcp 10.0.0.0 0.255.255.255 eq 8000 8050 www 10.58.175.0 0.0.0.63 gt 1024
+ 630 permit tcp 10.0.0.0 0.255.255.255 eq 8000 8050 www 10.42.4.0 0.0.0.127 gt 1024
+ 640 permit tcp 10.0.0.0 0.255.255.255 eq 8000 8050 www 10.83.17.0 0.0.0.127 gt 1024
+ 650 permit tcp 10.0.0.0 0.255.255.255 eq 8000 8050 www 10.80.33.128 0.0.0.127 gt 1024
+ 660 permit tcp 10.0.0.0 0.255.255.255 eq 8000 8050 www 10.112.209.128 0.0.0.63 gt 1024
+ 670 permit tcp 10.0.0.0 0.255.255.255 eq 8000 8050 www 10.101.225.224 0.0.0.31 gt 1024
+ 680 permit tcp 10.0.0.0 0.255.255.255 eq 8000 8050 www 10.176.110.0 0.0.0.127 gt 1024
+ 690 permit tcp 10.0.0.0 0.255.255.255 eq 8000 8050 www 10.161.84.0 0.0.0.127 gt 1024
+ 700 permit tcp 10.0.0.0 0.255.255.255 eq 8000 8050 www 10.108.209.64 0.0.0.31 gt 1024
+ 710 permit tcp 10.104.227.128 0.0.0.63 gt 1024 10.0.0.0 0.255.255.255 eq 8000 8050 www
+ 720 permit tcp 10.148.219.192 0.0.0.31 gt 1024 10.0.0.0 0.255.255.255 eq 8000 8050 www
+ 730 permit tcp 10.93.82.192 0.0.0.63 gt 1024 10.0.0.0 0.255.255.255 eq 8000 8050 www
+ 740 permit tcp 10.58.175.0 0.0.0.63 gt 1024 10.0.0.0 0.255.255.255 eq 8000 8050 www
+ 750 permit tcp 10.42.4.0 0.0.0.127 gt 1024 10.0.0.0 0.255.255.255 eq 8000 8050 www
+ 760 permit tcp 10.83.17.0 0.0.0.127 gt 1024 10.0.0.0 0.255.255.255 eq 8000 8050 www
+ 770 permit tcp 10.80.33.128 0.0.0.127 gt 1024 10.0.0.0 0.255.255.255 eq 8000 8050 www
+ 780 permit tcp 10.112.209.128 0.0.0.63 gt 1024 10.0.0.0 0.255.255.255 eq 8000 8050 www
+ 790 permit tcp 10.101.225.224 0.0.0.31 gt 1024 10.0.0.0 0.255.255.255 eq 8000 8050 www
+ 800 permit tcp 10.176.110.0 0.0.0.127 gt 1024 10.0.0.0 0.255.255.255 eq 8000 8050 www
+ 810 permit tcp 10.161.84.0 0.0.0.127 gt 1024 10.0.0.0 0.255.255.255 eq 8000 8050 www
+ 820 permit tcp 10.108.209.64 0.0.0.31 gt 1024 10.0.0.0 0.255.255.255 eq 8000 8050 www
+ip access-list extended QOS-BDN-VACOLS
+ 10 remark VBA BDN and VACOLS
+ 10 permit ip host 10.204.10.42 any
+ 20 permit ip any host 10.204.10.42
+ 30 permit ip host 10.204.10.52 any
+ 40 permit ip any host 10.204.10.52
+ 50 permit ip host 10.222.161.201 any
+ 60 permit ip any host 10.222.161.201
+ 70 permit ip host 10.222.161.200 any
+ 80 permit ip any host 10.222.161.200
+ip access-list extended QOS-BGP
+ 10 permit tcp any any eq bgp
+ 20 permit tcp any eq bgp any
+ip access-list extended QOS-BIZ-INTERNET
+ 10 remark This traffic will be marked BE
+ 10 permit ip 10.0.0.0 0.255.255.255 13.72.0.0 0.0.63.255
+ 20 permit ip 13.72.0.0 0.0.63.255 10.0.0.0 0.255.255.255
+ 30 permit ip 10.0.0.0 0.255.255.255 13.72.128.0 0.0.63.255
+ 40 permit ip 13.72.128.0 0.0.63.255 10.0.0.0 0.255.255.255
+ 50 permit ip 10.0.0.0 0.255.255.255 13.73.64.0 0.0.31.255
+ 60 permit ip 13.73.64.0 0.0.31.255 10.0.0.0 0.255.255.255
+ 70 permit ip 10.0.0.0 0.255.255.255 13.73.208.0 0.0.15.255
+ 80 permit ip 13.73.208.0 0.0.15.255 10.0.0.0 0.255.255.255
+ 90 permit ip 10.0.0.0 0.255.255.255 13.77.224.0 0.0.31.255
+ 100 permit ip 13.77.224.0 0.0.31.255 10.0.0.0 0.255.255.255
+ 110 permit ip 10.0.0.0 0.255.255.255 host 13.80.125.22
+ 120 permit ip host 13.80.125.22 10.0.0.0 0.255.255.255
+ 130 permit ip 10.0.0.0 0.255.255.255 host 13.91.91.243
+ 140 permit ip host 13.91.91.243 10.0.0.0 0.255.255.255
+ 150 permit ip 10.0.0.0 0.255.255.255 13.107.6.152 0.0.0.1
+ 160 permit ip 13.107.6.152 0.0.0.1 10.0.0.0 0.255.255.255
+ 170 permit ip 10.0.0.0 0.255.255.255 13.107.6.156 0.0.0.1
+ 180 permit ip 13.107.6.156 0.0.0.1 10.0.0.0 0.255.255.255
+ 190 permit ip 10.0.0.0 0.255.255.255 host 13.107.6.171
+ 200 permit ip host 13.107.6.171 10.0.0.0 0.255.255.255
+ 210 permit ip 10.0.0.0 0.255.255.255 13.107.7.190 0.0.0.1
+ 220 permit ip 13.107.7.190 0.0.0.1 10.0.0.0 0.255.255.255
+ 230 permit ip 10.0.0.0 0.255.255.255 13.107.9.156 0.0.0.1
+ 240 permit ip 13.107.9.156 0.0.0.1 10.0.0.0 0.255.255.255
+ 250 permit ip 10.0.0.0 0.255.255.255 13.107.18.10 0.0.0.1
+ 260 permit ip 13.107.18.10 0.0.0.1 10.0.0.0 0.255.255.255
+ 270 permit ip 10.0.0.0 0.255.255.255 13.107.64.0 0.0.63.255
+ 280 permit ip 13.107.64.0 0.0.63.255 10.0.0.0 0.255.255.255
+ 290 permit ip 10.0.0.0 0.255.255.255 13.107.66.0 0.0.0.255
+ 300 permit ip 13.107.66.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 310 permit ip 10.0.0.0 0.255.255.255 13.107.67.0 0.0.0.255
+ 320 permit ip 13.107.67.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 330 permit ip 10.0.0.0 0.255.255.255 13.107.128.0 0.0.0.255
+ 340 permit ip 13.107.128.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 350 permit ip 10.0.0.0 0.255.255.255 13.107.128.0 0.0.3.255
+ 360 permit ip 13.107.128.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 370 permit ip 10.0.0.0 0.255.255.255 13.107.129.0 0.0.0.255
+ 380 permit ip 13.107.129.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 390 permit ip 10.0.0.0 0.255.255.255 13.107.136.0 0.0.0.255
+ 400 permit ip 13.107.136.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 410 permit ip 10.0.0.0 0.255.255.255 13.107.136.0 0.0.3.255
+ 420 permit ip 13.107.136.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 430 permit ip 10.0.0.0 0.255.255.255 host 13.107.140.6
+ 440 permit ip host 13.107.140.6 10.0.0.0 0.255.255.255
+ 450 permit ip 10.0.0.0 0.255.255.255 13.108.0.0 0.1.255.255
+ 460 permit ip 13.108.0.0 0.1.255.255 10.0.0.0 0.255.255.255
+ 470 permit ip 10.0.0.0 0.255.255.255 13.110.0.0 0.0.255.255
+ 480 permit ip 13.110.0.0 0.0.255.255 10.0.0.0 0.255.255.255
+ 490 permit ip 10.0.0.0 0.255.255.255 13.110.16.0 0.0.7.255
+ 500 permit ip 13.110.16.0 0.0.7.255 10.0.0.0 0.255.255.255
+ 510 permit ip 10.0.0.0 0.255.255.255 15.200.0.0 0.0.255.255
+ 520 permit ip 15.200.0.0 0.0.255.255 10.0.0.0 0.255.255.255
+ 530 permit ip 10.0.0.0 0.255.255.255 18.253.0.0 0.0.255.255
+ 540 permit ip 18.253.0.0 0.0.255.255 10.0.0.0 0.255.255.255
+ 550 permit ip 10.0.0.0 0.255.255.255 20.140.32.0 0.0.15.255
+ 560 permit ip 20.140.32.0 0.0.15.255 10.0.0.0 0.255.255.255
+ 570 permit ip 10.0.0.0 0.255.255.255 20.140.48.0 0.0.7.255
+ 580 permit ip 20.140.48.0 0.0.7.255 10.0.0.0 0.255.255.255
+ 590 permit ip 10.0.0.0 0.255.255.255 20.140.56.0 0.0.7.255
+ 600 permit ip 20.140.56.0 0.0.7.255 10.0.0.0 0.255.255.255
+ 610 permit ip 10.0.0.0 0.255.255.255 20.140.80.0 0.0.0.255
+ 620 permit ip 20.140.80.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 630 permit ip 10.0.0.0 0.255.255.255 20.140.81.0 0.0.0.255
+ 640 permit ip 20.140.81.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 650 permit ip 10.0.0.0 0.255.255.255 20.140.88.0 0.0.7.255
+ 660 permit ip 20.140.88.0 0.0.7.255 10.0.0.0 0.255.255.255
+ 670 permit ip 10.0.0.0 0.255.255.255 20.140.128.0 0.0.7.255
+ 680 permit ip 20.140.128.0 0.0.7.255 10.0.0.0 0.255.255.255
+ 690 permit ip 10.0.0.0 0.255.255.255 20.140.136.0 0.0.7.255
+ 700 permit ip 20.140.136.0 0.0.7.255 10.0.0.0 0.255.255.255
+ 710 permit ip 10.0.0.0 0.255.255.255 20.140.152.0 0.0.7.255
+ 720 permit ip 20.140.152.0 0.0.7.255 10.0.0.0 0.255.255.255
+ 730 permit ip 10.0.0.0 0.255.255.255 20.140.176.0 0.0.15.255
+ 740 permit ip 20.140.176.0 0.0.15.255 10.0.0.0 0.255.255.255
+ 750 permit ip 10.0.0.0 0.255.255.255 20.140.192.0 0.0.31.255
+ 760 permit ip 20.140.192.0 0.0.31.255 10.0.0.0 0.255.255.255
+ 770 permit ip 10.0.0.0 0.255.255.255 20.140.224.0 0.0.7.255
+ 780 permit ip 20.140.224.0 0.0.7.255 10.0.0.0 0.255.255.255
+ 790 permit ip 10.0.0.0 0.255.255.255 20.141.1.0 0.0.0.255
+ 800 permit ip 20.141.1.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 810 permit ip 10.0.0.0 0.255.255.255 20.190.128.0 0.0.63.255
+ 820 permit ip 20.190.128.0 0.0.63.255 10.0.0.0 0.255.255.255
+ 830 permit ip 10.0.0.0 0.255.255.255 23.97.0.0 0.0.15.255
+ 840 permit ip 23.97.0.0 0.0.15.255 10.0.0.0 0.255.255.255
+ 850 permit ip 10.0.0.0 0.255.255.255 23.97.16.0 0.0.15.255
+ 860 permit ip 23.97.16.0 0.0.15.255 10.0.0.0 0.255.255.255
+ 870 permit ip 10.0.0.0 0.255.255.255 23.97.32.0 0.0.7.255
+ 880 permit ip 23.97.32.0 0.0.7.255 10.0.0.0 0.255.255.255
+ 890 permit ip 10.0.0.0 0.255.255.255 23.97.40.0 0.0.7.255
+ 900 permit ip 23.97.40.0 0.0.7.255 10.0.0.0 0.255.255.255
+ 910 permit ip 10.0.0.0 0.255.255.255 23.103.160.0 0.0.15.255
+ 920 permit ip 23.103.160.0 0.0.15.255 10.0.0.0 0.255.255.255
+ 930 permit ip 10.0.0.0 0.255.255.255 host 40.81.156.154
+ 940 permit ip host 40.81.156.154 10.0.0.0 0.255.255.255
+ 950 permit ip 10.0.0.0 0.255.255.255 host 40.90.218.198
+ 960 permit ip host 40.90.218.198 10.0.0.0 0.255.255.255
+ 970 permit ip 10.0.0.0 0.255.255.255 40.92.0.0 0.1.255.255
+ 980 permit ip 40.92.0.0 0.1.255.255 10.0.0.0 0.255.255.255
+ 990 permit ip 10.0.0.0 0.255.255.255 40.96.0.0 0.7.255.255
+ 1000 permit ip 40.96.0.0 0.7.255.255 10.0.0.0 0.255.255.255
+ 1010 permit ip 10.0.0.0 0.255.255.255 40.104.0.0 0.1.255.255
+ 1020 permit ip 40.104.0.0 0.1.255.255 10.0.0.0 0.255.255.255
+ 1030 permit ip 10.0.0.0 0.255.255.255 40.107.0.0 0.0.255.255
+ 1040 permit ip 40.107.0.0 0.0.255.255 10.0.0.0 0.255.255.255
+ 1050 permit ip 10.0.0.0 0.255.255.255 40.108.128.0 0.0.127.255
+ 1060 permit ip 40.108.128.0 0.0.127.255 10.0.0.0 0.255.255.255
+ 1070 permit ip 10.0.0.0 0.255.255.255 40.112.38.0 0.0.0.31
+ 1080 permit ip 40.112.38.0 0.0.0.31 10.0.0.0 0.255.255.255
+ 1090 permit ip 10.0.0.0 0.255.255.255 40.112.38.32 0.0.0.31
+ 1100 permit ip 40.112.38.32 0.0.0.31 10.0.0.0 0.255.255.255
+ 1110 permit ip 10.0.0.0 0.255.255.255 40.112.38.64 0.0.0.31
+ 1120 permit ip 40.112.38.64 0.0.0.31 10.0.0.0 0.255.255.255
+ 1130 permit ip 10.0.0.0 0.255.255.255 40.112.38.96 0.0.0.31
+ 1140 permit ip 40.112.38.96 0.0.0.31 10.0.0.0 0.255.255.255
+ 1150 permit ip 10.0.0.0 0.255.255.255 40.112.38.128 0.0.0.31
+ 1160 permit ip 40.112.38.128 0.0.0.31 10.0.0.0 0.255.255.255
+ 1170 permit ip 10.0.0.0 0.255.255.255 40.112.38.160 0.0.0.31
+ 1180 permit ip 40.112.38.160 0.0.0.31 10.0.0.0 0.255.255.255
+ 1190 permit ip 10.0.0.0 0.255.255.255 40.112.40.0 0.0.0.255
+ 1200 permit ip 40.112.40.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 1210 permit ip 10.0.0.0 0.255.255.255 40.112.41.0 0.0.0.255
+ 1220 permit ip 40.112.41.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 1230 permit ip 10.0.0.0 0.255.255.255 40.112.42.0 0.0.1.255
+ 1240 permit ip 40.112.42.0 0.0.1.255 10.0.0.0 0.255.255.255
+ 1250 permit ip 10.0.0.0 0.255.255.255 40.112.44.0 0.0.1.255
+ 1260 permit ip 40.112.44.0 0.0.1.255 10.0.0.0 0.255.255.255
+ 1270 permit ip 10.0.0.0 0.255.255.255 40.112.46.0 0.0.0.255
+ 1280 permit ip 40.112.46.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 1290 permit ip 10.0.0.0 0.255.255.255 40.112.47.0 0.0.0.255
+ 1300 permit ip 40.112.47.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 1310 permit ip 10.0.0.0 0.255.255.255 40.126.0.0 0.0.63.255
+ 1320 permit ip 40.126.0.0 0.0.63.255 10.0.0.0 0.255.255.255
+ 1330 permit ip 10.0.0.0 0.255.255.255 52.46.96.0 0.0.15.255
+ 1340 permit ip 52.46.96.0 0.0.15.255 10.0.0.0 0.255.255.255
+ 1350 permit ip 10.0.0.0 0.255.255.255 52.46.96.0 0.0.31.255
+ 1360 permit ip 52.46.96.0 0.0.31.255 10.0.0.0 0.255.255.255
+ 1370 permit ip 10.0.0.0 0.255.255.255 52.46.120.0 0.0.3.255
+ 1380 permit ip 52.46.120.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 1390 permit ip 10.0.0.0 0.255.255.255 52.46.176.0 0.0.3.255
+ 1400 permit ip 52.46.176.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 1410 permit ip 10.0.0.0 0.255.255.255 52.46.224.0 0.0.15.255
+ 1420 permit ip 52.46.224.0 0.0.15.255 10.0.0.0 0.255.255.255
+ 1430 permit ip 10.0.0.0 0.255.255.255 52.61.0.0 0.0.255.255
+ 1440 permit ip 52.61.0.0 0.0.255.255 10.0.0.0 0.255.255.255
+ 1450 permit ip 10.0.0.0 0.255.255.255 52.94.9.0 0.0.0.255
+ 1460 permit ip 52.94.9.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 1470 permit ip 10.0.0.0 0.255.255.255 52.94.22.0 0.0.0.255
+ 1480 permit ip 52.94.22.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 1490 permit ip 10.0.0.0 0.255.255.255 52.95.100.0 0.0.3.255
+ 1500 permit ip 52.95.100.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 1510 permit ip 10.0.0.0 0.255.255.255 52.95.142.0 0.0.0.255
+ 1520 permit ip 52.95.142.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 1530 permit ip 10.0.0.0 0.255.255.255 52.95.143.0 0.0.0.255
+ 1540 permit ip 52.95.143.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 1550 permit ip 10.0.0.0 0.255.255.255 52.95.144.0 0.0.0.255
+ 1560 permit ip 52.95.144.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 1570 permit ip 10.0.0.0 0.255.255.255 52.95.166.0 0.0.0.255
+ 1580 permit ip 52.95.166.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 1590 permit ip 10.0.0.0 0.255.255.255 52.95.167.0 0.0.0.255
+ 1600 permit ip 52.95.167.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 1610 permit ip 10.0.0.0 0.255.255.255 52.95.168.0 0.0.0.255
+ 1620 permit ip 52.95.168.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 1630 permit ip 10.0.0.0 0.255.255.255 52.96.0.0 0.3.255.255
+ 1640 permit ip 52.96.0.0 0.3.255.255 10.0.0.0 0.255.255.255
+ 1650 permit ip 10.0.0.0 0.255.255.255 52.96.38.0 0.0.0.255
+ 1660 permit ip 52.96.38.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 1670 permit ip 10.0.0.0 0.255.255.255 52.100.0.0 0.3.255.255
+ 1680 permit ip 52.100.0.0 0.3.255.255 10.0.0.0 0.255.255.255
+ 1690 permit ip 10.0.0.0 0.255.255.255 52.104.0.0 0.3.255.255
+ 1700 permit ip 52.104.0.0 0.3.255.255 10.0.0.0 0.255.255.255
+ 1710 permit ip 10.0.0.0 0.255.255.255 52.108.0.0 0.3.255.255
+ 1720 permit ip 52.108.0.0 0.3.255.255 10.0.0.0 0.255.255.255
+ 1730 permit ip 10.0.0.0 0.255.255.255 52.112.0.0 0.3.255.255
+ 1740 permit ip 52.112.0.0 0.3.255.255 10.0.0.0 0.255.255.255
+ 1750 permit ip 10.0.0.0 0.255.255.255 52.113.192.0 0.0.0.255
+ 1760 permit ip 52.113.192.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 1770 permit ip 10.0.0.0 0.255.255.255 52.113.193.0 0.0.0.255
+ 1780 permit ip 52.113.193.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 1790 permit ip 10.0.0.0 0.255.255.255 52.113.194.0 0.0.0.255
+ 1800 permit ip 52.113.194.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 1810 permit ip 10.0.0.0 0.255.255.255 52.113.195.0 0.0.0.255
+ 1820 permit ip 52.113.195.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 1830 permit ip 10.0.0.0 0.255.255.255 52.119.208.0 0.0.1.255
+ 1840 permit ip 52.119.208.0 0.0.1.255 10.0.0.0 0.255.255.255
+ 1850 permit ip 10.0.0.0 0.255.255.255 52.120.0.0 0.3.255.255
+ 1860 permit ip 52.120.0.0 0.3.255.255 10.0.0.0 0.255.255.255
+ 1870 permit ip 10.0.0.0 0.255.255.255 52.126.0.0 0.0.63.255
+ 1880 permit ip 52.126.0.0 0.0.63.255 10.0.0.0 0.255.255.255
+ 1890 permit ip 10.0.0.0 0.255.255.255 52.126.64.0 0.0.63.255
+ 1900 permit ip 52.126.64.0 0.0.63.255 10.0.0.0 0.255.255.255
+ 1910 permit ip 10.0.0.0 0.255.255.255 52.126.128.0 0.0.63.255
+ 1920 permit ip 52.126.128.0 0.0.63.255 10.0.0.0 0.255.255.255
+ 1930 permit ip 10.0.0.0 0.255.255.255 52.126.192.0 0.0.0.127
+ 1940 permit ip 52.126.192.0 0.0.0.127 10.0.0.0 0.255.255.255
+ 1950 permit ip 10.0.0.0 0.255.255.255 52.126.192.128 0.0.0.63
+ 1960 permit ip 52.126.192.128 0.0.0.63 10.0.0.0 0.255.255.255
+ 1970 permit ip 10.0.0.0 0.255.255.255 52.126.192.192 0.0.0.63
+ 1980 permit ip 52.126.192.192 0.0.0.63 10.0.0.0 0.255.255.255
+ 1990 permit ip 10.0.0.0 0.255.255.255 52.126.196.0 0.0.3.255
+ 2000 permit ip 52.126.196.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 2010 permit ip 10.0.0.0 0.255.255.255 52.126.208.0 0.0.0.255
+ 2020 permit ip 52.126.208.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 2030 permit ip 10.0.0.0 0.255.255.255 52.126.209.0 0.0.0.255
+ 2040 permit ip 52.126.209.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 2050 permit ip 10.0.0.0 0.255.255.255 52.126.210.0 0.0.0.255
+ 2060 permit ip 52.126.210.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 2070 permit ip 10.0.0.0 0.255.255.255 52.126.211.0 0.0.0.255
+ 2080 permit ip 52.126.211.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 2090 permit ip 10.0.0.0 0.255.255.255 52.126.216.0 0.0.3.255
+ 2100 permit ip 52.126.216.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 2110 permit ip 10.0.0.0 0.255.255.255 52.126.220.0 0.0.3.255
+ 2120 permit ip 52.126.220.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 2130 permit ip 10.0.0.0 0.255.255.255 52.126.224.0 0.0.0.63
+ 2140 permit ip 52.126.224.0 0.0.0.63 10.0.0.0 0.255.255.255
+ 2150 permit ip 10.0.0.0 0.255.255.255 52.126.224.128 0.0.0.63
+ 2160 permit ip 52.126.224.128 0.0.0.63 10.0.0.0 0.255.255.255
+ 2170 permit ip 10.0.0.0 0.255.255.255 52.126.224.192 0.0.0.63
+ 2180 permit ip 52.126.224.192 0.0.0.63 10.0.0.0 0.255.255.255
+ 2190 permit ip 10.0.0.0 0.255.255.255 52.126.232.0 0.0.0.255
+ 2200 permit ip 52.126.232.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 2210 permit ip 10.0.0.0 0.255.255.255 52.126.233.0 0.0.0.255
+ 2220 permit ip 52.126.233.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 2230 permit ip 10.0.0.0 0.255.255.255 52.126.234.0 0.0.0.255
+ 2240 permit ip 52.126.234.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 2250 permit ip 10.0.0.0 0.255.255.255 52.126.235.0 0.0.0.255
+ 2260 permit ip 52.126.235.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 2270 permit ip 10.0.0.0 0.255.255.255 52.127.0.0 0.0.1.255
+ 2280 permit ip 52.127.0.0 0.0.1.255 10.0.0.0 0.255.255.255
+ 2290 permit ip 10.0.0.0 0.255.255.255 52.127.2.0 0.0.0.255
+ 2300 permit ip 52.127.2.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 2310 permit ip 10.0.0.0 0.255.255.255 52.127.3.0 0.0.0.127
+ 2320 permit ip 52.127.3.0 0.0.0.127 10.0.0.0 0.255.255.255
+ 2330 permit ip 10.0.0.0 0.255.255.255 52.127.3.160 0.0.0.31
+ 2340 permit ip 52.127.3.160 0.0.0.31 10.0.0.0 0.255.255.255
+ 2350 permit ip 10.0.0.0 0.255.255.255 52.127.3.192 0.0.0.63
+ 2360 permit ip 52.127.3.192 0.0.0.63 10.0.0.0 0.255.255.255
+ 2370 permit ip 10.0.0.0 0.255.255.255 52.127.4.0 0.0.3.255
+ 2380 permit ip 52.127.4.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 2390 permit ip 10.0.0.0 0.255.255.255 52.127.8.0 0.0.7.255
+ 2400 permit ip 52.127.8.0 0.0.7.255 10.0.0.0 0.255.255.255
+ 2410 permit ip 10.0.0.0 0.255.255.255 52.127.16.0 0.0.7.255
+ 2420 permit ip 52.127.16.0 0.0.7.255 10.0.0.0 0.255.255.255
+ 2430 permit ip 10.0.0.0 0.255.255.255 52.127.24.0 0.0.1.255
+ 2440 permit ip 52.127.24.0 0.0.1.255 10.0.0.0 0.255.255.255
+ 2450 permit ip 10.0.0.0 0.255.255.255 52.127.26.0 0.0.0.127
+ 2460 permit ip 52.127.26.0 0.0.0.127 10.0.0.0 0.255.255.255
+ 2470 permit ip 10.0.0.0 0.255.255.255 52.127.26.128 0.0.0.63
+ 2480 permit ip 52.127.26.128 0.0.0.63 10.0.0.0 0.255.255.255
+ 2490 permit ip 10.0.0.0 0.255.255.255 52.127.26.192 0.0.0.31
+ 2500 permit ip 52.127.26.192 0.0.0.31 10.0.0.0 0.255.255.255
+ 2510 permit ip 10.0.0.0 0.255.255.255 52.127.27.0 0.0.0.255
+ 2520 permit ip 52.127.27.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 2530 permit ip 10.0.0.0 0.255.255.255 52.127.28.0 0.0.3.255
+ 2540 permit ip 52.127.28.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 2550 permit ip 10.0.0.0 0.255.255.255 52.127.32.0 0.0.1.255
+ 2560 permit ip 52.127.32.0 0.0.1.255 10.0.0.0 0.255.255.255
+ 2570 permit ip 10.0.0.0 0.255.255.255 52.127.34.0 0.0.0.255
+ 2580 permit ip 52.127.34.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 2590 permit ip 10.0.0.0 0.255.255.255 52.127.35.0 0.0.0.63
+ 2600 permit ip 52.127.35.0 0.0.0.63 10.0.0.0 0.255.255.255
+ 2610 permit ip 10.0.0.0 0.255.255.255 52.127.35.64 0.0.0.31
+ 2620 permit ip 52.127.35.64 0.0.0.31 10.0.0.0 0.255.255.255
+ 2630 permit ip 10.0.0.0 0.255.255.255 52.127.35.128 0.0.0.127
+ 2640 permit ip 52.127.35.128 0.0.0.127 10.0.0.0 0.255.255.255
+ 2650 permit ip 10.0.0.0 0.255.255.255 52.127.36.0 0.0.0.255
+ 2660 permit ip 52.127.36.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 2670 permit ip 10.0.0.0 0.255.255.255 52.127.38.0 0.0.1.255
+ 2680 permit ip 52.127.38.0 0.0.1.255 10.0.0.0 0.255.255.255
+ 2690 permit ip 10.0.0.0 0.255.255.255 52.127.40.0 0.0.1.255
+ 2700 permit ip 52.127.40.0 0.0.1.255 10.0.0.0 0.255.255.255
+ 2710 permit ip 10.0.0.0 0.255.255.255 52.127.42.0 0.0.0.255
+ 2720 permit ip 52.127.42.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 2730 permit ip 10.0.0.0 0.255.255.255 52.127.43.0 0.0.0.63
+ 2740 permit ip 52.127.43.0 0.0.0.63 10.0.0.0 0.255.255.255
+ 2750 permit ip 10.0.0.0 0.255.255.255 52.127.43.96 0.0.0.31
+ 2760 permit ip 52.127.43.96 0.0.0.31 10.0.0.0 0.255.255.255
+ 2770 permit ip 10.0.0.0 0.255.255.255 52.127.43.128 0.0.0.127
+ 2780 permit ip 52.127.43.128 0.0.0.127 10.0.0.0 0.255.255.255
+ 2790 permit ip 10.0.0.0 0.255.255.255 52.127.44.0 0.0.3.255
+ 2800 permit ip 52.127.44.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 2810 permit ip 10.0.0.0 0.255.255.255 52.127.48.0 0.0.7.255
+ 2820 permit ip 52.127.48.0 0.0.7.255 10.0.0.0 0.255.255.255
+ 2830 permit ip 10.0.0.0 0.255.255.255 52.127.84.0 0.0.3.255
+ 2840 permit ip 52.127.84.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 2850 permit ip 10.0.0.0 0.255.255.255 52.127.102.0 0.0.0.255
+ 2860 permit ip 52.127.102.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 2870 permit ip 10.0.0.0 0.255.255.255 52.127.103.0 0.0.0.255
+ 2880 permit ip 52.127.103.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 2890 permit ip 10.0.0.0 0.255.255.255 52.127.116.0 0.0.0.63
+ 2900 permit ip 52.127.116.0 0.0.0.63 10.0.0.0 0.255.255.255
+ 2910 permit ip 10.0.0.0 0.255.255.255 52.127.116.64 0.0.0.63
+ 2920 permit ip 52.127.116.64 0.0.0.63 10.0.0.0 0.255.255.255
+ 2930 permit ip 10.0.0.0 0.255.255.255 52.127.116.128 0.0.0.127
+ 2940 permit ip 52.127.116.128 0.0.0.127 10.0.0.0 0.255.255.255
+ 2950 permit ip 10.0.0.0 0.255.255.255 52.127.117.0 0.0.0.127
+ 2960 permit ip 52.127.117.0 0.0.0.127 10.0.0.0 0.255.255.255
+ 2970 permit ip 10.0.0.0 0.255.255.255 52.127.117.128 0.0.0.63
+ 2980 permit ip 52.127.117.128 0.0.0.63 10.0.0.0 0.255.255.255
+ 2990 permit ip 10.0.0.0 0.255.255.255 52.127.117.192 0.0.0.63
+ 3000 permit ip 52.127.117.192 0.0.0.63 10.0.0.0 0.255.255.255
+ 3010 permit ip 10.0.0.0 0.255.255.255 52.127.119.0 0.0.0.255
+ 3020 permit ip 52.127.119.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 3030 permit ip 10.0.0.0 0.255.255.255 52.127.160.0 0.0.15.255
+ 3040 permit ip 52.127.160.0 0.0.15.255 10.0.0.0 0.255.255.255
+ 3050 permit ip 10.0.0.0 0.255.255.255 52.127.176.0 0.0.15.255
+ 3060 permit ip 52.127.176.0 0.0.15.255 10.0.0.0 0.255.255.255
+ 3070 permit ip 10.0.0.0 0.255.255.255 52.127.192.0 0.0.15.255
+ 3080 permit ip 52.127.192.0 0.0.15.255 10.0.0.0 0.255.255.255
+ 3090 permit ip 10.0.0.0 0.255.255.255 52.127.208.0 0.0.15.255
+ 3100 permit ip 52.127.208.0 0.0.15.255 10.0.0.0 0.255.255.255
+ 3110 permit ip 10.0.0.0 0.255.255.255 52.127.224.0 0.0.15.255
+ 3120 permit ip 52.127.224.0 0.0.15.255 10.0.0.0 0.255.255.255
+ 3130 permit ip 10.0.0.0 0.255.255.255 host 52.174.56.180
+ 3140 permit ip host 52.174.56.180 10.0.0.0 0.255.255.255
+ 3150 permit ip 10.0.0.0 0.255.255.255 host 52.183.75.62
+ 3160 permit ip host 52.183.75.62 10.0.0.0 0.255.255.255
+ 3170 permit ip 10.0.0.0 0.255.255.255 host 52.184.165.82
+ 3180 permit ip host 52.184.165.82 10.0.0.0 0.255.255.255
+ 3190 permit ip 10.0.0.0 0.255.255.255 52.222.0.0 0.0.127.255
+ 3200 permit ip 52.222.0.0 0.0.127.255 10.0.0.0 0.255.255.255
+ 3210 permit ip 10.0.0.0 0.255.255.255 52.227.0.0 0.0.255.255
+ 3220 permit ip 52.227.0.0 0.0.255.255 10.0.0.0 0.255.255.255
+ 3230 permit ip 10.0.0.0 0.255.255.255 52.238.64.0 0.0.63.255
+ 3240 permit ip 52.238.64.0 0.0.63.255 10.0.0.0 0.255.255.255
+ 3250 permit ip 10.0.0.0 0.255.255.255 host 52.238.78.88
+ 3260 permit ip host 52.238.78.88 10.0.0.0 0.255.255.255
+ 3270 permit ip 10.0.0.0 0.255.255.255 host 52.238.106.116
+ 3280 permit ip host 52.238.106.116 10.0.0.0 0.255.255.255
+ 3290 permit ip 10.0.0.0 0.255.255.255 host 52.238.119.141
+ 3300 permit ip host 52.238.119.141 10.0.0.0 0.255.255.255
+ 3310 permit ip 10.0.0.0 0.255.255.255 52.238.128.0 0.0.63.255
+ 3320 permit ip 52.238.128.0 0.0.63.255 10.0.0.0 0.255.255.255
+ 3330 permit ip 10.0.0.0 0.255.255.255 52.239.166.0 0.0.0.255
+ 3340 permit ip 52.239.166.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 3350 permit ip 10.0.0.0 0.255.255.255 52.239.176.0 0.0.0.127
+ 3360 permit ip 52.239.176.0 0.0.0.127 10.0.0.0 0.255.255.255
+ 3370 permit ip 10.0.0.0 0.255.255.255 52.243.0.0 0.0.31.255
+ 3380 permit ip 52.243.0.0 0.0.31.255 10.0.0.0 0.255.255.255
+ 3390 permit ip 10.0.0.0 0.255.255.255 52.243.128.0 0.0.127.255
+ 3400 permit ip 52.243.128.0 0.0.127.255 10.0.0.0 0.255.255.255
+ 3410 permit ip 10.0.0.0 0.255.255.255 52.244.0.0 0.0.255.255
+ 3420 permit ip 52.244.0.0 0.0.255.255 10.0.0.0 0.255.255.255
+ 3430 permit ip 10.0.0.0 0.255.255.255 host 52.244.37.168
+ 3440 permit ip host 52.244.37.168 10.0.0.0 0.255.255.255
+ 3450 permit ip 10.0.0.0 0.255.255.255 host 52.244.160.207
+ 3460 permit ip host 52.244.160.207 10.0.0.0 0.255.255.255
+ 3470 permit ip 10.0.0.0 0.255.255.255 host 52.244.203.72
+ 3480 permit ip host 52.244.203.72 10.0.0.0 0.255.255.255
+ 3490 permit ip 10.0.0.0 0.255.255.255 host 52.244.207.172
+ 3500 permit ip host 52.244.207.172 10.0.0.0 0.255.255.255
+ 3510 permit ip 10.0.0.0 0.255.255.255 host 52.244.223.198
+ 3520 permit ip host 52.244.223.198 10.0.0.0 0.255.255.255
+ 3530 permit ip 10.0.0.0 0.255.255.255 52.245.0.0 0.0.0.255
+ 3540 permit ip 52.245.0.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 3550 permit ip 10.0.0.0 0.255.255.255 52.245.1.0 0.0.0.255
+ 3560 permit ip 52.245.1.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 3570 permit ip 10.0.0.0 0.255.255.255 52.245.3.0 0.0.0.255
+ 3580 permit ip 52.245.3.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 3590 permit ip 10.0.0.0 0.255.255.255 52.245.4.0 0.0.0.255
+ 3600 permit ip 52.245.4.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 3610 permit ip 10.0.0.0 0.255.255.255 52.245.5.0 0.0.0.255
+ 3620 permit ip 52.245.5.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 3630 permit ip 10.0.0.0 0.255.255.255 52.245.6.0 0.0.0.255
+ 3640 permit ip 52.245.6.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 3650 permit ip 10.0.0.0 0.255.255.255 52.245.128.0 0.0.127.255
+ 3660 permit ip 52.245.128.0 0.0.127.255 10.0.0.0 0.255.255.255
+ 3670 permit ip 10.0.0.0 0.255.255.255 52.247.128.0 0.0.63.255
+ 3680 permit ip 52.247.128.0 0.0.63.255 10.0.0.0 0.255.255.255
+ 3690 permit ip 10.0.0.0 0.255.255.255 host 52.247.150.191
+ 3700 permit ip host 52.247.150.191 10.0.0.0 0.255.255.255
+ 3710 permit ip 10.0.0.0 0.255.255.255 52.249.96.0 0.0.31.255
+ 3720 permit ip 52.249.96.0 0.0.31.255 10.0.0.0 0.255.255.255
+ 3730 permit ip 10.0.0.0 0.255.255.255 67.223.180.46 0.0.0.1
+ 3740 permit ip 67.223.180.46 0.0.0.1 10.0.0.0 0.255.255.255
+ 3750 permit ip 10.0.0.0 0.255.255.255 67.223.180.48 0.0.0.1
+ 3760 permit ip 67.223.180.48 0.0.0.1 10.0.0.0 0.255.255.255
+ 3770 permit ip 10.0.0.0 0.255.255.255 67.223.180.78 0.0.0.1
+ 3780 permit ip 67.223.180.78 0.0.0.1 10.0.0.0 0.255.255.255
+ 3790 permit ip 10.0.0.0 0.255.255.255 67.223.180.80 0.0.0.1
+ 3800 permit ip 67.223.180.80 0.0.0.1 10.0.0.0 0.255.255.255
+ 3810 permit ip 10.0.0.0 0.255.255.255 67.223.183.34 0.0.0.1
+ 3820 permit ip 67.223.183.34 0.0.0.1 10.0.0.0 0.255.255.255
+ 3830 permit ip 10.0.0.0 0.255.255.255 67.223.183.86 0.0.0.1
+ 3840 permit ip 67.223.183.86 0.0.0.1 10.0.0.0 0.255.255.255
+ 3850 permit ip 10.0.0.0 0.255.255.255 67.223.183.128 0.0.0.1
+ 3860 permit ip 67.223.183.128 0.0.0.1 10.0.0.0 0.255.255.255
+ 3870 permit ip 10.0.0.0 0.255.255.255 67.223.183.132 0.0.0.1
+ 3880 permit ip 67.223.183.132 0.0.0.1 10.0.0.0 0.255.255.255
+ 3890 permit ip 10.0.0.0 0.255.255.255 85.222.128.0 0.0.31.255
+ 3900 permit ip 85.222.128.0 0.0.31.255 10.0.0.0 0.255.255.255
+ 3910 permit ip 10.0.0.0 0.255.255.255 85.222.132.0 0.0.1.255
+ 3920 permit ip 85.222.132.0 0.0.1.255 10.0.0.0 0.255.255.255
+ 3930 permit ip 10.0.0.0 0.255.255.255 96.43.144.0 0.0.3.255
+ 3940 permit ip 96.43.144.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 3950 permit ip 10.0.0.0 0.255.255.255 96.43.144.0 0.0.15.255
+ 3960 permit ip 96.43.144.0 0.0.15.255 10.0.0.0 0.255.255.255
+ 3970 permit ip 10.0.0.0 0.255.255.255 96.43.148.0 0.0.3.255
+ 3980 permit ip 96.43.148.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 3990 permit ip 10.0.0.0 0.255.255.255 96.43.152.0 0.0.1.255
+ 4000 permit ip 96.43.152.0 0.0.1.255 10.0.0.0 0.255.255.255
+ 4010 permit ip 10.0.0.0 0.255.255.255 96.43.156.0 0.0.3.255
+ 4020 permit ip 96.43.156.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 4030 permit ip 10.0.0.0 0.255.255.255 96.127.0.0 0.0.127.255
+ 4040 permit ip 96.127.0.0 0.0.127.255 10.0.0.0 0.255.255.255
+ 4050 permit ip 10.0.0.0 0.255.255.255 128.17.0.0 0.0.255.255
+ 4060 permit ip 128.17.0.0 0.0.255.255 10.0.0.0 0.255.255.255
+ 4070 permit ip 10.0.0.0 0.255.255.255 128.245.0.0 0.0.255.255
+ 4080 permit ip 128.245.0.0 0.0.255.255 10.0.0.0 0.255.255.255
+ 4090 permit ip 10.0.0.0 0.255.255.255 host 131.253.33.215
+ 4100 permit ip host 131.253.33.215 10.0.0.0 0.255.255.255
+ 4110 permit ip 10.0.0.0 0.255.255.255 131.253.113.128 0.0.0.127
+ 4120 permit ip 131.253.113.128 0.0.0.127 10.0.0.0 0.255.255.255
+ 4130 permit ip 10.0.0.0 0.255.255.255 131.253.115.128 0.0.0.127
+ 4140 permit ip 131.253.115.128 0.0.0.127 10.0.0.0 0.255.255.255
+ 4150 permit ip 10.0.0.0 0.255.255.255 132.245.0.0 0.0.255.255
+ 4160 permit ip 132.245.0.0 0.0.255.255 10.0.0.0 0.255.255.255
+ 4170 permit ip 10.0.0.0 0.255.255.255 136.146.0.0 0.0.255.255
+ 4180 permit ip 136.146.0.0 0.0.255.255 10.0.0.0 0.255.255.255
+ 4190 permit ip 10.0.0.0 0.255.255.255 136.146.128.0 0.0.1.255
+ 4200 permit ip 136.146.128.0 0.0.1.255 10.0.0.0 0.255.255.255
+ 4210 permit ip 10.0.0.0 0.255.255.255 136.146.136.0 0.0.7.255
+ 4220 permit ip 136.146.136.0 0.0.7.255 10.0.0.0 0.255.255.255
+ 4230 permit ip 10.0.0.0 0.255.255.255 136.146.192.0 0.0.7.255
+ 4240 permit ip 136.146.192.0 0.0.7.255 10.0.0.0 0.255.255.255
+ 4250 permit ip 10.0.0.0 0.255.255.255 136.146.200.0 0.0.7.255
+ 4260 permit ip 136.146.200.0 0.0.7.255 10.0.0.0 0.255.255.255
+ 4270 permit ip 10.0.0.0 0.255.255.255 136.146.208.0 0.0.1.255
+ 4280 permit ip 136.146.208.0 0.0.1.255 10.0.0.0 0.255.255.255
+ 4290 permit ip 10.0.0.0 0.255.255.255 136.146.210.0 0.0.1.255
+ 4300 permit ip 136.146.210.0 0.0.1.255 10.0.0.0 0.255.255.255
+ 4310 permit ip 10.0.0.0 0.255.255.255 136.147.0.0 0.0.127.255
+ 4320 permit ip 136.147.0.0 0.0.127.255 10.0.0.0 0.255.255.255
+ 4330 permit ip 10.0.0.0 0.255.255.255 136.147.208.0 0.0.15.255
+ 4340 permit ip 136.147.208.0 0.0.15.255 10.0.0.0 0.255.255.255
+ 4350 permit ip 10.0.0.0 0.255.255.255 146.1.160.0 0.0.31.255
+ 4360 permit ip 146.1.160.0 0.0.31.255 10.0.0.0 0.255.255.255
+ 4370 permit ip 10.0.0.0 0.255.255.255 146.1.192.0 0.0.31.255
+ 4380 permit ip 146.1.192.0 0.0.31.255 10.0.0.0 0.255.255.255
+ 4390 permit ip 10.0.0.0 0.255.255.255 146.73.8.0 0.0.0.255
+ 4400 permit ip 146.73.8.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 4410 permit ip 10.0.0.0 0.255.255.255 146.73.9.0 0.0.0.255
+ 4420 permit ip 146.73.9.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 4430 permit ip 10.0.0.0 0.255.255.255 146.73.12.0 0.0.1.255
+ 4440 permit ip 146.73.12.0 0.0.1.255 10.0.0.0 0.255.255.255
+ 4450 permit ip 10.0.0.0 0.255.255.255 146.73.24.0 0.0.0.255
+ 4460 permit ip 146.73.24.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 4470 permit ip 10.0.0.0 0.255.255.255 146.73.25.0 0.0.0.255
+ 4480 permit ip 146.73.25.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 4490 permit ip 10.0.0.0 0.255.255.255 146.73.28.0 0.0.1.255
+ 4500 permit ip 146.73.28.0 0.0.1.255 10.0.0.0 0.255.255.255
+ 4510 permit ip 10.0.0.0 0.255.255.255 146.73.144.0 0.0.3.255
+ 4520 permit ip 146.73.144.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 4530 permit ip 10.0.0.0 0.255.255.255 146.73.148.0 0.0.3.255
+ 4540 permit ip 146.73.148.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 4550 permit ip 10.0.0.0 0.255.255.255 146.73.152.0 0.0.7.255
+ 4560 permit ip 146.73.152.0 0.0.7.255 10.0.0.0 0.255.255.255
+ 4570 permit ip 10.0.0.0 0.255.255.255 149.96.184.0 0.0.3.255
+ 4580 permit ip 149.96.184.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 4590 permit ip 10.0.0.0 0.255.255.255 149.96.188.0 0.0.3.255
+ 4600 permit ip 149.96.188.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 4610 permit ip 10.0.0.0 0.255.255.255 149.96.192.0 0.0.0.255
+ 4620 permit ip 149.96.192.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 4630 permit ip 10.0.0.0 0.255.255.255 149.96.193.0 0.0.0.255
+ 4640 permit ip 149.96.193.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 4650 permit ip 10.0.0.0 0.255.255.255 150.171.32.0 0.0.0.255
+ 4660 permit ip 150.171.32.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 4670 permit ip 10.0.0.0 0.255.255.255 150.171.32.0 0.0.3.255
+ 4680 permit ip 150.171.32.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 4690 permit ip 10.0.0.0 0.255.255.255 150.171.34.0 0.0.0.255
+ 4700 permit ip 150.171.34.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 4710 permit ip 10.0.0.0 0.255.255.255 150.171.35.0 0.0.0.255
+ 4720 permit ip 150.171.35.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 4730 permit ip 10.0.0.0 0.255.255.255 150.171.40.0 0.0.0.255
+ 4740 permit ip 150.171.40.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 4750 permit ip 10.0.0.0 0.255.255.255 150.171.40.0 0.0.3.255
+ 4760 permit ip 150.171.40.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 4770 permit ip 10.0.0.0 0.255.255.255 151.106.128.0 0.0.15.255
+ 4780 permit ip 151.106.128.0 0.0.15.255 10.0.0.0 0.255.255.255
+ 4790 permit ip 10.0.0.0 0.255.255.255 151.106.144.0 0.0.15.255
+ 4800 permit ip 151.106.144.0 0.0.15.255 10.0.0.0 0.255.255.255
+ 4810 permit ip 10.0.0.0 0.255.255.255 151.106.216.0 0.0.3.255
+ 4820 permit ip 151.106.216.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 4830 permit ip 10.0.0.0 0.255.255.255 151.106.220.0 0.0.3.255
+ 4840 permit ip 151.106.220.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 4850 permit ip 10.0.0.0 0.255.255.255 157.55.145.0 0.0.0.127
+ 4860 permit ip 157.55.145.0 0.0.0.127 10.0.0.0 0.255.255.255
+ 4870 permit ip 10.0.0.0 0.255.255.255 157.55.155.0 0.0.0.127
+ 4880 permit ip 157.55.155.0 0.0.0.127 10.0.0.0 0.255.255.255
+ 4890 permit ip 10.0.0.0 0.255.255.255 157.55.227.192 0.0.0.63
+ 4900 permit ip 157.55.227.192 0.0.0.63 10.0.0.0 0.255.255.255
+ 4910 permit ip 10.0.0.0 0.255.255.255 159.92.128.0 0.0.127.255
+ 4920 permit ip 159.92.128.0 0.0.127.255 10.0.0.0 0.255.255.255
+ 4930 permit ip 10.0.0.0 0.255.255.255 160.1.0.0 0.0.255.255
+ 4940 permit ip 160.1.0.0 0.0.255.255 10.0.0.0 0.255.255.255
+ 4950 permit ip 10.0.0.0 0.255.255.255 160.8.0.0 0.0.255.255
+ 4960 permit ip 160.8.0.0 0.0.255.255 10.0.0.0 0.255.255.255
+ 4970 permit ip 10.0.0.0 0.255.255.255 161.32.64.0 0.0.63.255
+ 4980 permit ip 161.32.64.0 0.0.63.255 10.0.0.0 0.255.255.255
+ 4990 permit ip 10.0.0.0 0.255.255.255 161.32.128.0 0.0.127.255
+ 5000 permit ip 161.32.128.0 0.0.127.255 10.0.0.0 0.255.255.255
+ 5010 permit ip 10.0.0.0 0.255.255.255 161.71.0.0 0.0.127.255
+ 5020 permit ip 161.71.0.0 0.0.127.255 10.0.0.0 0.255.255.255
+ 5030 permit ip 10.0.0.0 0.255.255.255 161.71.128.0 0.0.127.255
+ 5040 permit ip 161.71.128.0 0.0.127.255 10.0.0.0 0.255.255.255
+ 5050 permit ip 10.0.0.0 0.255.255.255 162.248.187.64 0.0.0.31
+ 5060 permit ip 162.248.187.64 0.0.0.31 10.0.0.0 0.255.255.255
+ 5070 permit ip 10.0.0.0 0.255.255.255 163.76.128.0 0.0.127.255
+ 5080 permit ip 163.76.128.0 0.0.127.255 10.0.0.0 0.255.255.255
+ 5090 permit ip 10.0.0.0 0.255.255.255 163.79.128.0 0.0.127.255
+ 5100 permit ip 163.79.128.0 0.0.127.255 10.0.0.0 0.255.255.255
+ 5110 permit ip 10.0.0.0 0.255.255.255 165.122.32.0 0.0.15.255
+ 5120 permit ip 165.122.32.0 0.0.15.255 10.0.0.0 0.255.255.255
+ 5130 permit ip 10.0.0.0 0.255.255.255 165.122.192.0 0.0.63.255
+ 5140 permit ip 165.122.192.0 0.0.63.255 10.0.0.0 0.255.255.255
+ 5150 permit ip 10.0.0.0 0.255.255.255 166.37.128.0 0.0.0.127
+ 5160 permit ip 166.37.128.0 0.0.0.127 10.0.0.0 0.255.255.255
+ 5170 permit ip 10.0.0.0 0.255.255.255 166.37.128.128 0.0.0.127
+ 5180 permit ip 166.37.128.128 0.0.0.127 10.0.0.0 0.255.255.255
+ 5190 permit ip 10.0.0.0 0.255.255.255 166.37.129.0 0.0.0.255
+ 5200 permit ip 166.37.129.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 5210 permit ip 10.0.0.0 0.255.255.255 166.37.130.0 0.0.1.255
+ 5220 permit ip 166.37.130.0 0.0.1.255 10.0.0.0 0.255.255.255
+ 5230 permit ip 10.0.0.0 0.255.255.255 166.37.132.0 0.0.3.255
+ 5240 permit ip 166.37.132.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 5250 permit ip 10.0.0.0 0.255.255.255 166.37.136.0 0.0.7.255
+ 5260 permit ip 166.37.136.0 0.0.7.255 10.0.0.0 0.255.255.255
+ 5270 permit ip 10.0.0.0 0.255.255.255 166.37.144.0 0.0.15.255
+ 5280 permit ip 166.37.144.0 0.0.15.255 10.0.0.0 0.255.255.255
+ 5290 permit ip 10.0.0.0 0.255.255.255 166.40.192.0 0.0.15.255
+ 5300 permit ip 166.40.192.0 0.0.15.255 10.0.0.0 0.255.255.255
+ 5310 permit ip 10.0.0.0 0.255.255.255 182.50.76.0 0.0.3.255
+ 5320 permit ip 182.50.76.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 5330 permit ip 10.0.0.0 0.255.255.255 185.79.140.0 0.0.3.255
+ 5340 permit ip 185.79.140.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 5350 permit ip 10.0.0.0 0.255.255.255 191.234.140.0 0.0.3.255
+ 5360 permit ip 191.234.140.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 5370 permit ip 10.0.0.0 0.255.255.255 194.145.0.0 0.0.15.255
+ 5380 permit ip 194.145.0.0 0.0.15.255 10.0.0.0 0.255.255.255
+ 5390 permit ip 10.0.0.0 0.255.255.255 194.145.16.0 0.0.7.255
+ 5400 permit ip 194.145.16.0 0.0.7.255 10.0.0.0 0.255.255.255
+ 5410 permit ip 10.0.0.0 0.255.255.255 202.129.242.0 0.0.1.255
+ 5420 permit ip 202.129.242.0 0.0.1.255 10.0.0.0 0.255.255.255
+ 5430 permit ip 10.0.0.0 0.255.255.255 204.14.232.0 0.0.7.255
+ 5440 permit ip 204.14.232.0 0.0.7.255 10.0.0.0 0.255.255.255
+ 5450 permit ip 10.0.0.0 0.255.255.255 host 204.79.197.215
+ 5460 permit ip host 204.79.197.215 10.0.0.0 0.255.255.255
+ 5470 permit ip 10.0.0.0 0.255.255.255 205.251.236.0 0.0.3.255
+ 5480 permit ip 205.251.236.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 5490 permit ip 10.0.0.0 0.255.255.255 65.158.211.36 0.0.0.3
+ 5500 permit ip 65.158.211.36 0.0.0.3 10.0.0.0 0.255.255.255
+ 5510 permit ip 10.0.0.0 0.255.255.255 67.130.44.80 0.0.0.3
+ 5520 permit ip 67.130.44.80 0.0.0.3 10.0.0.0 0.255.255.255
+ 5530 permit ip 10.0.0.0 0.255.255.255 67.130.44.96 0.0.0.3
+ 5540 permit ip 67.130.44.96 0.0.0.3 10.0.0.0 0.255.255.255
+ 5550 permit ip 10.0.0.0 0.255.255.255 67.130.44.104 0.0.0.3
+ 5560 permit ip 67.130.44.104 0.0.0.3 10.0.0.0 0.255.255.255
+ 5570 permit ip 10.0.0.0 0.255.255.255 host 65.216.92.209
+ 5580 permit ip host 65.216.92.209 10.0.0.0 0.255.255.255
+ 5590 permit ip 10.0.0.0 0.255.255.255 host 65.216.92.210
+ 5600 permit ip host 65.216.92.210 10.0.0.0 0.255.255.255
+ 5610 permit ip 10.0.0.0 0.255.255.255 146.73.0.0 0.0.0.255
+ 5620 permit ip 146.73.0.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 5630 permit ip 10.0.0.0 0.255.255.255 146.73.1.0 0.0.0.255
+ 5640 permit ip 146.73.1.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 5650 permit ip 10.0.0.0 0.255.255.255 146.73.4.0 0.0.1.255
+ 5660 permit ip 146.73.4.0 0.0.1.255 10.0.0.0 0.255.255.255
+ 5670 permit ip 10.0.0.0 0.255.255.255 146.73.16.0 0.0.0.255
+ 5680 permit ip 146.73.16.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 5690 permit ip 10.0.0.0 0.255.255.255 146.73.17.0 0.0.0.255
+ 5700 permit ip 146.73.17.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 5710 permit ip 10.0.0.0 0.255.255.255 146.73.20.0 0.0.1.255
+ 5720 permit ip 146.73.20.0 0.0.1.255 10.0.0.0 0.255.255.255
+ 5730 permit ip 10.0.0.0 0.255.255.255 146.73.64.0 0.0.7.255
+ 5740 permit ip 146.73.64.0 0.0.7.255 10.0.0.0 0.255.255.255
+ 5750 permit ip 10.0.0.0 0.255.255.255 146.73.68.0 0.0.3.255
+ 5760 permit ip 146.73.68.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 5770 permit ip 10.0.0.0 0.255.255.255 146.73.128.0 0.0.3.255
+ 5780 permit ip 146.73.128.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 5790 permit ip 10.0.0.0 0.255.255.255 146.73.132.0 0.0.3.255
+ 5800 permit ip 146.73.132.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 5810 permit ip 10.0.0.0 0.255.255.255 146.73.136.0 0.0.7.255
+ 5820 permit ip 146.73.136.0 0.0.7.255 10.0.0.0 0.255.255.255
+ 5830 permit ip 10.0.0.0 0.255.255.255 150.2.0.0 0.0.255.255
+ 5840 permit ip 150.2.0.0 0.0.255.255 10.0.0.0 0.255.255.255
+ 5850 permit ip 10.0.0.0 0.255.255.255 162.248.187.192 0.0.0.31
+ 5860 permit ip 162.248.187.192 0.0.0.31 10.0.0.0 0.255.255.255
+ 5870 permit ip 10.0.0.0 0.255.255.255 host 204.86.64.60
+ 5880 permit ip host 204.86.64.60 10.0.0.0 0.255.255.255
+ 5890 permit ip 10.0.0.0 0.255.255.255 206.38.136.0 0.0.0.127
+ 5900 permit ip 206.38.136.0 0.0.0.127 10.0.0.0 0.255.255.255
+ 5910 permit ip 10.0.0.0 0.255.255.255 206.38.136.128 0.0.0.127
+ 5920 permit ip 206.38.136.128 0.0.0.127 10.0.0.0 0.255.255.255
+ 5930 permit ip 10.0.0.0 0.255.255.255 host 207.133.7.14
+ 5940 permit ip host 207.133.7.14 10.0.0.0 0.255.255.255
+ 5950 permit ip 10.0.0.0 0.255.255.255 host 216.243.73.29
+ 5960 permit ip host 216.243.73.29 10.0.0.0 0.255.255.255
+ 5970 permit ip 10.0.0.0 0.255.255.255 63.156.38.168 0.0.0.3
+ 5980 permit ip 63.156.38.168 0.0.0.3 10.0.0.0 0.255.255.255
+ 5990 permit ip 10.0.0.0 0.255.255.255 63.156.254.252 0.0.0.3
+ 6000 permit ip 63.156.254.252 0.0.0.3 10.0.0.0 0.255.255.255
+ 6010 permit ip 10.0.0.0 0.255.255.255 63.158.24.196 0.0.0.3
+ 6020 permit ip 63.158.24.196 0.0.0.3 10.0.0.0 0.255.255.255
+ 6030 permit ip 10.0.0.0 0.255.255.255 63.235.55.0 0.0.0.3
+ 6040 permit ip 63.235.55.0 0.0.0.3 10.0.0.0 0.255.255.255
+ 6050 permit ip 10.0.0.0 0.255.255.255 host 12.162.18.2
+ 6060 permit ip host 12.162.18.2 10.0.0.0 0.255.255.255
+ 6070 permit ip 10.0.0.0 0.255.255.255 host 74.113.204.7
+ 6080 permit ip host 74.113.204.7 10.0.0.0 0.255.255.255
+ 6090 permit ip 10.0.0.0 0.255.255.255 146.73.0.0 0.0.1.255
+ 6100 permit ip 146.73.0.0 0.0.1.255 10.0.0.0 0.255.255.255
+ 6110 permit ip 10.0.0.0 0.255.255.255 146.73.4.0 0.0.0.255
+ 6120 permit ip 146.73.4.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 6130 permit ip 10.0.0.0 0.255.255.255 146.73.5.0 0.0.0.255
+ 6140 permit ip 146.73.5.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 6150 permit ip 10.0.0.0 0.255.255.255 146.73.16.0 0.0.1.255
+ 6160 permit ip 146.73.16.0 0.0.1.255 10.0.0.0 0.255.255.255
+ 6170 permit ip 10.0.0.0 0.255.255.255 146.73.20.0 0.0.0.255
+ 6180 permit ip 146.73.20.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 6190 permit ip 10.0.0.0 0.255.255.255 146.73.21.0 0.0.0.255
+ 6200 permit ip 146.73.21.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 6210 permit ip 10.0.0.0 0.255.255.255 146.73.64.0 0.0.3.255
+ 6220 permit ip 146.73.64.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 6230 permit ip 10.0.0.0 0.255.255.255 146.73.128.0 0.0.7.255
+ 6240 permit ip 146.73.128.0 0.0.7.255 10.0.0.0 0.255.255.255
+ 6250 permit ip 10.0.0.0 0.255.255.255 146.73.136.0 0.0.3.255
+ 6260 permit ip 146.73.136.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 6270 permit ip 10.0.0.0 0.255.255.255 146.73.140.0 0.0.3.255
+ 6280 permit ip 146.73.140.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 6290 permit ip 10.0.0.0 0.255.255.255 159.140.80.0 0.0.1.255
+ 6300 permit ip 159.140.80.0 0.0.1.255 10.0.0.0 0.255.255.255
+ 6310 permit ip 10.0.0.0 0.255.255.255 159.140.82.0 0.0.1.255
+ 6320 permit ip 159.140.82.0 0.0.1.255 10.0.0.0 0.255.255.255
+ 6330 permit ip 10.0.0.0 0.255.255.255 159.140.84.0 0.0.0.255
+ 6340 permit ip 159.140.84.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 6350 permit ip 10.0.0.0 0.255.255.255 159.140.85.0 0.0.0.63
+ 6360 permit ip 159.140.85.0 0.0.0.63 10.0.0.0 0.255.255.255
+ 6370 permit ip 10.0.0.0 0.255.255.255 159.140.124.0 0.0.3.255
+ 6380 permit ip 159.140.124.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 6390 permit ip 10.0.0.0 0.255.255.255 159.140.160.0 0.0.1.255
+ 6400 permit ip 159.140.160.0 0.0.1.255 10.0.0.0 0.255.255.255
+ 6410 permit ip 10.0.0.0 0.255.255.255 159.140.160.0 0.0.31.255
+ 6420 permit ip 159.140.160.0 0.0.31.255 10.0.0.0 0.255.255.255
+ 6430 permit ip 10.0.0.0 0.255.255.255 159.140.174.0 0.0.1.255
+ 6440 permit ip 159.140.174.0 0.0.1.255 10.0.0.0 0.255.255.255
+ 6450 permit ip 10.0.0.0 0.255.255.255 159.140.176.0 0.0.1.255
+ 6460 permit ip 159.140.176.0 0.0.1.255 10.0.0.0 0.255.255.255
+ 6470 permit ip 10.0.0.0 0.255.255.255 159.140.224.0 0.0.15.255
+ 6480 permit ip 159.140.224.0 0.0.15.255 10.0.0.0 0.255.255.255
+ 6490 permit ip 10.0.0.0 0.255.255.255 159.140.224.192 0.0.0.31
+ 6500 permit ip 159.140.224.192 0.0.0.31 10.0.0.0 0.255.255.255
+ 6510 permit ip 10.0.0.0 0.255.255.255 159.140.234.64 0.0.0.63
+ 6520 permit ip 159.140.234.64 0.0.0.63 10.0.0.0 0.255.255.255
+ 6530 permit ip 10.0.0.0 0.255.255.255 host 160.109.97.77
+ 6540 permit ip host 160.109.97.77 10.0.0.0 0.255.255.255
+ 6550 permit ip 10.0.0.0 0.255.255.255 host 168.75.148.158
+ 6560 permit ip host 168.75.148.158 10.0.0.0 0.255.255.255
+ 6570 permit ip 10.0.0.0 0.255.255.255 host 199.169.192.136
+ 6580 permit ip host 199.169.192.136 10.0.0.0 0.255.255.255
+ 6590 permit ip 10.0.0.0 0.255.255.255 host 199.169.194.136
+ 6600 permit ip host 199.169.194.136 10.0.0.0 0.255.255.255
+ 6610 permit ip 10.0.0.0 0.255.255.255 host 199.169.196.136
+ 6620 permit ip host 199.169.196.136 10.0.0.0 0.255.255.255
+ 6630 permit ip 10.0.0.0 0.255.255.255 host 199.169.197.136
+ 6640 permit ip host 199.169.197.136 10.0.0.0 0.255.255.255
+ 6650 permit ip 10.0.0.0 0.255.255.255 host 204.153.228.250
+ 6660 permit ip host 204.153.228.250 10.0.0.0 0.255.255.255
+ 6670 permit ip 10.0.0.0 0.255.255.255 206.38.136.0 0.0.0.255
+ 6680 permit ip 206.38.136.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 6690 permit ip 10.0.0.0 0.255.255.255 63.151.34.52 0.0.0.3
+ 6700 permit ip 63.151.34.52 0.0.0.3 10.0.0.0 0.255.255.255
+ 6710 permit ip 10.0.0.0 0.255.255.255 63.151.34.56 0.0.0.3
+ 6720 permit ip 63.151.34.56 0.0.0.3 10.0.0.0 0.255.255.255
+ 6730 permit ip 10.0.0.0 0.255.255.255 63.151.34.60 0.0.0.3
+ 6740 permit ip 63.151.34.60 0.0.0.3 10.0.0.0 0.255.255.255
+ 6750 permit ip 10.0.0.0 0.255.255.255 63.151.34.64 0.0.0.3
+ 6760 permit ip 63.151.34.64 0.0.0.3 10.0.0.0 0.255.255.255
+ 6770 permit ip 10.0.0.0 0.255.255.255 65.132.190.28 0.0.0.3
+ 6780 permit ip 65.132.190.28 0.0.0.3 10.0.0.0 0.255.255.255
+ 6790 permit ip 10.0.0.0 0.255.255.255 65.153.226.108 0.0.0.3
+ 6800 permit ip 65.153.226.108 0.0.0.3 10.0.0.0 0.255.255.255
+ 6810 permit ip 10.0.0.0 0.255.255.255 65.158.228.136 0.0.0.3
+ 6820 permit ip 65.158.228.136 0.0.0.3 10.0.0.0 0.255.255.255
+ 6830 permit ip 10.0.0.0 0.255.255.255 67.130.178.200 0.0.0.3
+ 6840 permit ip 67.130.178.200 0.0.0.3 10.0.0.0 0.255.255.255
+ 6850 permit ip 10.0.0.0 0.255.255.255 129.73.116.88 0.0.0.7
+ 6860 permit ip 129.73.116.88 0.0.0.7 10.0.0.0 0.255.255.255
+ 6870 permit ip 10.0.0.0 0.255.255.255 152.128.7.32 0.0.0.15
+ 6880 permit ip 152.128.7.32 0.0.0.15 10.0.0.0 0.255.255.255
+ 6890 permit ip 10.0.0.0 0.255.255.255 152.128.7.64 0.0.0.15
+ 6900 permit ip 152.128.7.64 0.0.0.15 10.0.0.0 0.255.255.255
+ 6910 permit ip 10.0.0.0 0.255.255.255 214.59.192.8 0.0.0.7
+ 6920 permit ip 214.59.192.8 0.0.0.7 10.0.0.0 0.255.255.255
+ 6930 permit ip 10.0.0.0 0.255.255.255 214.59.192.16 0.0.0.7
+ 6940 permit ip 214.59.192.16 0.0.0.7 10.0.0.0 0.255.255.255
+ 6950 permit ip 10.0.0.0 0.255.255.255 63.158.40.20 0.0.0.3
+ 6960 permit ip 63.158.40.20 0.0.0.3 10.0.0.0 0.255.255.255
+ 6970 permit ip 10.0.0.0 0.255.255.255 63.235.163.216 0.0.0.3
+ 6980 permit ip 63.235.163.216 0.0.0.3 10.0.0.0 0.255.255.255
+ 6990 permit ip 10.0.0.0 0.255.255.255 65.116.150.188 0.0.0.3
+ 7000 permit ip 65.116.150.188 0.0.0.3 10.0.0.0 0.255.255.255
+ 7010 permit ip 10.0.0.0 0.255.255.255 65.116.150.192 0.0.0.3
+ 7020 permit ip 65.116.150.192 0.0.0.3 10.0.0.0 0.255.255.255
+ 7030 permit ip 10.0.0.0 0.255.255.255 152.128.2.0 0.0.0.255
+ 7040 permit ip 152.128.2.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 7050 permit ip 10.0.0.0 0.255.255.255 152.128.7.0 0.0.0.15
+ 7060 permit ip 152.128.7.0 0.0.0.15 10.0.0.0 0.255.255.255
+ 7070 permit ip 10.0.0.0 0.255.255.255 172.30.0.0 0.0.0.127
+ 7080 permit ip 172.30.0.0 0.0.0.127 10.0.0.0 0.255.255.255
+ 7090 permit ip 10.0.0.0 0.255.255.255 214.59.128.0 0.0.0.127
+ 7100 permit ip 214.59.128.0 0.0.0.127 10.0.0.0 0.255.255.255
+ 7110 permit ip 10.0.0.0 0.255.255.255 214.59.192.0 0.0.0.7
+ 7120 permit ip 214.59.192.0 0.0.0.7 10.0.0.0 0.255.255.255
+ 7130 permit ip 10.0.0.0 0.255.255.255 143.69.160.0 0.0.31.255
+ 7140 permit ip 143.69.160.0 0.0.31.255 10.0.0.0 0.255.255.255
+ 7150 permit ip 10.0.0.0 0.255.255.255 143.69.192.0 0.0.7.255
+ 7160 permit ip 143.69.192.0 0.0.7.255 10.0.0.0 0.255.255.255
+ 7170 permit ip 10.0.0.0 0.255.255.255 214.59.130.128 0.0.0.127
+ 7180 permit ip 214.59.130.128 0.0.0.127 10.0.0.0 0.255.255.255
+ 7190 permit ip 10.0.0.0 0.255.255.255 152.128.5.0 0.0.0.255
+ 7200 permit ip 152.128.5.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 7210 permit ip 10.0.0.0 0.255.255.255 172.30.2.128 0.0.0.127
+ 7220 permit ip 172.30.2.128 0.0.0.127 10.0.0.0 0.255.255.255
+ 7230 permit ip 10.0.0.0 0.255.255.255 214.59.129.0 0.0.0.127
+ 7240 permit ip 214.59.129.0 0.0.0.127 10.0.0.0 0.255.255.255
+ 7250 permit ip 10.0.0.0 0.255.255.255 152.128.4.0 0.0.0.255
+ 7260 permit ip 152.128.4.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 7270 permit ip 10.0.0.0 0.255.255.255 214.59.128.128 0.0.0.127
+ 7280 permit ip 214.59.128.128 0.0.0.127 10.0.0.0 0.255.255.255
+ 7290 permit ip 10.0.0.0 0.255.255.255 132.62.24.0 0.0.3.255
+ 7300 permit ip 132.62.24.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 7310 permit ip 10.0.0.0 0.255.255.255 132.62.28.0 0.0.1.255
+ 7320 permit ip 132.62.28.0 0.0.1.255 10.0.0.0 0.255.255.255
+ 7330 permit ip 10.0.0.0 0.255.255.255 132.62.133.0 0.0.0.255
+ 7340 permit ip 132.62.133.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 7350 permit ip 10.0.0.0 0.255.255.255 214.1.101.0 0.0.0.255
+ 7360 permit ip 214.1.101.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 7370 permit ip 10.0.0.0 0.255.255.255 214.1.102.0 0.0.0.255
+ 7380 permit ip 214.1.102.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 7390 permit ip 10.0.0.0 0.255.255.255 214.2.22.0 0.0.1.255
+ 7400 permit ip 214.2.22.0 0.0.1.255 10.0.0.0 0.255.255.255
+ 7410 permit ip 10.0.0.0 0.255.255.255 214.59.253.0 0.0.0.31
+ 7420 permit ip 214.59.253.0 0.0.0.31 10.0.0.0 0.255.255.255
+ 7430 permit ip 10.0.0.0 0.255.255.255 214.2.252.0 0.0.0.255
+ 7440 permit ip 214.2.252.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 7450 permit ip 10.0.0.0 0.255.255.255 214.2.254.0 0.0.0.255
+ 7460 permit ip 214.2.254.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 7470 permit ip 10.0.0.0 0.255.255.255 214.2.255.0 0.0.0.255
+ 7480 permit ip 214.2.255.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 7490 permit ip 10.0.0.0 0.255.255.255 214.59.0.0 0.0.15.255
+ 7500 permit ip 214.59.0.0 0.0.15.255 10.0.0.0 0.255.255.255
+ 7510 permit ip 10.0.0.0 0.255.255.255 214.59.16.0 0.0.15.255
+ 7520 permit ip 214.59.16.0 0.0.15.255 10.0.0.0 0.255.255.255
+ 7530 permit ip 10.0.0.0 0.255.255.255 214.59.252.0 0.0.0.31
+ 7540 permit ip 214.59.252.0 0.0.0.31 10.0.0.0 0.255.255.255
+ 7550 permit ip 10.0.0.0 0.255.255.255 214.59.254.0 0.0.0.255
+ 7560 permit ip 214.59.254.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 7570 permit ip 10.0.0.0 0.255.255.255 214.59.255.0 0.0.0.255
+ 7580 permit ip 214.59.255.0 0.0.0.255 10.0.0.0 0.255.255.255
+ip access-list extended QOS-BULK-DATA
+ 10 remark Region 1 VistA CSJ
+ 10 permit tcp 10.0.0.0 0.255.255.255 range 19601 19632 10.184.64.0 0.0.1.255
+ 20 permit tcp 10.0.0.0 0.255.255.255 range 19601 19632 10.184.192.0 0.0.1.255
+ 30 permit tcp 10.184.64.0 0.0.1.255 10.0.0.0 0.255.255.255 range 19601 19632
+ 40 permit tcp 10.184.192.0 0.0.1.255 10.0.0.0 0.255.255.255 range 19601 19632
+ 50 permit tcp 10.0.0.0 0.255.255.255 10.184.64.0 0.0.1.255 range 19601 19632
+ 60 permit tcp 10.0.0.0 0.255.255.255 10.184.192.0 0.0.1.255 range 19601 19632
+ 70 permit tcp 10.184.64.0 0.0.1.255 range 19601 19632 10.0.0.0 0.255.255.255
+ 80 permit tcp 10.184.192.0 0.0.1.255 range 19601 19632 10.0.0.0 0.255.255.255
+ 90 remark Region 1 SenSage
+ 90 permit tcp host 10.184.33.211 10.0.0.0 0.255.255.255
+ 100 permit tcp 10.0.0.0 0.255.255.255 host 10.184.33.211
+ 110 permit tcp 10.184.33.212 0.0.0.3 10.0.0.0 0.255.255.255
+ 120 permit tcp 10.0.0.0 0.255.255.255 10.184.33.212 0.0.0.3
+ 130 permit tcp 10.184.33.216 0.0.0.7 10.0.0.0 0.255.255.255
+ 140 permit tcp 10.0.0.0 0.255.255.255 10.184.33.216 0.0.0.7
+ 150 permit tcp 10.184.33.224 0.0.0.1 10.0.0.0 0.255.255.255
+ 160 permit tcp 10.0.0.0 0.255.255.255 10.184.33.224 0.0.0.1
+ 170 remark Region 3 VistA CSJ
+ 170 remark Region 3 / Region 2 PITC VistA CSJ
+ 170 permit tcp 10.0.0.0 0.255.255.255 10.205.148.0 0.0.3.255 range 19601 19649
+ 180 permit tcp 10.0.0.0 0.255.255.255 10.205.152.0 0.0.0.255 range 19601 19649
+ 190 permit tcp 10.205.148.0 0.0.3.255 range 19601 19649 10.0.0.0 0.255.255.255
+ 200 permit tcp 10.205.152.0 0.0.0.255 range 19601 19649 10.0.0.0 0.255.255.255
+ 210 permit tcp 10.0.0.0 0.255.255.255 range 19601 19649 10.205.148.0 0.0.3.255
+ 220 permit tcp 10.0.0.0 0.255.255.255 range 19601 19649 10.205.152.0 0.0.0.255
+ 230 permit tcp 10.205.148.0 0.0.3.255 10.0.0.0 0.255.255.255 range 19601 19649
+ 240 permit tcp 10.205.152.0 0.0.0.255 10.0.0.0 0.255.255.255 range 19601 19649
+ 250 remark Region 4 VistA CSJ
+ 250 permit tcp 10.0.0.0 0.255.255.255 range 19601 19649 10.186.0.0 0.0.129.255
+ 260 permit tcp 10.186.0.0 0.0.129.255 10.0.0.0 0.255.255.255 range 19601 19649
+ 270 permit tcp 10.0.0.0 0.255.255.255 10.186.0.0 0.0.129.255 range 19601 19649
+ 280 permit tcp 10.186.0.0 0.0.129.255 range 19601 19649 10.0.0.0 0.255.255.255
+ 290 permit tcp 10.0.0.0 0.255.255.255 eq 1972 10.186.0.0 0.0.129.255
+ 300 permit tcp 10.186.0.0 0.0.129.255 10.0.0.0 0.255.255.255 eq 1972
+ 310 remark Region 5 VistA CSJ N/A
+ 310 remark Region FPO VistA CSJ
+ 310 permit tcp 10.0.0.0 0.255.255.255 10.248.24.0 0.0.7.255 range 19601 19649
+ 320 permit tcp 10.0.0.0 0.255.255.255 10.248.23.0 0.0.0.255 range 19601 19649
+ 330 permit tcp 10.248.24.0 0.0.7.255 range 19601 19649 10.0.0.0 0.255.255.255
+ 340 permit tcp 10.248.23.0 0.0.0.255 range 19601 19649 10.0.0.0 0.255.255.255
+ 350 permit tcp 10.0.0.0 0.255.255.255 range 19601 19649 10.248.24.0 0.0.7.255
+ 360 permit tcp 10.0.0.0 0.255.255.255 range 19601 19649 10.248.23.0 0.0.0.255
+ 370 permit tcp 10.248.24.0 0.0.7.255 10.0.0.0 0.255.255.255 range 19601 19649
+ 380 permit tcp 10.248.23.0 0.0.0.255 10.0.0.0 0.255.255.255 range 19601 19649
+ 390 remark Stentor DR
+ 390 permit tcp host 10.184.161.100 10.0.0.0 0.255.255.255
+ 400 permit tcp 10.0.0.0 0.255.255.255 host 10.184.161.100
+ 410 remark Place holder for Regional Backups
+ 410 remark FTP
+ 410 permit tcp 10.0.0.0 0.255.255.255 any eq ftp
+ 420 permit tcp any eq ftp 10.0.0.0 0.255.255.255
+ 430 permit tcp 10.0.0.0 0.255.255.255 any eq ftp-data
+ 440 permit tcp any eq ftp-data 10.0.0.0 0.255.255.255
+ 450 remark Celera NX4
+ 450 permit tcp host 10.204.1.166 10.0.0.0 0.255.255.255
+ 460 permit tcp 10.0.0.0 0.255.255.255 host 10.204.1.166
+ 470 permit tcp host 10.204.1.167 10.0.0.0 0.255.255.255
+ 480 permit tcp 10.0.0.0 0.255.255.255 host 10.204.1.167
+ 490 permit tcp host 10.204.1.168 10.0.0.0 0.255.255.255
+ 500 permit tcp 10.0.0.0 0.255.255.255 host 10.204.1.168
+ 510 permit tcp host 10.204.1.156 10.0.0.0 0.255.255.255
+ 520 permit tcp 10.0.0.0 0.255.255.255 host 10.204.1.156
+ 530 permit tcp host 10.205.1.104 10.0.0.0 0.255.255.255
+ 540 permit tcp 10.0.0.0 0.255.255.255 host 10.205.1.104
+ 550 permit tcp host 10.205.1.105 10.0.0.0 0.255.255.255
+ 560 permit tcp 10.0.0.0 0.255.255.255 host 10.205.1.105
+ 570 permit tcp host 10.205.1.106 10.0.0.0 0.255.255.255
+ 580 permit tcp 10.0.0.0 0.255.255.255 host 10.205.1.106
+ 590 permit tcp host 10.205.1.107 10.0.0.0 0.255.255.255
+ 600 permit tcp 10.0.0.0 0.255.255.255 host 10.205.1.107
+ 610 permit tcp host 10.224.108.121 10.0.0.0 0.255.255.255
+ 620 permit tcp 10.0.0.0 0.255.255.255 host 10.224.108.121
+ 630 permit tcp host 10.224.108.122 10.0.0.0 0.255.255.255
+ 640 permit tcp 10.0.0.0 0.255.255.255 host 10.224.108.122
+ 650 permit tcp host 10.224.108.123 10.0.0.0 0.255.255.255
+ 660 permit tcp 10.0.0.0 0.255.255.255 host 10.224.108.123
+ 670 permit tcp host 10.224.108.127 10.0.0.0 0.255.255.255
+ 680 permit tcp 10.0.0.0 0.255.255.255 host 10.224.108.127
+ 690 remark 
+ 690 remark Vista Imaging Tier 2 LDR Replication - StorageGRID
+ 690 permit tcp 10.0.0.0 0.255.255.255 any eq 1139
+ 700 permit tcp any eq 1139 10.0.0.0 0.255.255.255
+ 710 remark SPLUNK
+ 710 permit tcp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq 9997
+ 720 permit tcp 10.0.0.0 0.255.255.255 eq 9997 10.0.0.0 0.255.255.255
+ 730 remark VistA RO DB Refresh
+ 730 permit tcp any eq 21023 any
+ 740 permit tcp any any eq 21023
+ 750 remark Region 2 Backups
+ 750 remark ** Begin Gateway TBE CommVault Replication **
+ 750 permit tcp 10.0.0.0 0.255.255.255 10.252.192.0 0.0.31.255 eq 8484
+ 760 permit tcp 10.252.192.0 0.0.31.255 eq 8484 10.0.0.0 0.255.255.255
+ 770 remark ** EDN Gateway TBE CommVault Replication **
+ 770 remark 
+ 770 remark SCCM Traffic
+ 770 permit tcp 10.206.152.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 780 permit tcp 10.0.0.0 0.255.255.255 10.206.152.0 0.0.0.255
+ip access-list extended QOS-CITRIX-RDP-CAG
+ 10 permit tcp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq 3389
+ 20 permit tcp 10.0.0.0 0.255.255.255 eq 3389 10.0.0.0 0.255.255.255
+ 30 permit tcp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq 1494
+ 40 permit tcp 10.0.0.0 0.255.255.255 eq 1494 10.0.0.0 0.255.255.255
+ 50 permit tcp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq 2598
+ 60 permit tcp 10.0.0.0 0.255.255.255 eq 2598 10.0.0.0 0.255.255.255
+ 70 permit tcp 10.0.0.0 0.255.255.255 10.236.11.66 0.3.0.0 eq 443
+ 80 permit tcp 10.236.11.66 0.3.0.0 eq 443 10.0.0.0 0.255.255.255
+ 90 remark JLV - JMEADOWS to Terramark, AITC, DoD Relay (Interactive - AF21)
+ 90 remark JLV - MVI to service.eauth.va.gov (Interactive - AF21)
+ 90 permit tcp 10.206.18.0 0.0.0.255 host 146.73.136.7 eq 8080 www 443 8443 9193
+ 100 permit tcp host 146.73.136.7 eq 8080 www 443 8443 9193 10.206.18.0 0.0.0.255
+ 110 permit tcp 10.224.18.0 0.0.0.255 host 146.73.136.7 eq 8080 www 443 8443 9193
+ 120 permit tcp host 146.73.136.7 eq 8080 www 443 8443 9193 10.224.18.0 0.0.0.255
+ 130 permit tcp 10.224.18.0 0.0.0.255 host 146.73.136.8 eq 8080 www 443 8443 9193
+ 140 permit tcp host 146.73.136.8 eq 8080 www 443 8443 9193 10.224.18.0 0.0.0.255
+ 150 permit tcp 10.224.18.0 0.0.0.255 host 146.73.136.9 eq 8080 www 443 8443 9193
+ 160 permit tcp host 146.73.136.9 eq 8080 www 443 8443 9193 10.224.18.0 0.0.0.255
+ 170 permit tcp 10.224.18.0 0.0.0.255 host 214.16.192.21 eq 8080 www 443 8443 9193
+ 180 permit tcp host 214.16.192.21 eq 8080 www 443 8443 9193 10.224.18.0 0.0.0.255
+ 190 permit tcp 10.224.18.0 0.0.0.255 host 214.16.193.21 eq 8080 www 443 8443 9193
+ 200 permit tcp host 214.16.193.21 eq 8080 www 443 8443 9193 10.224.18.0 0.0.0.255
+ 210 permit tcp 10.224.18.0 0.0.0.255 host 214.16.194.21 eq 8080 www 443 8443 9193
+ 220 permit tcp host 214.16.194.21 eq 8080 www 443 8443 9193 10.224.18.0 0.0.0.255
+ 230 permit tcp 10.224.18.0 0.0.0.255 host 214.16.195.21 eq 8080 www 443 8443 9193
+ 240 permit tcp host 214.16.195.21 eq 8080 www 443 8443 9193 10.224.18.0 0.0.0.255
+ 250 permit tcp 10.206.18.0 0.0.0.255 host 146.73.136.8 eq 8080 www 443 8443 9193
+ 260 permit tcp host 146.73.136.8 eq 8080 www 443 8443 9193 10.206.18.0 0.0.0.255
+ 270 permit tcp 10.206.18.0 0.0.0.255 host 146.73.136.9 eq 8080 www 443 8443 9193
+ 280 permit tcp host 146.73.136.9 eq 8080 www 443 8443 9193 10.206.18.0 0.0.0.255
+ 290 permit tcp 10.206.18.0 0.0.0.255 host 146.73.144.2 eq 8080 www 443 8443 9193
+ 300 permit tcp host 146.73.144.2 eq 8080 www 443 8443 9193 10.206.18.0 0.0.0.255
+ 310 permit tcp 10.206.18.0 0.0.0.255 host 214.16.192.21 eq 8080 www 443 8443 9193
+ 320 permit tcp host 214.16.192.21 eq 8080 www 443 8443 9193 10.206.18.0 0.0.0.255
+ 330 permit tcp 10.206.18.0 0.0.0.255 host 214.16.193.21 eq 8080 www 443 8443 9193
+ 340 permit tcp host 214.16.193.21 eq 8080 www 443 8443 9193 10.206.18.0 0.0.0.255
+ 350 permit tcp 10.206.18.0 0.0.0.255 host 214.16.194.21 eq 8080 www 443 8443 9193
+ 360 permit tcp host 214.16.194.21 eq 8080 www 443 8443 9193 10.206.18.0 0.0.0.255
+ 370 permit tcp 10.206.18.0 0.0.0.255 host 214.16.195.21 eq 8080 www 443 8443 9193
+ 380 permit tcp host 214.16.195.21 eq 8080 www 443 8443 9193 10.206.18.0 0.0.0.255
+ 390 remark JLV - VA WAN to JLV Subnet PITC (Interactive - AF21)
+ 390 remark JLV - Entire VA_WAN Block is covered below
+ 390 remark JLV - End user to Load Balancer (Interactive - AF21)
+ 390 permit tcp 10.0.0.0 0.255.255.255 10.206.18.0 0.0.0.255 range 18701 18750
+ 400 permit tcp 10.206.18.0 0.0.0.255 range 18701 18750 10.0.0.0 0.255.255.255
+ 410 permit tcp 10.0.0.0 0.255.255.255 10.224.18.0 0.0.0.255 range 18701 18750
+ 420 permit tcp 10.224.18.0 0.0.0.255 range 18701 18750 10.0.0.0 0.255.255.255
+ 430 permit tcp 10.0.0.0 0.255.255.255 10.206.18.0 0.0.0.255 range 18901 18950
+ 440 permit tcp 10.206.18.0 0.0.0.255 range 18901 18950 10.0.0.0 0.255.255.255
+ 450 permit tcp 10.0.0.0 0.255.255.255 10.206.18.0 0.0.0.255 eq 8080 8081 8082 8083 8084 8085 8086 8087 8088
+ 460 permit tcp 10.206.18.0 0.0.0.255 eq 8080 8081 8082 8083 8084 8085 8086 8087 8088 10.0.0.0 0.255.255.255
+ 470 permit tcp 10.0.0.0 0.255.255.255 10.206.18.0 0.0.0.255 eq www 443 8443 343 9193
+ 480 permit tcp 10.206.18.0 0.0.0.255 eq www 443 8443 343 9193 10.0.0.0 0.255.255.255
+ 490 permit tcp 10.0.0.0 0.255.255.255 10.206.18.0 0.0.0.255 range 9010 9449
+ 500 permit tcp 10.206.18.0 0.0.0.255 range 9010 9449 10.0.0.0 0.255.255.255
+ 510 permit tcp 10.0.0.0 0.255.255.255 10.224.18.0 0.0.0.255 range 18901 18950
+ 520 permit tcp 10.224.18.0 0.0.0.255 range 18901 18950 10.0.0.0 0.255.255.255
+ 530 permit tcp 10.0.0.0 0.255.255.255 10.224.18.0 0.0.0.255 eq 8080 8081 8082 8083 8084 8085 8086 8087 8088
+ 540 permit tcp 10.224.18.0 0.0.0.255 eq 8080 8081 8082 8083 8084 8085 8086 8087 8088 10.0.0.0 0.255.255.255
+ 550 permit tcp 10.0.0.0 0.255.255.255 10.224.18.0 0.0.0.255 eq www 443 8443 343 9193
+ 560 permit tcp 10.224.18.0 0.0.0.255 eq www 443 8443 343 9193 10.0.0.0 0.255.255.255
+ 570 permit tcp 10.0.0.0 0.255.255.255 10.224.18.0 0.0.0.255 range 9010 9449
+ 580 permit tcp 10.224.18.0 0.0.0.255 range 9010 9449 10.0.0.0 0.255.255.255
+ip access-list extended QOS-IMAGING
+ 10 remark Radiology Image transfers
+ 10 remark All Other DICOM
+ 10 permit tcp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq 104
+ 20 permit tcp 10.0.0.0 0.255.255.255 eq 104 10.0.0.0 0.255.255.255
+ 30 remark All I-site query retrieval
+ 30 permit tcp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq 107
+ 40 permit tcp 10.0.0.0 0.255.255.255 eq 107 10.0.0.0 0.255.255.255
+ 50 remark Stentor PACS
+ 50 permit tcp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq 6464
+ 60 permit tcp 10.0.0.0 0.255.255.255 eq 6464 10.0.0.0 0.255.255.255
+ 70 remark Virtual VA
+ 70 permit tcp 10.0.0.0 0.255.255.255 10.205.16.0 0.0.0.255
+ 80 permit tcp 10.205.16.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 90 permit tcp 10.0.0.0 0.255.255.255 10.195.160.0 0.0.0.127
+ 100 permit tcp 10.195.160.0 0.0.0.127 10.0.0.0 0.255.255.255
+ 110 permit tcp 10.0.0.0 0.255.255.255 10.198.64.0 0.0.0.127
+ 120 permit tcp 10.198.64.0 0.0.0.127 10.0.0.0 0.255.255.255
+ 130 permit tcp 10.0.0.0 0.255.255.255 10.204.11.0 0.0.0.63
+ 140 permit tcp 10.204.11.0 0.0.0.63 10.0.0.0 0.255.255.255
+ 150 permit tcp 10.0.0.0 0.255.255.255 host 10.204.11.196
+ 160 permit tcp host 10.204.11.196 10.0.0.0 0.255.255.255
+ 170 remark Sacramento subnet National Teleradiology project
+ 170 permit tcp 10.0.0.0 0.255.255.255 10.184.95.0 0.0.0.255
+ 180 permit tcp 10.184.95.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 190 remark PITC Regional ingest servers subnet National Teleradiology project
+ 190 permit tcp 10.0.0.0 0.255.255.255 10.186.11.0 0.0.0.31
+ 200 permit tcp 10.186.11.0 0.0.0.31 10.0.0.0 0.255.255.255
+ 210 remark LIT Regional ingest servers subnet National Teleradiology project
+ 210 permit tcp 10.0.0.0 0.255.255.255 10.185.145.192 0.0.0.31
+ 220 permit tcp 10.185.145.192 0.0.0.31 10.0.0.0 0.255.255.255
+ 230 remark CLE Regional ingest servers subnet National Teleradiology project
+ 230 permit tcp 10.0.0.0 0.255.255.255 10.187.12.0 0.0.0.31
+ 240 permit tcp 10.187.12.0 0.0.0.31 10.0.0.0 0.255.255.255
+ 250 remark DVR Regional ingest servers subnet National Teleradiology project
+ 250 permit tcp 10.0.0.0 0.255.255.255 10.184.163.128 0.0.0.31
+ 260 permit tcp 10.184.163.128 0.0.0.31 10.0.0.0 0.255.255.255
+ 270 remark Menlo subnet National Teleradiology project
+ 270 permit tcp 10.0.0.0 0.255.255.255 10.168.176.0 0.0.0.255
+ 280 permit tcp 10.168.176.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 290 remark Hawaii subnet National Teleradiology project
+ 290 permit tcp 10.0.0.0 0.255.255.255 10.170.58.128 0.0.0.31
+ 300 permit tcp 10.170.58.128 0.0.0.31 10.0.0.0 0.255.255.255
+ 310 remark San Bruno subnet National Teleradiology project
+ 310 permit tcp 10.0.0.0 0.255.255.255 10.174.170.0 0.0.0.127
+ 320 permit tcp 10.174.170.0 0.0.0.127 10.0.0.0 0.255.255.255
+ 330 remark Durham subnet National Teleradiology project
+ 330 permit tcp 10.0.0.0 0.255.255.255 10.52.105.0 0.0.0.127
+ 340 permit tcp 10.52.105.0 0.0.0.127 10.0.0.0 0.255.255.255
+ 350 remark NYN Reading Centers subnet National Teleradiology project
+ 350 permit tcp 10.0.0.0 0.255.255.255 10.31.74.0 0.0.0.31
+ 360 permit tcp 10.31.74.0 0.0.0.31 10.0.0.0 0.255.255.255
+ 370 remark GLA Reading Centers subnet National Teleradiology project
+ 370 permit tcp 10.0.0.0 0.255.255.255 10.180.5.240 0.0.0.15
+ 380 permit tcp 10.180.5.240 0.0.0.15 10.0.0.0 0.255.255.255
+ 390 remark NTX Reading Centers subnet National Teleradiology project
+ 390 permit tcp 10.0.0.0 0.255.255.255 10.138.8.176 0.0.0.15
+ 400 permit tcp 10.138.8.176 0.0.0.15 10.0.0.0 0.255.255.255
+ 410 remark MAC Reading Centers subnet National Teleradiology project
+ 410 permit tcp 10.0.0.0 0.255.255.255 10.173.251.0 0.0.0.31
+ 420 permit tcp 10.173.251.0 0.0.0.31 10.0.0.0 0.255.255.255
+ 430 remark VistA M2Mserver
+ 430 permit tcp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 range 14801 14837
+ 440 permit tcp 10.0.0.0 0.255.255.255 range 14801 14837 10.0.0.0 0.255.255.255
+ 450 remark Visn 17 Mckesson-PACS
+ 450 permit tcp 10.0.0.0 0.255.255.255 10.137.85.0 0.0.0.127
+ 460 permit tcp 10.137.85.0 0.0.0.127 10.0.0.0 0.255.255.255
+ 470 permit tcp 10.0.0.0 0.255.255.255 10.140.178.0 0.0.0.127
+ 480 permit tcp 10.140.178.0 0.0.0.127 10.0.0.0 0.255.255.255
+ 490 remark **********************************************************
+ 490 remark Local VistA imaging cluster IP address goes here
+ 490 remark for VI display outbound traffic identification
+ 490 remark *********************************************************
+ 490 remark I-Site Archived Images stored at Ann Arbor 10.93.83.0/24
+ 490 permit tcp 10.0.0.0 0.255.255.255 10.93.83.0 0.0.0.255
+ 500 permit tcp 10.93.83.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 510 remark Sleep Study from Green Rd to Ann Arbor 10.93.108.16/28
+ 510 permit tcp 10.93.62.0 0.0.0.127 10.93.108.16 0.0.0.15
+ 520 permit tcp 10.93.108.16 0.0.0.15 10.93.62.0 0.0.0.127
+ 530 remark I-Site local images stored at Battle Creek 10.92.84.0/24
+ 530 permit tcp 10.92.84.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 540 permit tcp 10.0.0.0 0.255.255.255 10.92.84.0 0.0.0.255
+ 550 remark I-Site to/from Wyoming HCC 10.92.151.48/28
+ 550 permit tcp 10.0.0.0 0.255.255.255 10.92.151.48 0.0.0.15
+ 560 permit tcp 10.92.151.48 0.0.0.15 10.0.0.0 0.255.255.255
+ 570 remark I-Site local images stored at Danville Med Center 10.94.61.0/24
+ 570 permit tcp 10.94.61.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 580 permit tcp 10.0.0.0 0.255.255.255 10.94.61.0 0.0.0.25
+ 590 remark I-Site local images stored at Detroit 10.91.27.0/24
+ 590 permit tcp 10.91.27.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 600 permit tcp 10.0.0.0 0.255.255.255 10.91.27.0 0.0.0.255
+ 610 remark I-Site local images stored at Indianpolis 10.89.23.0/24
+ 610 permit tcp 10.89.23.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 620 permit tcp 10.0.0.0 0.255.255.255 10.89.23.0 0.0.0.255
+ 630 remark I-Site local images stored at Ft Wayne 10.90.10.16/28
+ 630 permit tcp 10.90.10.16 0.0.0.15 10.0.0.0 0.255.255.255
+ 640 permit tcp 10.0.0.0 0.255.255.255 10.90.10.16 0.0.0.15
+ 650 remark I-Site local images stored at Marion 10.90.66.1/24
+ 650 permit tcp 10.90.66.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 660 permit tcp 10.0.0.0 0.255.255.255 10.90.66.0 0.0.0.255
+ 670 remark I-Site local images stored at Saginaw 10.88.47.0/27
+ 670 permit tcp 10.88.47.0 0.0.0.31 10.0.0.0 0.255.255.255
+ 680 permit tcp 10.0.0.0 0.255.255.255 10.88.47.0 0.0.0.31
+ip access-list extended QOS-NCA-Web-Applications
+ 10 remark Traffic for NCA Gravelocator
+ 10 permit tcp host 10.228.1.3 eq www 443 10.238.24.0 0.0.3.255
+ 20 permit tcp 10.238.24.0 0.0.3.255 host 10.228.1.3 eq www 443
+ 30 remark Traffic for NCA Cemetery Burial Schedule
+ 30 permit tcp host 10.228.1.5 eq www 443 10.0.0.0 0.255.255.255
+ 40 permit tcp 10.0.0.0 0.255.255.255 host 10.228.1.5 eq www 443
+ 50 remark Traffic for NCA BOSS/AMAS
+ 50 permit tcp host 10.228.211.85 eq www 443 10.0.0.0 0.255.255.255
+ 60 permit tcp 10.0.0.0 0.255.255.255 host 10.228.211.85 eq www 443
+ 70 remark Traffic for NCA Portal
+ 70 permit tcp host 10.228.210.118 eq www 443 10.0.0.0 0.255.255.255
+ 80 permit tcp host 10.228.210.119 eq www 443 10.0.0.0 0.255.255.255
+ 90 permit tcp 10.0.0.0 0.255.255.255 host 10.228.210.118 eq www 443
+ 100 permit tcp 10.0.0.0 0.255.255.255 host 10.228.210.119 eq www 443
+ 110 remark Traffic for NCA Memorial Enterprise Letters
+ 110 permit tcp host 10.228.235.163 eq www 443 10.0.0.0 0.255.255.255
+ 120 permit tcp 10.0.0.0 0.255.255.255 host 10.228.235.163 eq www 443
+ 130 remark Traffic for NCA Eligibility Office Automation System
+ 130 permit tcp host 10.228.211.97 eq www 443 10.0.0.0 0.255.255.255
+ 140 permit tcp 10.0.0.0 0.255.255.255 host 10.228.211.97 eq www 443
+ 150 remark Traffic for NCA Kiosk
+ 150 permit tcp host 10.228.1.4 eq www 443 7780 10.0.0.0 0.255.255.255
+ 160 permit tcp 10.0.0.0 0.255.255.255 host 10.228.1.4 eq www 443 7780
+ 170 remark Traffic for NCA Kiosk Admin
+ 170 permit tcp host 10.228.211.94 eq www 443 10.0.0.0 0.255.255.255
+ 180 permit tcp 10.0.0.0 0.255.255.255 host 10.228.211.94 eq www 443
+ 190 remark Traffic for NCA Display Schedule
+ 190 permit tcp host 10.228.211.95 eq www 443 10.0.0.0 0.255.255.255
+ 200 permit tcp 10.0.0.0 0.255.255.255 host 10.228.211.95 eq www 443
+ 210 remark Traffic for NCA MenuX
+ 210 permit tcp host 10.228.211.28 eq www 443 10.0.0.0 0.255.255.255
+ 220 permit tcp 10.0.0.0 0.255.255.255 host 10.228.211.28 eq www 443
+ip access-list extended QOS-NET-MANAGEMENT
+ 10 remark OneVA iBGP Peering between demarcs & THEREFORE ONLY REQUIRED ON DEMARC ROUTERS
+ 10 permit tcp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq bgp
+ 20 permit tcp 10.0.0.0 0.255.255.255 eq bgp 10.0.0.0 0.255.255.255
+ 30 remark NTP
+ 30 permit udp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq ntp
+ 40 remark TELNET
+ 40 permit tcp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq telnet
+ 50 permit tcp 10.0.0.0 0.255.255.255 eq telnet 10.0.0.0 0.255.255.255
+ 60 remark SSH
+ 60 permit tcp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq 22
+ 70 permit tcp 10.0.0.0 0.255.255.255 eq 22 10.0.0.0 0.255.255.255
+ 80 remark SNMP
+ 80 permit udp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq snmp snmptrap
+ 90 remark TACACS
+ 90 permit tcp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq tacacs
+ 100 permit tcp 10.0.0.0 0.255.255.255 eq tacacs 10.0.0.0 0.255.255.255
+ 110 remark RADIUS
+ 110 permit udp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq 1812
+ 120 permit udp 10.0.0.0 0.255.255.255 eq 1812 10.0.0.0 0.255.255.255
+ 130 permit udp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq 1813
+ 140 permit udp 10.0.0.0 0.255.255.255 eq 1813 10.0.0.0 0.255.255.255
+ 150 permit udp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq 1612
+ 160 permit udp 10.0.0.0 0.255.255.255 eq 1612 10.0.0.0 0.255.255.255
+ 170 permit udp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq 1645
+ 180 permit udp 10.0.0.0 0.255.255.255 eq 1645 10.0.0.0 0.255.255.255
+ 190 permit udp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq 1646
+ 200 permit udp 10.0.0.0 0.255.255.255 eq 1646 10.0.0.0 0.255.255.255
+ip access-list extended QOS-POWERSCRIBE
+ 10 remark Region 4 PowerScribe
+ 10 permit ip 10.0.0.0 0.255.255.255 10.20.35.8 0.0.0.7
+ 20 permit ip 10.0.0.0 0.255.255.255 10.11.23.0 0.0.0.31
+ 30 permit ip 10.20.35.8 0.0.0.7 10.0.0.0 0.255.255.255
+ 40 permit ip 10.11.23.0 0.0.0.31 10.0.0.0 0.255.255.255
+ 50 remark New Consolidated VISN Virtual PowerScribe @ Cleveland IPs 10.83.88.130-136
+ 50 permit ip 10.0.0.0 0.255.255.255 10.83.88.128 0.0.0.15
+ 60 permit ip 10.83.88.128 0.0.0.15 10.0.0.0 0.255.255.255
+ 70 remark POWERSCRIBE query retrieval to/from NIN/Marion 10.90.43.64/28
+ 70 permit tcp 10.0.0.0 0.255.255.255 10.90.43.64 0.0.0.15
+ 80 permit tcp 10.90.43.64 0.0.0.15 10.0.0.0 0.255.255.255
+ 90 remark POWERSCRIBE query retrieval to/from NIN/Ft Wayne 10.90.174.80/28
+ 90 permit tcp 10.0.0.0 0.255.255.255 10.90.174.80 0.0.0.15
+ 100 permit tcp 10.90.174.80 0.0.0.15 10.0.0.0 0.255.255.255
+ 110 remark POWERSCRIBE query retrieval to/from Detroit 10.91.27.104/29
+ 110 permit tcp 10.0.0.0 0.255.255.255 10.91.27.104 0.0.0.7
+ 120 permit tcp 10.91.27.104 0.0.0.7 10.0.0.0 0.255.255.255
+ 130 remark POWERSCRIBE query retrieval to/from Battle Creek 10.92.28.72/29
+ 130 permit tcp 10.0.0.0 0.255.255.255 10.92.28.72 0.0.0.7
+ 140 permit tcp 10.92.28.72 0.0.0.7 10.0.0.0 0.255.255.255
+ 150 remark POWERSCRIBE query retrieval to/from Indianapolis 10.89.20.120/29
+ 150 permit tcp 10.0.0.0 0.255.255.255 10.89.20.120 0.0.0.7
+ 160 permit tcp 10.89.20.120 0.0.0.7 10.0.0.0 0.255.255.255
+ 170 remark POWERSCRIBE query retrieval to/from Danville 10.94.11.115/32
+ 170 permit tcp 10.0.0.0 0.255.255.255 host 10.94.11.115
+ 180 permit tcp host 10.94.11.115 10.0.0.0 0.255.255.255
+ 190 remark POWERSCRIBE query retrieval to/from Ann Arbor 10.93.81.200/29
+ 190 permit tcp 10.0.0.0 0.255.255.255 10.93.81.200 0.0.0.7
+ 200 permit tcp 10.93.81.200 0.0.0.7 10.0.0.0 0.255.255.255
+ip access-list extended QOS-Standard-Version
+ 10 remark Revision Update v2.2
+ 10 remark AI - QoS Standard - Update Deployment: Several ACL Changes, Shaping, Queue Depth
+ 10 deny   ip any any
+ip access-list extended QOS-TEN-TO-NON-TEN
+ 10 remark VA 10 to Non 10 Non VA   CS1
+ 10 remark Exclude all mission oriented traffic to the Internet
+ 10 remark Added EES Adobe Connect subnets 6/30/2020 -- BSJ
+ 10 deny   ip 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255
+ 20 deny   ip 10.0.0.0 0.255.255.255 152.125.0.0 0.0.0.255
+ 30 deny   ip 10.0.0.0 0.255.255.255 129.72.0.0 0.0.0.7
+ 40 deny   ip 10.0.0.0 0.255.255.255 159.140.0.0 0.0.255.255
+ 50 deny   ip 10.0.0.0 0.255.255.255 146.73.0.0 0.0.255.255
+ 60 deny   ip 10.0.0.0 0.255.255.255 150.2.0.0 0.0.255.255
+ 70 deny   ip 10.0.0.0 0.255.255.255 214.1.102.80 0.0.0.7
+ 80 deny   ip 10.0.0.0 0.255.255.255 214.1.102.192 0.0.0.63
+ 90 deny   ip 10.0.0.0 0.255.255.255 214.2.22.0 0.0.1.255
+ 100 deny   ip 152.125.0.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 110 deny   ip 129.72.0.0 0.0.0.7 10.0.0.0 0.255.255.255
+ 120 deny   ip 159.140.0.0 0.0.255.255 10.0.0.0 0.255.255.255
+ 130 deny   ip 146.73.0.0 0.0.255.255 10.0.0.0 0.255.255.255
+ 140 deny   ip 150.2.0.0 0.0.255.255 10.0.0.0 0.255.255.255
+ 150 deny   ip 214.1.102.80 0.0.0.7 10.0.0.0 0.255.255.255
+ 160 deny   ip 214.1.102.192 0.0.0.63 10.0.0.0 0.255.255.255
+ 170 deny   ip 214.2.22.0 0.0.1.255 10.0.0.0 0.255.255.255
+ 180 deny   ip 10.0.0.0 0.255.255.255 192.243.241.0 0.0.0.255
+ 190 deny   ip 192.243.241.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 200 permit ip any any
+ip access-list extended QOS-TUXEDO
+ 10 remark Tuxedo VETSNET
+ 10 permit tcp 10.0.0.0 0.255.255.255 host 10.224.108.114
+ 20 permit tcp host 10.224.108.114 10.0.0.0 0.255.255.255
+ 30 permit tcp 10.0.0.0 0.255.255.255 host 10.224.108.117
+ 40 permit tcp host 10.224.108.117 10.0.0.0 0.255.255.255
+ 50 permit tcp 10.0.0.0 0.255.255.255 host 10.224.108.120
+ 60 permit tcp host 10.224.108.120 10.0.0.0 0.255.255.255
+ip access-list extended QOS-VIDEO-ADMIN
+ 10 remark Place holder for Admin video endpoints that do not mark their own traffic properly
+ 10 remark Pexip admin video traffic
+ 10 remark BSJ - 11Jun20 - Removed Pexip Entries due to NBAR matching
+ 10 permit tcp 10.0.0.0 0.255.255.255 64.68.96.0 0.0.31.255 eq www 443 5004
+ 20 permit udp 10.0.0.0 0.255.255.255 64.68.96.0 0.0.31.255 eq 9000
+ 30 permit tcp 64.68.96.0 0.0.31.255 eq www 443 5004 10.0.0.0 0.255.255.255
+ 40 permit udp 64.68.96.0 0.0.31.255 eq 9000 10.0.0.0 0.255.255.255
+ 50 permit tcp 10.0.0.0 0.255.255.255 64.68.96.0 0.0.31.255 range 8000 59999
+ 60 permit udp 10.0.0.0 0.255.255.255 64.68.96.0 0.0.31.255 range 8000 59999
+ 70 permit tcp 64.68.96.0 0.0.31.255 range 8000 59999 10.0.0.0 0.255.255.255
+ 80 permit udp 64.68.96.0 0.0.31.255 range 8000 59999 10.0.0.0 0.255.255.255
+ 90 permit tcp 10.0.0.0 0.255.255.255 64.68.104.0 0.0.7.255 eq www 443 5004
+ 100 permit udp 10.0.0.0 0.255.255.255 64.68.104.0 0.0.7.255 eq 9000
+ 110 permit tcp 64.68.104.0 0.0.7.255 eq www 443 5004 10.0.0.0 0.255.255.255
+ 120 permit udp 64.68.104.0 0.0.7.255 eq 9000 10.0.0.0 0.255.255.255
+ 130 permit tcp 10.0.0.0 0.255.255.255 64.68.104.0 0.0.7.255 range 8000 59999
+ 140 permit udp 10.0.0.0 0.255.255.255 64.68.104.0 0.0.7.255 range 8000 59999
+ 150 permit tcp 64.68.104.0 0.0.7.255 range 8000 59999 10.0.0.0 0.255.255.255
+ 160 permit udp 64.68.104.0 0.0.7.255 range 8000 59999 10.0.0.0 0.255.255.255
+ 170 permit tcp 10.0.0.0 0.255.255.255 64.68.120.0 0.0.7.255 eq www 443 5004
+ 180 permit udp 10.0.0.0 0.255.255.255 64.68.120.0 0.0.7.255 eq 9000
+ 190 permit tcp 64.68.120.0 0.0.7.255 eq www 443 5004 10.0.0.0 0.255.255.255
+ 200 permit udp 64.68.120.0 0.0.7.255 eq 9000 10.0.0.0 0.255.255.255
+ 210 permit tcp 10.0.0.0 0.255.255.255 64.68.120.0 0.0.7.255 range 8000 59999
+ 220 permit udp 10.0.0.0 0.255.255.255 64.68.120.0 0.0.7.255 range 8000 59999
+ 230 permit tcp 64.68.120.0 0.0.7.255 range 8000 59999 10.0.0.0 0.255.255.255
+ 240 permit udp 64.68.120.0 0.0.7.255 range 8000 59999 10.0.0.0 0.255.255.255
+ 250 permit tcp 10.0.0.0 0.255.255.255 66.114.160.0 0.0.15.255 eq www 443 5004
+ 260 permit udp 10.0.0.0 0.255.255.255 66.114.160.0 0.0.15.255 eq 9000
+ 270 permit tcp 66.114.160.0 0.0.15.255 eq www 443 5004 10.0.0.0 0.255.255.255
+ 280 permit udp 66.114.160.0 0.0.15.255 eq 9000 10.0.0.0 0.255.255.255
+ 290 permit tcp 10.0.0.0 0.255.255.255 66.114.160.0 0.0.15.255 range 8000 59999
+ 300 permit udp 10.0.0.0 0.255.255.255 66.114.160.0 0.0.15.255 range 8000 59999
+ 310 permit tcp 66.114.160.0 0.0.15.255 range 8000 59999 10.0.0.0 0.255.255.255
+ 320 permit udp 66.114.160.0 0.0.15.255 range 8000 59999 10.0.0.0 0.255.255.255
+ 330 permit tcp 10.0.0.0 0.255.255.255 66.163.32.0 0.0.31.255 eq www 443 5004
+ 340 permit udp 10.0.0.0 0.255.255.255 66.163.32.0 0.0.31.255 eq 9000
+ 350 permit tcp 66.163.32.0 0.0.31.255 eq www 443 5004 10.0.0.0 0.255.255.255
+ 360 permit udp 66.163.32.0 0.0.31.255 eq 9000 10.0.0.0 0.255.255.255
+ 370 permit tcp 10.0.0.0 0.255.255.255 66.163.32.0 0.0.31.255 range 8000 59999
+ 380 permit udp 10.0.0.0 0.255.255.255 66.163.32.0 0.0.31.255 range 8000 59999
+ 390 permit tcp 66.163.32.0 0.0.31.255 range 8000 59999 10.0.0.0 0.255.255.255
+ 400 permit udp 66.163.32.0 0.0.31.255 range 8000 59999 10.0.0.0 0.255.255.255
+ 410 permit tcp 10.0.0.0 0.255.255.255 150.253.128.0 0.0.63.255 eq www 443 5004
+ 420 permit udp 10.0.0.0 0.255.255.255 150.253.128.0 0.0.63.255 eq 9000
+ 430 permit tcp 150.253.128.0 0.0.63.255 eq www 443 5004 10.0.0.0 0.255.255.255
+ 440 permit udp 150.253.128.0 0.0.63.255 eq 9000 10.0.0.0 0.255.255.255
+ 450 permit tcp 10.0.0.0 0.255.255.255 150.253.128.0 0.0.63.255 range 8000 59999
+ 460 permit udp 10.0.0.0 0.255.255.255 150.253.128.0 0.0.63.255 range 8000 59999
+ 470 permit tcp 150.253.128.0 0.0.63.255 range 8000 59999 10.0.0.0 0.255.255.255
+ 480 permit udp 150.253.128.0 0.0.63.255 range 8000 59999 10.0.0.0 0.255.255.255
+ 490 permit tcp 10.0.0.0 0.255.255.255 170.133.128.0 0.0.31.255 eq www 443 5004
+ 500 permit udp 10.0.0.0 0.255.255.255 170.133.128.0 0.0.31.255 eq 9000
+ 510 permit tcp 170.133.128.0 0.0.31.255 eq www 443 5004 10.0.0.0 0.255.255.255
+ 520 permit udp 170.133.128.0 0.0.31.255 eq 9000 10.0.0.0 0.255.255.255
+ 530 permit tcp 10.0.0.0 0.255.255.255 170.133.128.0 0.0.31.255 range 8000 59999
+ 540 permit udp 10.0.0.0 0.255.255.255 170.133.128.0 0.0.31.255 range 8000 59999
+ 550 permit tcp 170.133.128.0 0.0.31.255 range 8000 59999 10.0.0.0 0.255.255.255
+ 560 permit udp 170.133.128.0 0.0.31.255 range 8000 59999 10.0.0.0 0.255.255.255
+ 570 permit tcp 10.0.0.0 0.255.255.255 173.39.224.0 0.0.31.255 eq www 443 5004
+ 580 permit udp 10.0.0.0 0.255.255.255 173.39.224.0 0.0.31.255 eq 9000
+ 590 permit tcp 173.39.224.0 0.0.31.255 eq www 443 5004 10.0.0.0 0.255.255.255
+ 600 permit udp 173.39.224.0 0.0.31.255 eq 9000 10.0.0.0 0.255.255.255
+ 610 permit tcp 10.0.0.0 0.255.255.255 173.39.224.0 0.0.31.255 range 8000 59999
+ 620 permit udp 10.0.0.0 0.255.255.255 173.39.224.0 0.0.31.255 range 8000 59999
+ 630 permit tcp 173.39.224.0 0.0.31.255 range 8000 59999 10.0.0.0 0.255.255.255
+ 640 permit udp 173.39.224.0 0.0.31.255 range 8000 59999 10.0.0.0 0.255.255.255
+ 650 permit tcp 10.0.0.0 0.255.255.255 173.243.0.0 0.0.15.255 eq www 443 5004
+ 660 permit udp 10.0.0.0 0.255.255.255 173.243.0.0 0.0.15.255 eq 9000
+ 670 permit tcp 173.243.0.0 0.0.15.255 eq www 443 5004 10.0.0.0 0.255.255.255
+ 680 permit udp 173.243.0.0 0.0.15.255 eq 9000 10.0.0.0 0.255.255.255
+ 690 permit tcp 10.0.0.0 0.255.255.255 173.243.0.0 0.0.15.255 range 8000 59999
+ 700 permit udp 10.0.0.0 0.255.255.255 173.243.0.0 0.0.15.255 range 8000 59999
+ 710 permit tcp 173.243.0.0 0.0.15.255 range 8000 59999 10.0.0.0 0.255.255.255
+ 720 permit udp 173.243.0.0 0.0.15.255 range 8000 59999 10.0.0.0 0.255.255.255
+ 730 permit tcp 10.0.0.0 0.255.255.255 207.182.160.0 0.0.31.255 eq www 443 5004
+ 740 permit udp 10.0.0.0 0.255.255.255 207.182.160.0 0.0.31.255 eq 9000
+ 750 permit tcp 207.182.160.0 0.0.31.255 eq www 443 5004 10.0.0.0 0.255.255.255
+ 760 permit udp 207.182.160.0 0.0.31.255 eq 9000 10.0.0.0 0.255.255.255
+ 770 permit tcp 10.0.0.0 0.255.255.255 207.182.160.0 0.0.31.255 range 8000 59999
+ 780 permit udp 10.0.0.0 0.255.255.255 207.182.160.0 0.0.31.255 range 8000 59999
+ 790 permit tcp 207.182.160.0 0.0.31.255 range 8000 59999 10.0.0.0 0.255.255.255
+ 800 permit udp 207.182.160.0 0.0.31.255 range 8000 59999 10.0.0.0 0.255.255.255
+ 810 permit tcp 10.0.0.0 0.255.255.255 207.182.172.0 0.0.3.255 eq www 443 5004
+ 820 permit udp 10.0.0.0 0.255.255.255 207.182.172.0 0.0.3.255 eq 9000
+ 830 permit tcp 207.182.172.0 0.0.3.255 eq www 443 5004 10.0.0.0 0.255.255.255
+ 840 permit udp 207.182.172.0 0.0.3.255 eq 9000 10.0.0.0 0.255.255.255
+ 850 permit tcp 10.0.0.0 0.255.255.255 207.182.172.0 0.0.3.255 range 8000 59999
+ 860 permit udp 10.0.0.0 0.255.255.255 207.182.172.0 0.0.3.255 range 8000 59999
+ 870 permit tcp 207.182.172.0 0.0.3.255 range 8000 59999 10.0.0.0 0.255.255.255
+ 880 permit udp 207.182.172.0 0.0.3.255 range 8000 59999 10.0.0.0 0.255.255.255
+ 890 permit tcp 10.0.0.0 0.255.255.255 209.197.192.0 0.0.31.255 eq www 443 5004
+ 900 permit udp 10.0.0.0 0.255.255.255 209.197.192.0 0.0.31.255 eq 9000
+ 910 permit tcp 209.197.192.0 0.0.31.255 eq www 443 5004 10.0.0.0 0.255.255.255
+ 920 permit udp 209.197.192.0 0.0.31.255 eq 9000 10.0.0.0 0.255.255.255
+ 930 permit tcp 10.0.0.0 0.255.255.255 209.197.192.0 0.0.31.255 range 8000 59999
+ 940 permit udp 10.0.0.0 0.255.255.255 209.197.192.0 0.0.31.255 range 8000 59999
+ 950 permit tcp 209.197.192.0 0.0.31.255 range 8000 59999 10.0.0.0 0.255.255.255
+ 960 permit udp 209.197.192.0 0.0.31.255 range 8000 59999 10.0.0.0 0.255.255.255
+ 970 remark *** MS TEAMS VIDEO ***
+ 970 permit udp 10.0.0.0 0.255.255.255 range 50020 50039 13.107.64.0 0.0.63.255 range 3478 3481
+ 980 permit udp 13.107.64.0 0.0.63.255 range 3478 3481 10.0.0.0 0.255.255.255 range 50020 50039
+ 990 permit udp 10.0.0.0 0.255.255.255 range 50020 50039 52.112.0.0 0.3.255.255 range 3478 3481
+ 1000 permit udp 52.112.0.0 0.3.255.255 range 3478 3481 10.0.0.0 0.255.255.255 range 50020 50039
+ 1010 permit udp 10.0.0.0 0.255.255.255 range 50020 50039 52.120.0.0 0.3.255.255 range 3478 3481
+ 1020 permit udp 52.120.0.0 0.3.255.255 range 3478 3481 10.0.0.0 0.255.255.255 range 50020 50039
+ 1030 permit udp 10.0.0.0 0.255.255.255 range 50020 50039 host 52.238.119.141 range 3478 3481
+ 1040 permit udp host 52.238.119.141 range 3478 3481 10.0.0.0 0.255.255.255 range 50020 50039
+ 1050 permit udp 10.0.0.0 0.255.255.255 range 50020 50039 host 52.244.160.207 range 3478 3481
+ 1060 permit udp host 52.244.160.207 range 3478 3481 10.0.0.0 0.255.255.255 range 50020 50039
+ 1070 permit udp 10.0.0.0 0.255.255.255 range 50020 50039 10.0.0.0 0.255.255.255 range 50020 50039
+ip access-list extended QOS-VIDEO-CLIN
+ 10 remark Place holder for Clinical video endpoints that do not mark their own traffic properly
+ 10 remark BSJ - 31Jul20 - Adjusted Pexip Entries per conversation with SD Video group
+ 10 remark --- permit GW PEXIP ranges to 10 addresses ---
+ 10 permit udp 10.232.103.0 0.3.0.255 range 40000 49999 10.0.0.0 0.255.255.255 gt 1024
+ 20 permit udp 10.0.0.0 0.255.255.255 gt 1024 10.232.103.0 0.3.0.255 range 40000 49999
+ 30 permit tcp 10.232.103.0 0.3.0.255 range 40000 49999 10.0.0.0 0.255.255.255 gt 1024
+ 40 permit tcp 10.0.0.0 0.255.255.255 gt 1024 10.232.103.0 0.3.0.255 range 40000 49999
+ 50 permit udp 10.0.0.0 0.255.255.255 10.232.122.128 0.3.0.63 range 40000 49999
+ 60 permit udp 10.232.122.128 0.3.0.63 range 40000 49999 10.0.0.0 0.255.255.255
+ 70 permit tcp 10.0.0.0 0.255.255.255 10.232.122.128 0.3.0.63 range 40000 49999
+ 80 permit tcp 10.232.122.128 0.3.0.63 range 40000 49999 10.0.0.0 0.255.255.255
+ 90 remark --- deny other 10 to 10 which could be caught in the permits below ---
+ 90 deny   udp 10.0.0.0 0.255.255.255 range 40000 49999 10.0.0.0 0.255.255.255 gt 1024
+ 100 deny   udp 10.0.0.0 0.255.255.255 gt 1024 10.0.0.0 0.255.255.255 range 40000 49999
+ 110 deny   tcp 10.0.0.0 0.255.255.255 range 40000 49999 10.0.0.0 0.255.255.255 gt 1024
+ 120 deny   tcp 10.0.0.0 0.255.255.255 gt 1024 10.0.0.0 0.255.255.255 range 40000 49999
+ 130 remark --- permit non 10 to 10: server range 40000-49999 -- client range gt 1024 ---
+ 130 permit udp any range 40000 49999 10.0.0.0 0.255.255.255 gt 1024
+ 140 permit udp 10.0.0.0 0.255.255.255 gt 1024 any range 40000 49999
+ 150 permit tcp any range 40000 49999 10.0.0.0 0.255.255.255 gt 1024
+ 160 permit tcp 10.0.0.0 0.255.255.255 gt 1024 any range 40000 49999
+ 170 remark *** TELE-ICU ***
+ 170 deny   tcp any eq www 445 8000 8050 any gt 1024
+ 180 deny   tcp any gt 1024 any eq www 445 8000 8050
+ 190 permit tcp 10.104.209.0 0.0.0.127 10.0.0.0 0.255.255.255
+ 200 permit tcp 10.0.0.0 0.255.255.255 10.104.209.0 0.0.0.127
+ 210 permit tcp 10.0.0.0 0.255.255.255 10.104.227.128 0.0.0.63
+ 220 permit tcp 10.104.227.128 0.0.0.63 10.0.0.0 0.255.255.255
+ 230 permit tcp 10.0.0.0 0.255.255.255 10.148.219.192 0.0.0.31
+ 240 permit tcp 10.148.219.192 0.0.0.31 10.0.0.0 0.255.255.255
+ 250 permit tcp 10.0.0.0 0.255.255.255 10.93.82.192 0.0.0.63
+ 260 permit tcp 10.93.82.192 0.0.0.63 10.0.0.0 0.255.255.255
+ 270 permit tcp 10.0.0.0 0.255.255.255 10.58.175.0 0.0.0.63
+ 280 permit tcp 10.58.175.0 0.0.0.63 10.0.0.0 0.255.255.255
+ 290 permit tcp 10.42.4.0 0.0.0.127 10.0.0.0 0.255.255.255
+ 300 permit tcp 10.0.0.0 0.255.255.255 10.42.4.0 0.0.0.127
+ 310 permit tcp 10.83.17.0 0.0.0.127 10.0.0.0 0.255.255.255
+ 320 permit tcp 10.0.0.0 0.255.255.255 10.83.17.0 0.0.0.127
+ 330 permit tcp 10.80.33.128 0.0.0.127 10.0.0.0 0.255.255.255
+ 340 permit tcp 10.0.0.0 0.255.255.255 10.80.33.128 0.0.0.127
+ 350 permit tcp 10.80.85.0 0.0.0.127 10.0.0.0 0.255.255.255
+ 360 permit tcp 10.0.0.0 0.255.255.255 10.80.85.0 0.0.0.127
+ 370 permit tcp 10.112.209.128 0.0.0.63 10.0.0.0 0.255.255.255
+ 380 permit tcp 10.0.0.0 0.255.255.255 10.112.209.128 0.0.0.63
+ 390 permit tcp 10.101.225.224 0.0.0.31 10.0.0.0 0.255.255.255
+ 400 permit tcp 10.0.0.0 0.255.255.255 10.101.225.224 0.0.0.31
+ 410 permit tcp 10.176.110.0 0.0.0.127 10.0.0.0 0.255.255.255
+ 420 permit tcp 10.0.0.0 0.255.255.255 10.176.110.0 0.0.0.127
+ 430 permit tcp 10.161.84.0 0.0.0.127 10.0.0.0 0.255.255.255
+ 440 permit tcp 10.0.0.0 0.255.255.255 10.161.84.0 0.0.0.127
+ 450 permit tcp 10.108.209.64 0.0.0.31 10.0.0.0 0.255.255.255
+ 460 permit tcp 10.0.0.0 0.255.255.255 10.108.209.64 0.0.0.31
+ip access-list extended QOS-VISTA
+ 10 remark Updated w/ validated subnets AND ports from Vista FO 4/6/2020
+ 10 remark Do not include VistRo or FTP in VistA Queue
+ 10 remark Include CCOW traffic to provide good CPRS performance during link congestions
+ 10 deny   tcp any eq ftp-data any
+ 20 deny   tcp any eq ftp any
+ 30 deny   tcp any any eq ftp-data
+ 40 deny   tcp any any eq ftp
+ 50 remark Region 1 VistA and CCOW
+ 50 deny   tcp 10.0.0.0 0.255.255.255 range 19601 19632 10.184.64.0 0.0.3.255
+ 60 deny   tcp 10.0.0.0 0.255.255.255 range 19601 19632 10.184.192.0 0.0.3.255
+ 70 deny   tcp 10.184.64.0 0.0.3.255 10.0.0.0 0.255.255.255 range 19601 19632
+ 80 deny   tcp 10.184.192.0 0.0.3.255 10.0.0.0 0.255.255.255 range 19601 19632
+ 90 deny   tcp 10.0.0.0 0.255.255.255 10.184.64.0 0.0.3.255 range 19601 19632
+ 100 deny   tcp 10.0.0.0 0.255.255.255 10.184.192.0 0.0.3.255 range 19601 19632
+ 110 deny   tcp 10.184.64.0 0.0.3.255 range 19601 19632 10.0.0.0 0.255.255.255
+ 120 deny   tcp 10.184.192.0 0.0.3.255 range 19601 19632 10.0.0.0 0.255.255.255
+ 130 permit tcp 10.0.0.0 0.255.255.255 10.184.64.0 0.0.3.255
+ 140 permit tcp 10.184.64.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 150 permit tcp 10.0.0.0 0.255.255.255 10.184.192.0 0.0.3.255
+ 160 permit tcp 10.184.192.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 170 remark Region 2 / Region 3-DR VistA and CCOW not CSJ
+ 170 remark Region 3 / Region 2 PITC VistA and CCOW not CSJ
+ 170 remark deny the DR-CSJ on TCP 196(MagicNumber)
+ 170 deny   tcp 10.0.0.0 0.255.255.255 10.205.148.0 0.0.3.255 range 19601 19649
+ 180 deny   tcp 10.0.0.0 0.255.255.255 10.205.152.0 0.0.0.255 range 19601 19649
+ 190 deny   tcp 10.205.148.0 0.0.3.255 range 19601 19649 10.0.0.0 0.255.255.255
+ 200 deny   tcp 10.205.152.0 0.0.0.255 range 19601 19649 10.0.0.0 0.255.255.255
+ 210 deny   tcp 10.0.0.0 0.255.255.255 range 19601 19649 10.205.148.0 0.0.3.255
+ 220 deny   tcp 10.0.0.0 0.255.255.255 range 19601 19649 10.205.152.0 0.0.0.255
+ 230 deny   tcp 10.205.148.0 0.0.3.255 10.0.0.0 0.255.255.255 range 19601 19649
+ 240 deny   tcp 10.205.152.0 0.0.0.255 10.0.0.0 0.255.255.255 range 19601 19649
+ 250 permit tcp 10.0.0.0 0.255.255.255 10.205.148.0 0.0.3.255
+ 260 permit tcp 10.205.148.0 0.0.3.255 10.0.0.0 0.255.255.255
+ 270 permit tcp 10.0.0.0 0.255.255.255 10.205.152.0 0.0.0.255
+ 280 permit tcp 10.205.152.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 290 remark Place holder for Region FPO VistA
+ 290 remark Region 4 VistA and CCOW
+ 290 deny   tcp 10.0.0.0 0.255.255.255 range 19601 19649 10.186.8.0 0.0.1.255
+ 300 deny   tcp 10.186.8.0 0.0.1.255 10.0.0.0 0.255.255.255 range 19601 19649
+ 310 deny   tcp 10.0.0.0 0.255.255.255 10.186.8.0 0.0.1.255 range 19601 19649
+ 320 deny   tcp 10.186.8.0 0.0.1.255 range 19601 19649 10.0.0.0 0.255.255.255
+ 330 deny   tcp 10.186.8.0 0.0.1.255 10.0.0.0 0.255.255.255 eq 1972
+ 340 deny   tcp 10.0.0.0 0.255.255.255 range 19601 19649 10.186.128.0 0.0.1.255
+ 350 deny   tcp 10.186.128.0 0.0.1.255 10.0.0.0 0.255.255.255 range 19601 19649
+ 360 deny   tcp 10.0.0.0 0.255.255.255 10.186.128.0 0.0.1.255 range 19601 19649
+ 370 deny   tcp 10.186.128.0 0.0.1.255 range 19601 19649 10.0.0.0 0.255.255.255
+ 380 deny   tcp 10.186.128.0 0.0.1.255 10.0.0.0 0.255.255.255 eq 1972
+ 390 deny   tcp 10.0.0.0 0.255.255.255 range 19601 19649 10.186.64.0 0.0.1.255
+ 400 deny   tcp 10.186.64.0 0.0.1.255 10.0.0.0 0.255.255.255 range 19601 19649
+ 410 deny   tcp 10.0.0.0 0.255.255.255 10.186.64.0 0.0.1.255 range 19601 19649
+ 420 deny   tcp 10.186.64.0 0.0.1.255 range 19601 19649 10.0.0.0 0.255.255.255
+ 430 deny   tcp 10.186.64.0 0.0.1.255 10.0.0.0 0.255.255.255 eq 1972
+ 440 deny   tcp 10.0.0.0 0.255.255.255 range 19601 19649 10.186.130.0 0.0.1.255
+ 450 deny   tcp 10.186.130.0 0.0.1.255 10.0.0.0 0.255.255.255 range 19601 19649
+ 460 deny   tcp 10.0.0.0 0.255.255.255 10.186.130.0 0.0.1.255 range 19601 19649
+ 470 deny   tcp 10.186.130.0 0.0.1.255 range 19601 19649 10.0.0.0 0.255.255.255
+ 480 deny   tcp 10.186.130.0 0.0.1.255 10.0.0.0 0.255.255.255 eq 1972
+ 490 remark To VistA systems
+ 490 permit tcp 10.0.0.0 0.255.255.255 10.186.8.0 0.0.1.255
+ 500 permit tcp 10.186.8.0 0.0.1.255 10.0.0.0 0.255.255.255
+ 510 permit tcp 10.0.0.0 0.255.255.255 10.186.128.0 0.0.1.255
+ 520 permit tcp 10.186.128.0 0.0.1.255 10.0.0.0 0.255.255.255
+ 530 permit tcp 10.0.0.0 0.255.255.255 10.186.64.0 0.0.1.255
+ 540 permit tcp 10.186.64.0 0.0.1.255 10.0.0.0 0.255.255.255
+ 550 permit tcp 10.0.0.0 0.255.255.255 10.186.130.0 0.0.1.255
+ 560 permit tcp 10.186.130.0 0.0.1.255 10.0.0.0 0.255.255.255
+ 570 remark host to SG CCOW traffic
+ 570 permit tcp 10.0.0.0 0.255.255.255 host 10.186.30.83 eq www
+ 580 permit tcp 10.0.0.0 0.255.255.255 10.186.30.84 0.0.0.3 eq www
+ 590 permit tcp 10.0.0.0 0.255.255.255 10.186.30.88 0.0.0.7 eq www
+ 600 permit tcp 10.0.0.0 0.255.255.255 10.186.30.96 0.0.0.3 eq www
+ 610 permit tcp 10.0.0.0 0.255.255.255 host 10.186.30.83 eq 2617
+ 620 permit tcp 10.0.0.0 0.255.255.255 10.186.30.84 0.0.0.3 eq 2617
+ 630 permit tcp 10.0.0.0 0.255.255.255 10.186.30.88 0.0.0.7 eq 2617
+ 640 permit tcp 10.0.0.0 0.255.255.255 10.186.30.96 0.0.0.3 eq 2617
+ 650 remark Host to BYN CCOW traffic
+ 650 permit tcp 10.0.0.0 0.255.255.255 host 10.186.146.36 eq www
+ 660 permit tcp 10.0.0.0 0.255.255.255 10.186.30.20 0.0.0.3 eq www
+ 670 permit tcp 10.0.0.0 0.255.255.255 10.186.30.24 0.0.0.7 eq www
+ 680 permit tcp 10.0.0.0 0.255.255.255 10.186.30.32 0.0.0.3 eq www
+ 690 permit tcp 10.0.0.0 0.255.255.255 host 10.186.146.36 eq 2617
+ 700 permit tcp 10.0.0.0 0.255.255.255 10.186.30.20 0.0.0.3 eq 2617
+ 710 permit tcp 10.0.0.0 0.255.255.255 10.186.30.24 0.0.0.7 eq 2617
+ 720 permit tcp 10.0.0.0 0.255.255.255 10.186.30.32 0.0.0.3 eq 2617
+ 730 remark Region 5 VistA N/A
+ 730 remark GWE-Gov Cloud East VistA(Primary)
+ 730 remark deny the DR-CSJ on TCP 197(MagicNumber)
+ 730 deny   tcp 10.0.0.0 0.255.255.255 10.248.24.0 0.0.7.255 range 19601 19649
+ 740 deny   tcp 10.0.0.0 0.255.255.255 10.248.23.0 0.0.0.255 range 19601 19649
+ 750 deny   tcp 10.248.24.0 0.0.7.255 range 19601 19649 10.0.0.0 0.255.255.255
+ 760 deny   tcp 10.248.23.0 0.0.0.255 range 19601 19649 10.0.0.0 0.255.255.255
+ 770 deny   tcp 10.0.0.0 0.255.255.255 range 19601 19649 10.248.24.0 0.0.7.255
+ 780 deny   tcp 10.0.0.0 0.255.255.255 range 19601 19649 10.248.23.0 0.0.0.255
+ 790 deny   tcp 10.248.24.0 0.0.7.255 10.0.0.0 0.255.255.255 range 19601 19649
+ 800 deny   tcp 10.248.23.0 0.0.0.255 10.0.0.0 0.255.255.255 range 19601 19649
+ 810 permit tcp 10.0.0.0 0.255.255.255 10.248.24.0 0.0.7.255
+ 820 permit tcp 10.248.24.0 0.0.7.255 10.0.0.0 0.255.255.255
+ 830 permit tcp 10.0.0.0 0.255.255.255 10.248.23.0 0.0.0.255
+ 840 permit tcp 10.248.23.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 850 remark GWN-Gov Cloud North VistA(Secondary)
+ 850 remark deny the DR-CSJ on TCP 197(MagicNumber)
+ 850 deny   tcp 10.0.0.0 0.255.255.255 10.247.168.0 0.0.7.255 range 19601 19649
+ 860 deny   tcp 10.0.0.0 0.255.255.255 10.247.167.0 0.0.0.255 range 19601 19649
+ 870 deny   tcp 10.247.168.0 0.0.7.255 range 19601 19649 10.0.0.0 0.255.255.255
+ 880 deny   tcp 10.247.167.0 0.0.0.255 range 19601 19649 10.0.0.0 0.255.255.255
+ 890 deny   tcp 10.0.0.0 0.255.255.255 range 19601 19649 10.247.168.0 0.0.7.255
+ 900 deny   tcp 10.0.0.0 0.255.255.255 range 19601 19649 10.247.167.0 0.0.0.255
+ 910 deny   tcp 10.247.168.0 0.0.7.255 10.0.0.0 0.255.255.255 range 19601 19649
+ 920 deny   tcp 10.247.167.0 0.0.0.255 10.0.0.0 0.255.255.255 range 19601 19649
+ 930 permit tcp 10.0.0.0 0.255.255.255 10.247.168.0 0.0.7.255
+ 940 permit tcp 10.247.168.0 0.0.7.255 10.0.0.0 0.255.255.255
+ 950 permit tcp 10.0.0.0 0.255.255.255 10.247.167.0 0.0.0.255
+ 960 permit tcp 10.247.167.0 0.0.0.255 10.0.0.0 0.255.255.255
+ip access-list extended QOS-VOIP
+ 10 remark Place holder for VoIP endpoints that do not mark their own traffic properly
+ 10 permit udp 10.232.113.10 0.3.0.1 range 7000 11999 10.0.0.0 0.255.255.255
+ 20 permit udp 10.0.0.0 0.255.255.255 range 50000 54999 10.232.113.10 0.3.0.1
+ 30 remark *** MS TEAMS VOICE ***
+ 30 permit udp 10.0.0.0 0.255.255.255 range 50000 50019 13.107.64.0 0.0.63.255 range 3478 3481
+ 40 permit udp 13.107.64.0 0.0.63.255 range 3478 3481 10.0.0.0 0.255.255.255 range 50000 50019
+ 50 permit udp 10.0.0.0 0.255.255.255 range 50000 50019 52.112.0.0 0.3.255.255 range 3478 3481
+ 60 permit udp 52.112.0.0 0.3.255.255 range 3478 3481 10.0.0.0 0.255.255.255 range 50000 50019
+ 70 permit udp 10.0.0.0 0.255.255.255 range 50000 50019 52.120.0.0 0.3.255.255 range 3478 3481
+ 80 permit udp 52.120.0.0 0.3.255.255 range 3478 3481 10.0.0.0 0.255.255.255 range 50000 50019
+ 90 permit udp 10.0.0.0 0.255.255.255 range 50000 50019 host 52.238.119.141 range 3478 3481
+ 100 permit udp host 52.238.119.141 range 3478 3481 10.0.0.0 0.255.255.255 range 50000 50019
+ 110 permit udp 10.0.0.0 0.255.255.255 range 50000 50019 host 52.244.160.207 range 3478 3481
+ 120 permit udp host 52.244.160.207 range 3478 3481 10.0.0.0 0.255.255.255 range 50000 50019
+ 130 permit udp 10.0.0.0 0.255.255.255 range 50000 50019 10.0.0.0 0.255.255.255 range 50000 50019
+ip access-list extended QOS-VOIP-CONTROL
+ 10 remark H.323 H.245 H.225
+ 10 permit tcp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 range 11000 11999
+ 20 remark Media Gateway Control Protocol (MGCP)
+ 20 permit udp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq 2427
+ 30 permit udp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq 2727
+ 40 permit tcp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq 2428
+ 50 remark Cisco Finesse Call Center Agent Notification SLC - VACO UCCE
+ 50 permit tcp 10.5.0.0 0.0.255.255 host 10.221.123.5 eq www
+ 60 permit tcp host 10.221.123.5 eq www 10.5.0.0 0.0.255.255
+ 70 permit tcp 10.5.0.0 0.0.255.255 host 10.221.123.5 eq 8082
+ 80 permit tcp host 10.221.123.5 eq 8082 10.5.0.0 0.0.255.255
+ 90 permit tcp 10.5.0.0 0.0.255.255 host 10.221.123.5 eq 443
+ 100 permit tcp host 10.221.123.5 eq 443 10.5.0.0 0.0.255.255
+ 110 permit tcp 10.5.0.0 0.0.255.255 host 10.221.123.5 eq 8445
+ 120 permit tcp host 10.221.123.5 eq 8445 10.5.0.0 0.0.255.255
+ 130 permit tcp 10.5.0.0 0.0.255.255 host 10.221.123.5 eq 5222
+ 140 permit tcp host 10.221.123.5 eq 5222 10.5.0.0 0.0.255.255
+ 150 permit tcp 10.5.0.0 0.0.255.255 host 10.221.123.5 eq 5223
+ 160 permit tcp host 10.221.123.5 eq 5223 10.5.0.0 0.0.255.255
+ 170 permit tcp 10.5.0.0 0.0.255.255 host 10.221.123.5 eq 7071
+ 180 permit tcp host 10.221.123.5 eq 7071 10.5.0.0 0.0.255.255
+ 190 permit tcp 10.5.0.0 0.0.255.255 host 10.221.123.5 eq 7443
+ 200 permit tcp host 10.221.123.5 eq 7443 10.5.0.0 0.0.255.255
+ 210 permit tcp 10.5.0.0 0.0.255.255 host 10.221.238.42 eq www
+ 220 permit tcp host 10.221.238.42 eq www 10.5.0.0 0.0.255.255
+ 230 permit tcp 10.5.0.0 0.0.255.255 host 10.221.238.42 eq 8082
+ 240 permit tcp host 10.221.238.42 eq 8082 10.5.0.0 0.0.255.255
+ 250 permit tcp 10.5.0.0 0.0.255.255 host 10.221.238.42 eq 443
+ 260 permit tcp host 10.221.238.42 eq 443 10.5.0.0 0.0.255.255
+ 270 permit tcp 10.5.0.0 0.0.255.255 host 10.221.238.42 eq 8445
+ 280 permit tcp host 10.221.238.42 eq 8445 10.5.0.0 0.0.255.255
+ 290 permit tcp 10.5.0.0 0.0.255.255 host 10.221.238.42 eq 5222
+ 300 permit tcp host 10.221.238.42 eq 5222 10.5.0.0 0.0.255.255
+ 310 permit tcp 10.5.0.0 0.0.255.255 host 10.221.238.42 eq 5223
+ 320 permit tcp host 10.221.238.42 eq 5223 10.5.0.0 0.0.255.255
+ 330 permit tcp 10.5.0.0 0.0.255.255 host 10.221.238.42 eq 7071
+ 340 permit tcp host 10.221.238.42 eq 7071 10.5.0.0 0.0.255.255
+ 350 permit tcp 10.5.0.0 0.0.255.255 host 10.221.238.42 eq 7443
+ 360 permit tcp host 10.221.238.42 eq 7443 10.5.0.0 0.0.255.255
+ 370 permit tcp 10.5.0.0 0.0.255.255 host 10.221.123.6 eq www
+ 380 permit tcp host 10.221.123.6 eq www 10.5.0.0 0.0.255.255
+ 390 permit tcp 10.5.0.0 0.0.255.255 host 10.221.123.6 eq 8082
+ 400 permit tcp host 10.221.123.6 eq 8082 10.5.0.0 0.0.255.255
+ 410 permit tcp 10.5.0.0 0.0.255.255 host 10.221.123.6 eq 443
+ 420 permit tcp host 10.221.123.6 eq 443 10.5.0.0 0.0.255.255
+ 430 permit tcp 10.5.0.0 0.0.255.255 host 10.221.123.6 eq 8445
+ 440 permit tcp host 10.221.123.6 eq 8445 10.5.0.0 0.0.255.255
+ 450 remark Cisco Finesse Call Center Agent Notification
+ 450 permit tcp 10.0.0.0 0.255.255.255 10.184.197.128 0.0.0.127 eq 2748
+ 460 permit tcp 10.184.197.128 0.0.0.127 eq 2748 10.0.0.0 0.255.255.255
+ 470 permit tcp 10.0.0.0 0.255.255.255 10.184.197.128 0.0.0.127 eq 2789
+ 480 permit tcp 10.184.197.128 0.0.0.127 eq 2789 10.0.0.0 0.255.255.255
+ 490 permit tcp 10.0.0.0 0.255.255.255 10.184.197.128 0.0.0.127 eq 5222
+ 500 permit tcp 10.184.197.128 0.0.0.127 eq 5222 10.0.0.0 0.255.255.255
+ 510 permit tcp 10.0.0.0 0.255.255.255 10.184.197.128 0.0.0.127 eq 5443
+ 520 permit tcp 10.184.197.128 0.0.0.127 eq 5443 10.0.0.0 0.255.255.255
+ 530 permit tcp 10.0.0.0 0.255.255.255 10.184.197.128 0.0.0.127 eq 7071
+ 540 permit tcp 10.184.197.128 0.0.0.127 eq 7071 10.0.0.0 0.255.255.255
+ 550 permit tcp 10.0.0.0 0.255.255.255 10.184.197.128 0.0.0.127 eq 7443
+ 560 permit tcp 10.184.197.128 0.0.0.127 eq 7443 10.0.0.0 0.255.255.255
+ 570 permit tcp 10.0.0.0 0.255.255.255 10.184.197.128 0.0.0.127 eq 8443
+ 580 permit tcp 10.184.197.128 0.0.0.127 eq 8443 10.0.0.0 0.255.255.255
+ 590 permit tcp 10.0.0.0 0.255.255.255 10.184.69.128 0.0.0.127 eq 2748
+ 600 permit tcp 10.184.69.128 0.0.0.127 eq 2748 10.0.0.0 0.255.255.255
+ 610 permit tcp 10.0.0.0 0.255.255.255 10.184.69.128 0.0.0.127 eq 2789
+ 620 permit tcp 10.184.69.128 0.0.0.127 eq 2789 10.0.0.0 0.255.255.255
+ 630 permit tcp 10.0.0.0 0.255.255.255 10.184.69.128 0.0.0.127 eq 5222
+ 640 permit tcp 10.184.69.128 0.0.0.127 eq 5222 10.0.0.0 0.255.255.255
+ 650 permit tcp 10.0.0.0 0.255.255.255 10.184.69.128 0.0.0.127 eq 5443
+ 660 permit tcp 10.184.69.128 0.0.0.127 eq 5443 10.0.0.0 0.255.255.255
+ 670 permit tcp 10.0.0.0 0.255.255.255 10.184.69.128 0.0.0.127 eq 7071
+ 680 permit tcp 10.184.69.128 0.0.0.127 eq 7071 10.0.0.0 0.255.255.255
+ 690 permit tcp 10.0.0.0 0.255.255.255 10.184.69.128 0.0.0.127 eq 7443
+ 700 permit tcp 10.184.69.128 0.0.0.127 eq 7443 10.0.0.0 0.255.255.255
+ 710 permit tcp 10.0.0.0 0.255.255.255 10.184.69.128 0.0.0.127 eq 8443
+ 720 permit tcp 10.184.69.128 0.0.0.127 eq 8443 10.0.0.0 0.255.255.255
+ 730 remark Webex Signaling
+ 730 permit tcp 10.0.0.0 0.255.255.255 64.68.96.0 0.0.31.255 range 5060 5070
+ 740 permit udp 10.0.0.0 0.255.255.255 64.68.96.0 0.0.31.255 range 5060 5070
+ 750 permit tcp 64.68.96.0 0.0.31.255 range 5060 5070 10.0.0.0 0.255.255.255
+ 760 permit udp 64.68.96.0 0.0.31.255 range 5060 50701 0.0.0.0 0.255.255.255
+ 770 permit tcp 10.0.0.0 0.255.255.255 64.68.104.0 0.0.7.255 range 5060 5070
+ 780 permit udp 10.0.0.0 0.255.255.255 64.68.104.0 0.0.7.255 range 5060 5070
+ 790 permit tcp 64.68.104.0 0.0.7.255 range 5060 5070 10.0.0.0 0.255.255.255
+ 800 permit udp 64.68.104.0 0.0.7.255 range 5060 5070 10.0.0.0 0.255.255.255
+ 810 permit tcp 10.0.0.0 0.255.255.255 64.68.120.0 0.0.7.255 range 5060 5070
+ 820 permit udp 10.0.0.0 0.255.255.255 64.68.120.0 0.0.7.255 range 5060 5070
+ 830 permit tcp 64.68.120.0 0.0.7.255 range 5060 5070 10.0.0.0 0.255.255.255
+ 840 permit udp 64.68.120.0 0.0.7.255 range 5060 5070 10.0.0.0 0.255.255.255
+ 850 permit tcp 10.0.0.0 0.255.255.255 66.114.160.0 0.0.15.255 range 5060 5070
+ 860 permit udp 10.0.0.0 0.255.255.255 66.114.160.0 0.0.15.255 range 5060 5070
+ 870 permit tcp 66.114.160.0 0.0.15.255 range 5060 5070 10.0.0.0 0.255.255.255
+ 880 permit udp 66.114.160.0 0.0.15.255 range 5060 5070 10.0.0.0 0.255.255.255
+ 890 permit tcp 10.0.0.0 0.255.255.255 66.163.32.0 0.0.31.255 range 5060 5070
+ 900 permit udp 10.0.0.0 0.255.255.255 66.163.32.0 0.0.31.255 range 5060 5070
+ 910 permit tcp 66.163.32.0 0.0.31.255 range 5060 5070 10.0.0.0 0.255.255.255
+ 920 permit udp 66.163.32.0 0.0.31.255 range 5060 5070 10.0.0.0 0.255.255.255
+ 930 permit tcp 10.0.0.0 0.255.255.255 150.253.128.0 0.0.63.255 range 5060 5070
+ 940 permit udp 10.0.0.0 0.255.255.255 150.253.128.0 0.0.63.255 range 5060 5070
+ 950 permit tcp 150.253.128.0 0.0.63.255 range 5060 5070 10.0.0.0 0.255.255.255
+ 960 permit udp 150.253.128.0 0.0.63.255 range 5060 5070 10.0.0.0 0.255.255.255
+ 970 permit tcp 10.0.0.0 0.255.255.255 170.133.128.0 0.0.31.255 range 5060 5070
+ 980 permit udp 10.0.0.0 0.255.255.255 170.133.128.0 0.0.31.255 range 5060 5070
+ 990 permit tcp 170.133.128.0 0.0.31.255 range 5060 5070 10.0.0.0 0.255.255.255
+ 1000 permit udp 170.133.128.0 0.0.31.255 range 5060 5070 10.0.0.0 0.255.255.255
+ 1010 permit tcp 10.0.0.0 0.255.255.255 173.39.224.0 0.0.31.255 range 5060 5070
+ 1020 permit udp 10.0.0.0 0.255.255.255 173.39.224.0 0.0.31.255 range 5060 5070
+ 1030 permit tcp 173.39.224.0 0.0.31.255 range 5060 5070 10.0.0.0 0.255.255.255
+ 1040 permit udp 173.39.224.0 0.0.31.255 range 5060 5070 10.0.0.0 0.255.255.255
+ 1050 permit tcp 10.0.0.0 0.255.255.255 173.243.0.0 0.0.15.255 range 5060 5070
+ 1060 permit udp 10.0.0.0 0.255.255.255 173.243.0.0 0.0.15.255 range 5060 5070
+ 1070 permit tcp 173.243.0.0 0.0.15.255 range 5060 5070 10.0.0.0 0.255.255.255
+ 1080 permit udp 173.243.0.0 0.0.15.255 range 5060 5070 10.0.0.0 0.255.255.255
+ 1090 permit tcp 10.0.0.0 0.255.255.255 207.182.160.0 0.0.31.255 range 5060 5070
+ 1100 permit udp 10.0.0.0 0.255.255.255 207.182.160.0 0.0.31.255 range 5060 5070
+ 1110 permit tcp 207.182.160.0 0.0.31.255 range 5060 5070 10.0.0.0 0.255.255.255
+ 1120 permit udp 207.182.160.0 0.0.31.255 range 5060 5070 10.0.0.0 0.255.255.255
+ 1130 permit tcp 10.0.0.0 0.255.255.255 207.182.172.0 0.0.3.255 range 5060 5070
+ 1140 permit udp 10.0.0.0 0.255.255.255 207.182.172.0 0.0.3.255 range 5060 5070
+ 1150 permit tcp 207.182.172.0 0.0.3.255 range 5060 5070 10.0.0.0 0.255.255.255
+ 1160 permit udp 207.182.172.0 0.0.3.255 range 5060 5070 10.0.0.0 0.255.255.255
+ 1170 permit tcp 10.0.0.0 0.255.255.255 209.197.192.0 0.0.31.255 range 5060 5070
+ 1180 permit udp 10.0.0.0 0.255.255.255 209.197.192.0 0.0.31.255 range 5060 5070
+ 1190 permit tcp 209.197.192.0 0.0.31.255 range 5060 5070 10.0.0.0 0.255.255.255
+ 1200 permit udp 209.197.192.0 0.0.31.255 range 5060 5070 10.0.0.0 0.255.255.255
+ 1210 remark BSJ - 31Jul20 - Adjusted Pexip Entries per conversation with SD Video group
+ 1210 remark --- permit GW PEXIP ranges to 10 addresses ---
+ 1210 permit tcp 10.232.103.0 0.3.0.255 range 33000 39999 10.0.0.0 0.255.255.255
+ 1220 permit tcp 10.0.0.0 0.255.255.255 10.232.103.0 0.3.0.255 range 33000 39999
+ 1230 permit tcp 10.232.122.128 0.3.0.63 range 33000 39999 10.0.0.0 0.255.255.255
+ 1240 permit tcp 10.0.0.0 0.255.255.255 10.232.122.128 0.3.0.63 range 33000 39999
+ 1250 permit tcp 10.232.122.174 0.3.0.0 eq 443 10.0.0.0 0.255.255.255
+ 1260 permit tcp 10.0.0.0 0.255.255.255 10.232.122.174 0.3.0.0 eq 443
+ 1270 permit tcp 10.232.122.167 0.3.0.0 eq 443 10.0.0.0 0.255.255.255
+ 1280 permit tcp 10.0.0.0 0.255.255.255 10.232.122.167 0.3.0.0 eq 443
+ 1290 permit tcp 10.232.103.0 0.3.0.255 range 1719 1720 10.0.0.0 0.255.255.255
+ 1300 permit tcp 10.0.0.0 0.255.255.255 10.232.103.0 0.3.0.255 range 1719 1720
+ 1310 permit tcp 10.232.122.128 0.3.0.63 range 1719 1720 10.0.0.0 0.255.255.255
+ 1320 permit tcp 10.0.0.0 0.255.255.255 10.232.122.128 0.3.0.63 range 1719 1720
+ 1330 remark --- permit Univago/Pexip to 10 Connection
+ 1330 permit tcp 10.232.123.90 0.3.0.0 eq 8443 10.0.0.0 0.255.255.255
+ 1340 permit tcp 10.0.0.0 0.255.255.255 10.232.123.90 0.3.0.0 eq 8443
+ 1350 permit tcp 10.232.123.90 0.3.0.0 eq 3443 10.0.0.0 0.255.255.255
+ 1360 permit tcp 10.0.0.0 0.255.255.255 10.232.123.90 0.3.0.0 eq 3443
+ 1370 remark --- deny other 10 to 10 which could be caught in the permits below ---
+ 1370 deny   udp 10.0.0.0 0.255.255.255 range 33000 39999 10.0.0.0 0.255.255.255
+ 1380 deny   udp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 range 33000 39999
+ 1390 deny   tcp 10.0.0.0 0.255.255.255 range 33000 39999 10.0.0.0 0.255.255.255
+ 1400 deny   tcp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 range 33000 39999
+ 1410 remark --- permit non 10 to 10: server range 33000 39999 ---
+ 1410 permit udp any range 33000 39999 10.0.0.0 0.255.255.255
+ 1420 permit udp 10.0.0.0 0.255.255.255 any range 33000 39999
+ 1430 permit tcp any range 33000 39999 10.0.0.0 0.255.255.255
+ 1440 permit tcp 10.0.0.0 0.255.255.255 any range 33000 39999
+ 1450 remark --- permit Care2 to 10: 443 WebRTC ---
+ 1450 permit tcp host 13.248.142.109 eq 443 10.0.0.0 0.255.255.255
+ 1460 permit tcp 10.0.0.0 0.255.255.255 host 13.248.142.109 eq 443
+ 1470 permit tcp host 76.223.15.21 eq 443 10.0.0.0 0.255.255.255
+ 1480 permit tcp 10.0.0.0 0.255.255.255 host 76.223.15.21 eq 443
+ 1490 remark Session Initiation Protocol (SIP)
+ 1490 permit udp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq 5060
+ 1500 permit tcp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq 5061
+ 1510 permit tcp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq 5060
+ 1520 permit udp 10.0.0.0 0.255.255.255 eq 5060 10.0.0.0 0.255.255.255
+ 1530 permit tcp 10.0.0.0 0.255.255.255 eq 5061 10.0.0.0 0.255.255.255
+ 1540 permit tcp 10.0.0.0 0.255.255.255 eq 5060 10.0.0.0 0.255.255.255
+ 1550 remark Skinny Client Control Protocol (SCCP)
+ 1550 permit tcp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq 2000
+ 1560 permit tcp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq 2001
+ 1570 permit tcp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq 2002
+ 1580 permit tcp 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255 eq 2443
+ 1590 permit tcp 10.0.0.0 0.255.255.255 eq 2000 10.0.0.0 0.255.255.255
+ 1600 permit tcp 10.0.0.0 0.255.255.255 eq 2001 10.0.0.0 0.255.255.255
+ 1610 permit tcp 10.0.0.0 0.255.255.255 eq 2002 10.0.0.0 0.255.255.255
+ 1620 permit tcp 10.0.0.0 0.255.255.255 eq 2443 10.0.0.0 0.255.255.255
+ip access-list extended SSH-VTY
+ 10 remark SSH Access to router
+ 10 permit tcp 10.0.0.0 0.255.255.255 any eq 22
+ 20 permit tcp 172.16.0.0 0.15.255.255 any eq 22
+ 30 deny   ip any any log
+!
+!
+ip prefix-list GLBL-eBGP-IN__LOCAL-PREFIXES seq 10 permit 172.23.117.3/32
+ip prefix-list GLBL-eBGP-IN__LOCAL-PREFIXES seq 20 permit 10.250.231.96/30
+!
+ip prefix-list RR-IN__LOCAL-PREFIXES seq 10 permit 10.90.167.196/32
+ip prefix-list RR-IN__LOCAL-PREFIXES seq 20 permit 10.90.167.197/32
+ip prefix-list RR-IN__LOCAL-PREFIXES seq 30 permit 10.90.196.0/22
+ip prefix-list RR-IN__LOCAL-PREFIXES seq 40 permit 10.90.200.0/22
+ip prefix-list RR-IN__LOCAL-PREFIXES seq 50 permit 10.90.204.0/23
+!
+ip prefix-list RR-OUT__MPLS-ROUTES seq 10 permit 10.90.167.196/32
+ip prefix-list RR-OUT__MPLS-ROUTES seq 20 permit 10.90.196.0/22
+ip prefix-list RR-OUT__MPLS-ROUTES seq 30 permit 10.90.200.0/22
+ip prefix-list RR-OUT__MPLS-ROUTES seq 40 permit 10.90.204.0/23
+logging source-interface Loopback0 vrf VAVRF
+ipv6 route FD00::1/128 Null0 name RTBH
+ipv6 route vrf VAVRF FD00::1/128 Null0 name RTBH
+!
+!
+ipv6 prefix-list RR-IN-IPV6__LOCAL-PREFIXES seq 10 permit 2600:8020:7264::/48 le 128
+!
+ipv6 prefix-list RR-OUT-IPV6__MPLS-ROUTES seq 10 permit 2600:8020:7264::/48
+ipv6 prefix-list RR-OUT-IPV6__MPLS-ROUTES seq 20 permit 2600:8020:7264:1::1/128
+!
+ipv6 prefix-list VAORT-IGP-IN-IPV6__FROM-CORE seq 10 permit 2600:8020:7264::/48 le 128
+ipv6 prefix-list VAORT-IGP-IN-IPV6__FROM-CORE seq 20 deny ::/0 le 128
+!
+route-map RR-IN-IPV6__VAVPN deny 5 
+ description DENIES LOCAL ROUTES WHICH MAY BE ADVERTISED BACK TO SITE BY PE
+ match ipv6 address prefix-list RR-IN-IPV6__LOCAL-PREFIXES
+!
+route-map RR-IN-IPV6__VAVPN permit 10 
+ description SETS NEXT HOP ON ROUTES WITH COMMUNITY 64666:666 (RTBHR) TO NULL 0
+ match community RR-IN-IPV6__RTBHR
+ set ipv6 next-hop FD00::1
+!
+route-map RR-IN-IPV6__VAVPN permit 20 
+ description SETS PRIMARY GATEWAY FOR DEFAULT ROUTE AND BPE TRAFFIC
+ match community RR-IN-IPV6__DEFAULT-S RR-IN-IPV6__BPE-PRI RR-IN-IPV6__PRI
+ continue
+ set local-preference 4000
+!
+route-map RR-IN-IPV6__VAVPN permit 30 
+ description SETS SECOND PERFERENCE GATEWAY FOR DEFAULT ROUTE AND BPE TRAFFIC
+ match community RR-IN-IPV6__DEFAULT-W RR-IN-IPV6__BPE-SEC RR-IN-IPV6__SEC
+ continue
+ set local-preference 3000
+!
+route-map RR-IN-IPV6__VAVPN permit 40 
+ description SETS THIRD PERFERENCE GATEWAY FOR DEFAULT ROUTE AND BPE TRAFFIC
+ match community RR-IN-IPV6__DEFAULT-N RR-IN-IPV6__BPE-TIR RR-IN-IPV6__TER
+ continue
+ set local-preference 2000
+!
+route-map RR-IN-IPV6__VAVPN permit 50 
+ description SETS FOURTH PERFERENCE GATEWAY FOR DEFAULT ROUTE AND BPE TRAFFIC
+ match community RR-IN-IPV6__DEFAULT-E RR-IN-IPV6__BPE-QUA RR-IN-IPV6__QUA
+ continue
+ set local-preference 1000
+!
+route-map RR-IN-IPV6__VAVPN permit 60 
+ description SETS VAORT AS NEXT HOP FOR ALL ORT ROUTES
+ set ipv6 next-hop encapsulate l3vpn RR-IN__VAVPN
+!
+route-map VAORT-IGP-IN__FROM-CORE deny 10 
+ description DROPS VAORT ROUTES FROM INCOMMING IGP UPDATE
+ match tag 170
+!
+route-map VAORT-IGP-IN__FROM-CORE permit 20 
+ description ACCEPTS ROUTES ORIGINATED FROM THE SITE LAN
+!
+route-map GLBL-eBGP-IN__PROVIDER deny 5 
+ description FILTER LOCAL ROUTES FROM PE UPDATE
+ match ip address prefix-list GLBL-eBGP-IN__LOCAL-PREFIXES
+!
+route-map GLBL-eBGP-IN__PROVIDER permit 10 
+ description IDENTIFY RECEIVED RTBH STATIC ROUTES AND THEN SET BGP ATTRIBUTES
+ match community GLBL-eBGP-IN__RTBHR
+ set metric 6
+ set local-preference 666666
+ set origin igp
+ set ip next-hop 192.0.2.2
+!
+route-map GLBL-eBGP-IN__PROVIDER permit 20 
+ description ALLOW AND DO NOT MODIFY ALL OTHER ROUTES
+!
+route-map RR-OUT__VAVPN permit 10 
+ description ADVERTISE SITE ROUTES - SET MED AND TRANSIT COMMUNITY
+ match ip address prefix-list RR-OUT__MPLS-ROUTES
+ match as-path 1
+ set metric 100
+ set community 65094:13979
+!
+route-map RR-OUT__VAVPN permit 20 
+ description ADVERTISES SISTER ROUTER LOOP 0 AND SETS MED
+ match as-path 1
+ set metric 1000
+ set community 64555:66
+!
+route-map VAORT-IGP-IN-IPV6__FROM-BGP deny 10 
+ description BLOCK RTBH BGP ROUTES FROM BEING REDISTRIBUTED INTO EIGRP
+ match community VAORT-IGP-IN-IPV6__RTBHR
+!
+route-map VAORT-IGP-IN-IPV6__FROM-BGP permit 20 
+ description PRIMARY GATEWAY FOR DEFAULT ROUTE TRAFFIC
+ match community VAORT-IGP-IN-IPV6__DEFAULT-S VAORT-IGP-IN-IPV6__BPE-PRI VAORT-IGP-IN-IPV6__PRI
+ set metric 1000000 10 255 1 1500
+ set tag 170
+!
+route-map VAORT-IGP-IN-IPV6__FROM-BGP permit 30 
+ description SECOND PERFERENCE GATEWAY FOR DEFAULT ROUTE TRAFFIC
+ match community VAORT-IGP-IN-IPV6__DEFAULT-W VAORT-IGP-IN-IPV6__BPE-SEC VAORT-IGP-IN-IPV6__SEC
+ set metric 1000000 20 255 1 1500
+ set tag 170
+!
+route-map VAORT-IGP-IN-IPV6__FROM-BGP permit 40 
+ description THIRD PERFERENCE GATEWAY FOR DEFAULT ROUTE TRAFFIC
+ match community VAORT-IGP-IN-IPV6__DEFAULT-N VAORT-IGP-IN-IPV6__BPE-TIR VAORT-IGP-IN-IPV6__TER
+ set metric 1000000 30 255 1 1500
+ set tag 170
+!
+route-map VAORT-IGP-IN-IPV6__FROM-BGP permit 50 
+ description FOURTH PERFERENCE GATEWAY FOR DEFAULT ROUTE TRAFFIC
+ match community VAORT-IGP-IN-IPV6__DEFAULT-E VAORT-IGP-IN-IPV6__BPE-QUA VAORT-IGP-IN-IPV6__QUA
+ set metric 1000000 40 255 1 1500
+ set tag 170
+!
+route-map VAORT-IGP-IN-IPV6__FROM-BGP permit 60 
+ description REDISTRIBUTE BGP ROUTES WITH POOR METRIC SO MATCHING TRAFFIC IS ROUTED TO OTHER WAN ROUTER
+ match community VAORT-IGP-IN-IPV6__TRANSIT-E VAORT-IGP-IN-IPV6__TRANSIT-N VAORT-IGP-IN-IPV6__TRANSIT-S VAORT-IGP-IN-IPV6__TRANSIT-W VAORT-IGP-IN-IPV6__POISON
+ set metric 1000000 50 255 1 1500
+ set tag 170
+!
+route-map VAORT-IGP-IN-IPV6__FROM-BGP permit 70 
+ description REDISTRIBUTE SINGLE SP REMOTE SITE PREFIXES WITH NORMAL METRIC AND PROVIDER PATH TAG
+ match community VAORT-IGP-IN-IPV6__SINGLE-ATT
+ set metric 1000000 10 255 1 1500
+ set tag 13979
+!
+route-map VAORT-IGP-IN-IPV6__FROM-BGP permit 80 
+ description REDISTRIBUTE BGP ROUTES NORMAL METRIC SO MATCHING TRAFFIC IS CEF LOAD SHARED AT LAN CORE
+ set metric 1000000 10 255 1 1500
+ set tag 170
+!
+route-map RR-OUT-IPV6__VAVPN permit 10 
+ description ADVERTISE SITE ROUTES - SET MED AND TRANSIT COMMUNITY
+ match ip address prefix-list RR-OUT-IPV6__MPLS-ROUTES
+ match as-path 1
+ set metric 100
+ set community 65094:13979
+!
+route-map RR-OUT-IPV6__VAVPN permit 20 
+ description ADVERTISES SISTER ROUTER LOOP 0 AND SETS MED
+ match as-path 1
+ set metric 1000
+ set community 64555:66
+!
+route-map VAORT-IGP-IN__FROM-BGP deny 10 
+ description BLOCK RTBH BGP ROUTES FROM BEING REDISTRIBUTED INTO EIGRP
+ match community VAORT-IGP-IN__RTBHR
+!
+route-map VAORT-IGP-IN__FROM-BGP permit 20 
+ description PRIMARY GATEWAY FOR DEFAULT ROUTE TRAFFIC
+ match community VAORT-IGP-IN__DEFAULT-S VAORT-IGP-IN__BPE-PRI VAORT-IGP-IN__PRI
+ set metric 1000000 10 255 1 1500
+ set tag 170
+!
+route-map VAORT-IGP-IN__FROM-BGP permit 30 
+ description SECOND PERFERENCE GATEWAY FOR DEFAULT ROUTE TRAFFIC
+ match community VAORT-IGP-IN__DEFAULT-W VAORT-IGP-IN__BPE-SEC VAORT-IGP-IN__SEC
+ set metric 1000000 20 255 1 1500
+ set tag 170
+!
+route-map VAORT-IGP-IN__FROM-BGP permit 40 
+ description THIRD PERFERENCE GATEWAY FOR DEFAULT ROUTE TRAFFIC
+ match community VAORT-IGP-IN__DEFAULT-N VAORT-IGP-IN__BPE-TIR VAORT-IGP-IN__TER
+ set metric 1000000 30 255 1 1500
+ set tag 170
+!
+route-map VAORT-IGP-IN__FROM-BGP permit 50 
+ description FOURTH PERFERENCE GATEWAY FOR DEFAULT ROUTE TRAFFIC
+ match community VAORT-IGP-IN__DEFAULT-E VAORT-IGP-IN__BPE-QUA VAORT-IGP-IN__QUA
+ set metric 1000000 40 255 1 1500
+ set tag 170
+!
+route-map VAORT-IGP-IN__FROM-BGP permit 60 
+ description REDISTRIBUTE BGP ROUTES WITH POOR METRIC SO MATCHING TRAFFIC IS ROUTED TO OTHER WAN ROUTER
+ match community VAORT-IGP-IN__TRANSIT-E VAORT-IGP-IN__TRANSIT-N VAORT-IGP-IN__TRANSIT-S VAORT-IGP-IN__TRANSIT-W VAORT-IGP-IN__POISON
+ set metric 1000000 50 255 1 1500
+ set tag 170
+!
+route-map VAORT-IGP-IN__FROM-BGP permit 70 
+ description REDISTRIBUTE SINGLE SP REMOTE SITE PREFIXES WITH NORMAL METRIC AND PROVIDER PATH TAG
+ match community VAORT-IGP-IN__SINGLE-ATT
+ set metric 1000000 10 255 1 1500
+ set tag 13979
+!
+route-map VAORT-IGP-IN__FROM-BGP permit 80 
+ description REDISTRIBUTE BGP ROUTES NORMAL METRIC SO MATCHING TRAFFIC IS CEF LOAD SHARED AT LAN CORE
+ set metric 1000000 10 255 1 1500
+ set tag 170
+!
+route-map RR-IN__VAVPN deny 5 
+ description DENIES LOCAL ROUTES WHICH MAY BE ADVERTISED BACK TO SITE BY PE
+ match ip address prefix-list RR-IN__LOCAL-PREFIXES
+!
+route-map RR-IN__VAVPN permit 10 
+ description SETS NEXT HOP ON ROUTES WITH COMMUNITY 64666:666 (RTBHR) TO NULL 0
+ match community RR-IN__RTBHR
+ set ip next-hop 192.0.2.2
+!
+route-map RR-IN__VAVPN permit 20 
+ description SETS PRIMARY GATEWAY FOR DEFAULT ROUTE AND BPE TRAFFIC
+ match community RR-IN__DEFAULT-S RR-IN__BPE-PRI RR-IN__PRI
+ continue
+ set local-preference 4000
+!
+route-map RR-IN__VAVPN permit 30 
+ description SETS SECOND PERFERENCE GATEWAY FOR DEFAULT ROUTE AND BPE TRAFFIC
+ match community RR-IN__DEFAULT-W RR-IN__BPE-SEC RR-IN__SEC
+ continue
+ set local-preference 3000
+!
+route-map RR-IN__VAVPN permit 40 
+ description SETS THIRD PERFERENCE GATEWAY FOR DEFAULT ROUTE AND BPE TRAFFIC
+ match community RR-IN__DEFAULT-N RR-IN__BPE-TIR RR-IN__TER
+ continue
+ set local-preference 2000
+!
+route-map RR-IN__VAVPN permit 50 
+ description SETS FOURTH PERFERENCE GATEWAY FOR DEFAULT ROUTE AND BPE TRAFFIC
+ match community RR-IN__DEFAULT-E RR-IN__BPE-QUA RR-IN__QUA
+ continue
+ set local-preference 1000
+!
+route-map RR-IN__VAVPN permit 60 
+ description SETS ORT AS NEXT HOP FOR ALL ORT ROUTES
+ set ip next-hop encapsulate l3vpn RR-IN__VAVPN
+!
+route-map GLBL-eBGP-OUT__PROVIDER permit 10 
+ description ADVERTISE SITE LOOPBACK 10 AND WAN LINK NETWORK SETS MED SO RTBHR WORKS AS EXPECTED
+ match as-path 10
+ set metric 4000
+ set community 13979:6655 13979:6692
+!
+snmp-server group VAENIPAM v3 priv context vlan- match prefix 
+snmp-server group FOWANGROUP v3 auth read FOWANREAD write FOWANWRITE 
+snmp-server group VACNCGROUP v3 priv read VACNCVIEW 
+snmp-server group VALANGROUP v3 priv read VALANVIEW write VALANVIEW 
+snmp-server group VALANGROUP v3 priv context vlan- match prefix 
+snmp-server group VAORIONGROUP v3 priv read VAORIONVIEW 
+snmp-server group VAORIONGROUP v3 priv context vlan- match prefix 
+snmp-server group EONETPROFILER v3 priv read EONETPROFILERVIEW 
+snmp-server group VACASPECTGROUP v3 priv read VACASPECTVIEW 
+snmp-server group VACASPECTGROUP v3 priv context vlan- match prefix 
+snmp-server group VANSOCMDPPGROUP v3 priv read VANSOCMDPPVIEW 
+snmp-server view VAENIPAM iso included
+snmp-server view FOWANREAD internet included
+snmp-server view FOWANREAD ipAddrEntry excluded
+snmp-server view VACNCVIEW internet included
+snmp-server view VACNCVIEW ip.21 excluded
+snmp-server view VACNCVIEW ip.22 excluded
+snmp-server view VALANVIEW internet included
+snmp-server view VALANVIEW ip.21 excluded
+snmp-server view FOWANWRITE internet included
+snmp-server view FOWANWRITE ipAddrEntry excluded
+snmp-server view VAORIONVIEW iso included
+snmp-server view VAORIONVIEW internet included
+snmp-server view VAORIONVIEW ip.21 excluded
+snmp-server view VACASPECTVIEW iso included
+snmp-server view VACASPECTVIEW internet included
+snmp-server view VACASPECTVIEW ip.21 excluded
+snmp-server view VANSOCMDPPVIEW internet included
+snmp-server view VANSOCMDPPVIEW ip.21 excluded
+snmp-server view EONETPROFILERVIEW internet included
+snmp-server view EONETPROFILERVIEW ipAddrEntry excluded
+snmp-server trap-source Loopback0
+snmp-server source-interface informs Loopback0
+snmp-server location NIN-OP-RT1-STJOEHCC-IN,1540 Trinity Place,Mishawaka,IN,46545
+snmp-server contact VAITRegion3WANTeam
+snmp-server enable traps snmp authentication linkdown linkup coldstart warmstart
+snmp-server enable traps bgp
+snmp-server enable traps config
+snmp-server enable traps entity
+snmp ifmib ifindex persist
+!
+tacacs-server timeout 10
+tacacs-server directed-request
+tacacs server Primary
+ address ipv4 10.185.129.182
+tacacs server Secondary
+ address ipv4 10.187.134.25
+!
+!
+!
+!
+control-plane
+!
+!
+!
+!
+!
+banner exec ^CCCC
+           ************************************************************
+           *           This is a Federal Government system.           *
+           *                                                          *
+           *      Unauthorized use is prohibited and subject to       *
+           *   prosecution. All activity on this system is logged     *
+           *       and monitored for law enforcement purposes.        *
+           *                                                          *
+           ************************************************************
+^C
+banner login ^CCCC
+      *********************************************************************
+      *                ** WARNING ** WARNING ** WARNING **                *
+      *                                                                   *
+      *      This system is intended to be used by [authorized            *
+      * VA network users]for viewing and retrieving information           *
+      * only except as otherwise explicitly authorized. VA information    *
+      * resides on and transmits through computer systems and networks    *
+      * funded by VA; all use is considered to be understanding and       *
+      * acceptance that there is no reasonable expectation of privacy     *
+      * for any data or transmissions on Government Intranet or Extranet  *
+      * (non-public) networks or systems.  All transactions that occur    *
+      * on this system and all data transmitted through this system are   *
+      * subject to review and action including (but not limited to)       *
+      * monitoring, recording, retrieving, copying, auditing, inspecting, *
+      * investigating, restricting access, blocking, tracking, disclosing *
+      * to authorized personnel, or any other authorized actions by all   *
+      * authorized VA and law enforcement personnel. All use of this      *
+      * system constitutes understanding and unconditional acceptance of  *
+      * these terms.                                                      *
+      *     Unauthorized attempts or acts to either (1) access, upload,   *
+      * change, or delete information on this system, (2) modify this     *
+      * system, (3) deny access to this system, or (4) accrue resources   *
+      * for unauthorized use on this system are strictly prohibited. Such *
+      * attempts or acts are subject to action that may result in         *
+      * criminal, civil, or administrative penalties.                     *
+      *                                                                   *
+      *                ** WARNING ** WARNING ** WARNING **                *
+      *********************************************************************
+^C
+banner motd ^CCCC
+
+
+
+
+           ************************************************************
+           *           This is a Federal Government system.           *
+           *                                                          *
+           *      Unauthorized use is prohibited and subject to       *
+           *   prosecution. All activity on this system is logged     *
+           *       and monitored for law enforcement purposes.        *
+           *                                                          *
+           ************************************************************
+^C
+!
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ login authentication no_tacacs
+ stopbits 1
+line vty 0 4
+ logging synchronous
+ transport input ssh
+ transport output ssh
+!
+!
+!
+!
+!
+!
+end

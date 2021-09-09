@@ -1,0 +1,57 @@
+- hosts: all
+  connection: local
+  gather_facts: no
+  serial: 1
+  vars:
+    netbox_host: "{{ lookup('env', 'NETBOX_HOST') | default (hostvars['netbox'].ansible_host) }}"
+    nso_host: "{{ lookup('env', 'NSO_HOST') | default (hostvars['nso'].ansible_host) }}"
+    netbox_token: "{{ lookup('env', 'NETBOX_TOKEN') }}"
+    netbox_site: 'default'
+  tasks:
+    # - name: Create Site
+    #   netbox.netbox.netbox_site:
+    #     netbox_url: "https://{{ netbox_host }}"
+    #     netbox_token: "{{ netbox_token }}"
+    #     data:
+    #       name: "{{ netbox_site }}"
+    #       slug: "{{ netbox_site | lower }}"
+    #     state: present
+    #     validate_certs: false
+    #   delegate_to: localhost
+
+    # - name: Update Device
+    #   include_role:
+    #     name: ciscops.devops.netbox
+    #     tasks_from: nso_device
+    #   vars:
+    #     device_name: "{{ inventory_hostname }}"
+    #     device_type: "{{ version.model | default('switch') }}"
+    #     device_serial: "{{ version.serial | default(omit) }}"
+    #     device_platform: "{{ version.name | default(omit) }}"
+
+    # - name: Update VRFs
+    #   include_role:
+    #     name: ciscops.devops.netbox
+    #     tasks_from: nso_vrf
+    #   vars:
+    #     vrf: "{{ item }}"
+    #   loop: "{{ vrfs }}"
+
+    # - name: Update VLANs
+    #   include_role:
+    #     name: ciscops.devops.netbox
+    #     tasks_from: nso_vlan
+    #   vars:
+    #     vlan: "{{ item }}"
+    #   loop: "{{ vlans }}"
+
+    - name: Update Interfaces
+      include_role:
+        name: ciscops.devops.netbox
+        tasks_from: nso_interface
+      vars:
+        interface: "{{ item }}"
+      loop: "{{ interfaces | default ([]) }}"
+
+
+

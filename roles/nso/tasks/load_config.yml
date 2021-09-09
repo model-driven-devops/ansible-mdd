@@ -1,0 +1,32 @@
+- name: Create host {{ device_name }} in NSO
+  cisco.nso.nso_config:
+    url: "{{ nso_url }}"
+    username: "{{ nso_username }}"
+    password: "{{ nso_password }}"
+    data:
+      tailf-ncs:devices:
+        device:
+        - description: CONFIGURED BY ANSIBLE!
+          name: "{{ device_name }}"
+          address: 172.0.0.1
+          authgroup: "{{ nso_auth_group | default('default') }}"
+          device-type:
+            cli:
+              ned-id: "cisco-ios-cli-6.69"
+          state:
+            admin-state: "southbound-locked"
+
+- name: Load native config for device {{ device_name }}
+  cisco.nso.nso_action:
+    url: "{{ nso_url }}"
+    username: "{{ nso_username }}"
+    password: "{{ nso_password }}"
+    path: '/ncs:devices/ncs:device{"{{ device_name }}"}/load-native-config'
+    input:
+      data: "{{ device_config }}"
+      verbose: true
+      mode: "merge"
+  register: load_result
+  ignore_errors: true
+
+

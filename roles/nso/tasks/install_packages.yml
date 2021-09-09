@@ -1,0 +1,50 @@
+---
+- name: Process package list
+  environment:
+    NCS_JAVA_VM_OPTIONS: "{{ nso_java_opts }}"
+  block:
+    - name: Clone model-driven-devops nso-oc-services repo
+      ansible.builtin.git:
+        repo: '{{ item.repo }}'
+        dest: '/tmp/{{ item.name }}'
+      with_items: "{{ nso_package_repos }}"
+
+    - name: Copy models to packages directory
+      copy:
+        src: "/tmp/{{ item[0].name }}/{{ item[1] }}"
+        dest: "{{ nso_run_dir }}/packages"
+        remote_src: yes
+      with_subelements:
+        - "{{ nso_package_repos }}"
+        - service_list
+
+    - name: Remove old package directory
+      file:
+        path: "/tmp/{{ item[0].name }}/{{ item[1] }}"
+        state: absent
+      with_subelements:
+        - "{{ nso_package_repos }}"
+        - service_list
+
+    - name: Make packages
+      command:
+        chdir: '{{ nso_run_dir }}/packages/{{ item[1] }}/src/'
+        cmd: '/bin/bash -c "source {{ nso_install_dir }}/ncsrc; make"'
+      with_subelements:
+        - "{{ nso_package_repos }}"
+        - service_list
+
+    - name: Remove repo
+      file:
+        path: '/tmp/{{ item.name }}'
+        state: absent
+      with_items: "{{ nso_package_repos }}"
+
+    - name: Check device sync
+      cisco.nso.nso_action:
+        url: "{{ nso_url }}"
+        username: "{{ nso_username }}"
+        password: "{{ nso_password }}"
+        path: /ncs:packages/reload
+        input: {}
+  when: nso_package_repos is defined

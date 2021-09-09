@@ -1,0 +1,14 @@
+- name: Add Auth Groups
+  cisco.nso.nso_config:
+    url: "{{ nso_url }}"
+    username: "{{ nso_username }}"
+    password: "{{ nso_password }}"
+    data:
+      tailf-ncs:devices:
+        authgroups:
+          group:
+          - name: "{{ item.key }}"
+            default-map:
+              remote-name: "{{ item.value.remote_name }}"
+              remote-password: "{{ item.value.remote_password }}"
+  loop: "{{ nso_auth_groups | dict2items }}"
