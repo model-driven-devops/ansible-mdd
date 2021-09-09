@@ -47,16 +47,16 @@ dependencies:
   netbox.netbox: ">=3.0.0"
 
 # The URL of the originating SCM repository
-repository: http://github.com/ciscops/ansible-devops
+repository: https://github.com/model-driven-devops/ansible-mdd
 
 # The URL to any online docs
-documentation: http://github.com/ciscops/ansible-devops
+documentation: https://github.com/model-driven-devops/ansible-mdd
 
 # The URL to the homepage of the collection/project
-homepage: http://github.com/ciscops/ansible-devops
+homepage: https://github.com/model-driven-devops/ansible-mdd
 
 # The URL to the collection issue tracker
-issues: http://github.com/ciscops/ansible-devops/issue/tracker
+issues: https://github.com/model-driven-devops/ansible-mdd/issue/tracker
 
 # A list of file glob-like patterns used to filter any files or directories that should not be included in the build
 # artifact. A pattern is matched from the relative path of the file or directory of the collection directory. This
