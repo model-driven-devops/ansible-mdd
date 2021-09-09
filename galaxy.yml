@@ -5,7 +5,7 @@
 namespace: ciscops
 
 # The name of the collection. Has the same character restrictions as 'namespace'
-name: devops
+name: mdd
 
 # The version of the collection. Must be compatible with semantic versioning
 version: 1.0.0
@@ -44,7 +44,7 @@ dependencies:
   ansible.netcommon: ">=2.0.2"
   ansible.utils: ">=2.1.0"
   community.yang: ">=1.0.1"
-  netbox.netbox: ">=3.1.0"
+  netbox.netbox: ">=3.0.0"
 
 # The URL of the originating SCM repository
 repository: http://github.com/ciscops/ansible-devops
