@@ -21,7 +21,7 @@
 
     - copy:
         content: "{{ oc_interfaces | to_nice_yaml }}"
-        dest: debug.yaml
+        dest: /tmp/debug.yaml
 
     # - debug:
     #     var: oc_interfaces
@@ -40,7 +40,7 @@
           'Accept': 'application/yang-data+json'}"
         body_format: json
         body: 
-          'mdd:openconfig:': "{{ oc_interfaces }}"
+          "{{ oc_interfaces }}"
       register: results
 
     - debug:
