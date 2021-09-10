@@ -1,0 +1,48 @@
+- name: Push OC Interfaces to NSO
+  hosts: all
+  connection: local
+  gather_facts: no
+  vars:
+    nso_hostname: "{{ groups.nso_hosts | first }}"
+    nso_host: "{{ hostvars[nso_hostname].ansible_host }}"
+    dry_run: true
+  tasks:
+    - set_fact:
+        nso_host: "{{ custom_fields.nso_host }}"
+      when: custom_fields.nso_host is defined
+
+    - name: Get OC Interface Data
+      include_role:
+        name: ciscops.mdd.netbox
+        tasks_from: oc_interfaces
+
+    - debug:
+        var: interfaces
+
+    - copy:
+        content: "{{ oc_interfaces | to_nice_yaml }}"
+        dest: debug.yaml
+
+    # - debug:
+    #     var: oc_interfaces
+
+    - name: Update System Information
+      uri:
+        url: "http://{{ nso_host }}:8080/restconf/data/tailf-ncs:devices/device={{ inventory_hostname }}/mdd:openconfig{{ '?dry-run=native' if dry_run | bool else '' }}" 
+        url_username: admin
+        url_password: admin
+        force_basic_auth: yes
+        validate_certs: no
+        status_code: [200,201,204]
+        method: PUT
+        headers: "{
+          'Content-Type': 'application/yang-data+json',
+          'Accept': 'application/yang-data+json'}"
+        body_format: json
+        body: 
+          'mdd:openconfig:': "{{ oc_interfaces }}"
+      register: results
+
+    - debug:
+        var: results.json
+      when: "'json' in results"

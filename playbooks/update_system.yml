@@ -1,0 +1,39 @@
+- name: Push NSO
+  hosts: all
+  connection: local
+  gather_facts: no
+  vars:
+    nso_hostname: "{{ groups.nso_hosts | first }}"
+    nso_host: "{{ hostvars[nso_hostname].ansible_host }}"
+    dry_run: true
+  tasks:
+    - set_fact:
+        nso_host: "{{ custom_fields.nso_host }}"
+      when: custom_fields.nso_host is defined
+
+    - debug:
+        msg: "NSO Host: {{ nso_host }}"
+
+    - debug:
+        var: hostvars[inventory_hostname]['oc-system-nso:oc-system-nso']
+
+    - name: Update System Information
+      uri:
+        url: "http://{{ nso_host }}:8080/restconf/data/tailf-ncs:devices/device={{ inventory_hostname }}/mdd:openconfig{{ '?dry-run=native' if dry_run | bool else '' }}" 
+        url_username: admin
+        url_password: admin
+        force_basic_auth: yes
+        validate_certs: no
+        status_code: [200,201,204]
+        method: PUT
+        headers: "{
+          'Content-Type': 'application/yang-data+json',
+          'Accept': 'application/yang-data+json'}"
+        body_format: json
+        body: 
+          'mdd:openconfig:': "{{ hostvars[inventory_hostname]['oc-system-nso:oc-system-nso'] }}"
+      register: results
+
+    - debug:
+        var: results.json
+      when: "'json' in results"

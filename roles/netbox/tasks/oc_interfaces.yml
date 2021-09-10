@@ -1,0 +1,2 @@
+- set_fact:
+    oc_interfaces: "{{ lookup('template', 'netbox-to-oc.yml.j2') | from_yaml }}"
