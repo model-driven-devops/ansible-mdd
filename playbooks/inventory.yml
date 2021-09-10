@@ -1,0 +1,11 @@
+- hosts: all
+  connection: local
+  gather_facts: no
+  tasks:
+    - debug:
+        msg: "{{ inventory_hostname }}"
+    - debug:
+        var: hostvars[inventory_hostname]
+      tags:
+        - never
+        - hostvars
