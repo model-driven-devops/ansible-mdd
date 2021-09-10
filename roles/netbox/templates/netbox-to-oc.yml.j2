@@ -7,7 +7,7 @@
     - name: {{ interface.name }}
       config:
    {% if interface.description %}
-         description: {{ interface.description }}
+         description: "{{ interface.description }}"
    {% endif %}
          enabled: true
          name: {{ interface.name }}
