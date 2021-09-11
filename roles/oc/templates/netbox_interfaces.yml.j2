@@ -48,8 +48,9 @@ mdd:openconfig:
                   index: '0'
       {% if interface.ip_addresses is defined and interface.ip_addresses %}
                openconfig-if-ip:ipv4:
+         {% if interface.ip_addresses[0].status.value != 'dhcp' %}
                   addresses:
-                     address:      
+                     address:
          {% for address_item in interface.ip_addresses | default([]) %}
             {% if address_item.vrf %}
                {% if vrf_interfaces[address_item.vrf.name] is not defined %}
@@ -59,17 +60,17 @@ mdd:openconfig:
                {% set _ = temp_list.append(interface.name) %}
                {% set _ = vrf_interfaces.update({address_item.vrf.name: temp_list}) %}
             {% endif %}
-            {% if address_item.status.value == 'dhcp' %}
-               {% set _ = dhcp_enabled.append('1') %}
-            {% else %}
                      -  ip: {{ address_item.address.split('/')[0] }}
                         config:
                            ip: {{ address_item.address.split('/')[0] }}
                            prefix-length: {{ address_item.address.split('/')[1] }}
-            {% endif %}{# if address_item.status.value == 'dhcp' #}
          {% endfor %}{# for address_item in interface.ip_addresses #}
                   config:
-                     'dhcp-client': {{ 'true' if dhcp_enabled|length else 'false' }}                       
+                     'dhcp-client': false
+         {% else %}
+                  config:
+                     'dhcp-client': true
+         {% endif %}                    
       {% endif %}{# if interface.ip_addresses is defined and interface.ip_addresses #}
    {% endif %}{# if interface.ip_addresses is defined and interface.ip_addresses or interface_type == "softwareLoopback" #}
 {% endfor %}{# for interface in interfaces #}

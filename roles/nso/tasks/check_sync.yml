@@ -1,0 +1,10 @@
+- name: Check it device is in sync
+  cisco.nso.nso_action:
+    url: "{{ nso_url }}"
+    username: "{{ nso_username }}"
+    password: "{{ nso_password }}"
+    path: '/ncs:devices/device{"{{ device_name | default(inventory_hostname) }}"}/check-sync'
+    input: {}
+  register: action_result
+  changed_when: False
+  failed_when: "'out-of-sync' in action_result.output.result"

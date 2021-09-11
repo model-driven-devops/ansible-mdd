@@ -1,0 +1,44 @@
+- name: Set Defaults
+  set_fact:
+    interface_untagged_vlan: ''
+    interface_tagged_vlans: []
+    interface_mode: ''
+
+- name: Create Interface {{ device_name }}:{{ interface_name }}
+  netbox.netbox.netbox_device_interface:
+    netbox_url: "{{ netbox_url }}"
+    netbox_token: "{{ netbox_token }}"
+    data:
+      device: "{{ device_name }}"
+      name: "{{ interface_name }}"
+      mgmt_only: yes
+      enabled: yes
+    state: present
+    validate_certs: "{{ netbox_validate_certs }}"
+  register: interface_result
+  ignore_errors: yes
+
+- name: Add IP address {{ ip_address }}
+  netbox.netbox.netbox_ip_address:
+    netbox_url: "{{ netbox_url }}"
+    netbox_token: "{{ netbox_token }}"
+    data:
+      address: "{{ ip_address }}"
+      # vrf: Test
+      # description: "{{ interface.description | default(omit) }}"
+      assigned_object:
+        device: "{{ device_name }}"
+        name: "{{ interface_name }}"
+      status: DHCP
+    state: present
+    validate_certs: "{{ netbox_validate_certs }}"
+
+- name: Set Primary IP4 for {{ device_name }} to {{ ip_address }}
+  netbox.netbox.netbox_device:
+    netbox_url: "{{ netbox_url }}"
+    netbox_token: "{{ netbox_token }}"
+    data:
+      name: "{{ device_name }}"
+      primary_ip4: "{{ ip_address }}"
+    state: present
+    validate_certs: "{{ netbox_validate_certs }}"

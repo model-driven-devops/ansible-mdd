@@ -1,4 +1,4 @@
-- name: Push NSO
+- name: Push OC Interfaces to NSO
   hosts: all
   connection: local
   gather_facts: no
@@ -6,16 +6,24 @@
     nso_hostname: "{{ groups.nso_hosts | first }}"
     nso_host: "{{ hostvars[nso_hostname].ansible_host }}"
     dry_run: true
+    models: all
   tasks:
     - set_fact:
         nso_host: "{{ custom_fields.nso_host }}"
       when: custom_fields.nso_host is defined
 
-    - debug:
-        msg: "NSO Host: {{ nso_host }}"
+    - block:
+      - name: Get OC Data
+        include_role:
+          name: ciscops.mdd.oc
+          tasks_from: "{{ models }}"
 
-    - debug:
-        var: hostvars[inventory_hostname]['oc-system-nso:oc-system-nso']
+    # - debug:
+    #     var: mdd_data
+
+    # - copy:
+    #     content: "{{ mdd_data | to_nice_yaml }}"
+    #     dest: "/tmp/{{ inventory_hostname}}_debug.yaml"
 
     - name: Update System Information
       uri:
@@ -31,7 +39,7 @@
           'Accept': 'application/yang-data+json'}"
         body_format: json
         body: 
-          'mdd:openconfig:': "{{ hostvars[inventory_hostname]['oc-system-nso:oc-system-nso'] }}"
+          "{{ mdd_data }}"
       register: results
 
     - debug:

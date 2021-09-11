@@ -1,0 +1,11 @@
+- set_fact:
+    nso_host: "{{ lookup('env', 'NSO_HOST') | default('') }}"
+
+- set_fact:
+    nso_hostname: "{{ groups.nso_hosts | first }}"
+    nso_host: "{{ hostvars[nso_hostname].ansible_host }}"
+  when: groups.nso_hosts is defined and groups.nso_hosts | length
+
+- set_fact:
+    nso_host: "{{ custom_fields.nso_host }}"
+  when: custom_fields.nso_host is defined

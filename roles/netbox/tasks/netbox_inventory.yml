@@ -1,0 +1,7 @@
+- set_fact:
+    netbox_inventory: "{{ query('netbox.netbox.nb_lookup', 'devices',
+            api_endpoint=netbox_url,
+            token=netbox_token,
+            validate_certs=False) }}"
+- set_fact:
+    netbox_host_list: "{{ netbox_inventory | map(attribute='value.name') | list }}"
