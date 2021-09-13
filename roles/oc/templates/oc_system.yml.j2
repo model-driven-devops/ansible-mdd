@@ -122,8 +122,7 @@ mdd:openconfig:
         timezone-name: {{ timezone_name }}
 {% endif %}
     config:
-
-      oc-system-ext:enable-secret: 'admin'
+{#      oc-system-ext:enable-secret: 'admin'#}
       oc-system-ext:console-exec-timeout-seconds: '600'
 {% if domain_name is defined and domain_name %}
       domain-name: {{ domain_name }}

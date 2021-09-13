@@ -2,12 +2,20 @@
 # defaults file for netbox
 netbox_url: "https://{{ netbox_host }}"
 netbox_validate_certs: no
+default_netbox_manufacturer: Unknown
 netbox_manufacturers:
+  - name: Unknown
+    description: Unknown
+    slug: unknown
   - name: Cisco
     description: Cisco Systems
     slug: cisco
 netbox_device_type: switch
+default_netbox_device_type: unknown
 netbox_device_types:
+  - model: unknown
+    slug: unknown
+    manufacturer: Unknown
   - model: router
     slug: router
     manufacturer: Cisco
@@ -19,9 +27,9 @@ netbox_site: main
 netbox_sites:
   - default
   - "{{ netbox_site }}"
-netbox_device_role: switch
+default_netbox_device_role: unknown
 netbox_device_roles:
-  - "{{ netbox_device_role }}"
+  - "{{ default_netbox_device_role }}"
   - router
 netbox_device_platform: ios
 netbox_platforms:

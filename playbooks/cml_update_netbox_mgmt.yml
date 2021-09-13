@@ -19,6 +19,6 @@
       when: item.value.ansible_host_interface is defined and item.key in netbox_host_list
       with_dict: "{{ cml_lab_results.cml_facts.nodes }}"
       vars:
-        device_name: "{{ item.key }}"
-        interface_name: "{{ item.value.ansible_host_interface }}"
-        ip_address: "{{ item.value.ansible_host }}"
+        netbox_device_name: "{{ item.key }}"
+        netbox_device_interface_name: "{{ item.value.ansible_host_interface }}"
+        netbox_device_ipv4_address: "{{ item.value.ansible_host }}"

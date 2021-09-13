@@ -2,9 +2,6 @@
   hosts: all
   connection: local
   gather_facts: no
-  vars:
-    dry_run: true
-    models: all
   tasks:
     - include_role:
         name: ciscops.mdd.nso

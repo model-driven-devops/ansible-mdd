@@ -1,4 +1,4 @@
-- name: Check it device is in sync
+- name: Check if device is in sync
   cisco.nso.nso_action:
     url: "{{ nso_url }}"
     username: "{{ nso_username }}"

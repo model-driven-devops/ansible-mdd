@@ -1,0 +1,13 @@
+- name: Show Operational Data
+  cisco.nso.nso_show:
+    url: "{{ nso_url }}"
+    username: "{{ nso_username }}"
+    password: "{{ nso_password }}"
+    path: '/ncs:devices/device{"{{ device_name | default(inventory_hostname) }}"}/live-status/version'
+    operational: true
+  register: show_result
+
+- set_fact:
+    version_data: "{{ show_result.output.data['tailf-ncs:devices']['device'][0]['live-status'][version_key] }}"
+  vars:
+    version_key: "{{ show_result.output.data['tailf-ncs:devices']['device'][0]['live-status'].keys() | first }}"

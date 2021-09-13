@@ -1,0 +1,14 @@
+- name: Dump NSO Config Data
+  hosts: all
+  connection: local
+  gather_facts: no
+  vars:
+    current_dir: "{{ lookup('env','PWD') }}"
+  tasks:
+    - include_role:
+        name: ciscops.mdd.nso
+        tasks_from: get_config
+
+    - copy:
+        content: "{{ nso_device_config | to_nice_json }}"
+        dest: "{{ current_dir }}/device_config_data/{{ inventory_hostname }}.json"
