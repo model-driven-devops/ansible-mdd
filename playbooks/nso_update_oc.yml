@@ -1,0 +1,25 @@
+- name: Push OC Interfaces to NSO
+  hosts: all
+  connection: local
+  gather_facts: no
+  vars:
+    nso_hostname: "{{ groups.nso_hosts | first }}"
+    nso_host: "{{ hostvars[nso_hostname].ansible_host }}"
+    dry_run: true
+    models: all
+  tasks:
+    - set_fact:
+        nso_host: "{{ custom_fields.nso_host }}"
+      when: custom_fields.nso_host is defined
+
+    - block:
+      - name: Get OC Data
+        include_role:
+          name: ciscops.mdd.oc
+          tasks_from: "{{ models }}"
+
+    - block:
+      - name: Update OC Data
+        include_role:
+          name: ciscops.mdd.nso
+          tasks_from: update_oc

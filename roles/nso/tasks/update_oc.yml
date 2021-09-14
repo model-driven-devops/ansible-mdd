@@ -1,0 +1,38 @@
+  - name: Update System Information
+    uri:
+      url: "{{ nso_rest_url }}/restconf/data/tailf-ncs:devices/device={{ inventory_hostname }}/mdd:openconfig{{ '?dry-run=native' if dry_run | bool else '' }}" 
+      url_username: admin
+      url_password: admin
+      force_basic_auth: yes
+      validate_certs: no
+      status_code: [200,201,204]
+      method: PUT
+      headers: "{
+        'Content-Type': 'application/yang-data+json',
+        'Accept': 'application/yang-data+json'}"
+      body_format: json
+      body: 
+        "{{ mdd_data }}"
+    register: results
+
+  - debug:
+      var: results.json
+    when: "'json' in results and dry_run | bool"
+    changed_when: results.json["dry-run-result"].native
+
+# - name: Update OC Service
+#   cisco.nso.nso_config:
+#     url: "{{ nso_url }}"
+#     username: "{{ nso_username }}"
+#     password: "{{ nso_password }}"
+#     # commit_flags:
+#     #   - 'dry-run=cli'
+#     data:
+#         tailf-ncs:devices:
+#           device:
+#           - name: "{{ inventory_hostname }}"
+#             mdd:openconfig: "{{ mdd_data['mdd:openconfig'] }}"
+#   register: config_result
+
+# - debug:
+#     var: config_result

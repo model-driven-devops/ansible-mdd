@@ -122,8 +122,8 @@ mdd:openconfig:
         timezone-name: {{ timezone_name }}
 {% endif %}
     config:
-{#      oc-system-ext:enable-secret: 'admin'#}
-      oc-system-ext:console-exec-timeout-seconds: '600'
+{#      openconfig-system-ext:enable-secret: 'admin'#}
+      openconfig-system-ext:console-exec-timeout-seconds: '600'
 {% if domain_name is defined and domain_name %}
       domain-name: {{ domain_name }}
 {% endif %}
@@ -164,7 +164,7 @@ mdd:openconfig:
               host: '10.0.0.1'  # logging host x.x.x.x
               remote-port: '514'
               source-address: '192.168.100.1'  # logging source-interface Loopback0; same for all servers
-              oc-system-ext:use-vrf: 'abc'
+              openconfig-system-ext:use-vrf: 'abc'
             host: '10.0.0.1'
             selectors:
               selector:
@@ -177,7 +177,7 @@ mdd:openconfig:
               host: '10.0.0.2'  # logging host x.x.x.x
               remote-port: '514'
               source-address: '192.168.100.1'  # logging source-interface Loopback0; same for all servers
-              oc-system-ext:use-vrf: 'default'
+              openconfig-system-ext:use-vrf: 'default'
             host: '10.0.0.2'
             selectors:
               selector:
@@ -190,7 +190,7 @@ mdd:openconfig:
 {% if enable_ntp | default('false') | bool %}
     ntp:
       config:
-        oc-system-ext:ntp-enable-logging: true
+        openconfig-system-ext:ntp-enable-logging: true
         enable-ntp-auth: true
         enabled: true  # true or false - removes or adds ntp servers
         ntp-source-address: '192.168.100.1'
@@ -209,9 +209,9 @@ mdd:openconfig:
       servers:
         server:
           - address: '10.0.0.1'
-#            oc-system-ext:ntp-use-vrf: ''
+#            openconfig-system-ext:ntp-use-vrf: ''
             config:
-              oc-system-ext:ntp-auth-key-id: '1'
+              openconfig-system-ext:ntp-auth-key-id: '1'
               address: '10.0.0.1'
               association-type: SERVER  # SERVER, PEER, POOL
               iburst: true
@@ -219,9 +219,9 @@ mdd:openconfig:
               prefer: false
               version: '4'
           - address: '10.0.0.2'
-            oc-system-ext:ntp-use-vrf: 'abc'
+            openconfig-system-ext:ntp-use-vrf: 'abc'
             config:
-              oc-system-ext:ntp-auth-key-id: '2'
+              openconfig-system-ext:ntp-auth-key-id: '2'
               address: '10.0.0.2'
               association-type: SERVER  # SERVER, PEER, POOL
               iburst: true
@@ -232,9 +232,9 @@ mdd:openconfig:
 {% if enable_ssh | default('false') | bool %}
     ssh-server:
       config:
-        oc-system-ext:absolute-timeout-minutes: '1200'
-        oc-system-ext:ssh-timeout: '60'  # ip ssh timeout
-        oc-system-ext:ssh-source-interface: 'GigabitEthernet1/0'
+        openconfig-system-ext:absolute-timeout-minutes: '1200'
+        openconfig-system-ext:ssh-timeout: '60'  # ip ssh timeout
+        openconfig-system-ext:ssh-source-interface: 'GigabitEthernet1/0'
         enable: true  #   adds line transport input ssh; must be enabled for this to work
         protocol-version: 'V2'  # ip ssh version 2
         rate-limit: '0'  # unsupported in ios

@@ -1,6 +1,7 @@
 ---
 nso_host: "{{ ansible_host | default(inventory_hostname) }}"
 nso_url: "http://{{ nso_host }}:8080/jsonrpc"
+nso_rest_url: "http://{{ nso_host }}:8080"
 nso_install_dir: /pkgs/nso-install
 nso_run_dir: /home/ubuntu/ncs-run
 nso_java_opts: "-Xmx2G -Xms1G"
