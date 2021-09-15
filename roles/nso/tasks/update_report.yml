@@ -1,0 +1,5 @@
+- set_fact:
+    update_report: "{{ lookup('template', 'update-report.yml.j2') | from_yaml }}"
+
+- debug:
+    var: update_report

@@ -23,3 +23,17 @@
         include_role:
           name: ciscops.mdd.nso
           tasks_from: update_oc
+
+- name: Run update_report
+  hosts: all
+  connection: local
+  gather_facts: no
+  vars:
+    dry_run: true
+  tasks:
+    - name: Update OC Data
+      include_role:
+        name: ciscops.mdd.nso
+        tasks_from: update_report
+      run_once: true
+      when: dry_run | bool

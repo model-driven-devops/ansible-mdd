@@ -13,12 +13,13 @@
       body_format: json
       body: 
         "{{ mdd_data }}"
-    register: results
+      return_content: yes
+    register: nso_update_result
 
   - debug:
-      var: results.json
-    when: "'json' in results and dry_run | bool"
-    changed_when: results.json["dry-run-result"].native
+      var: nso_update_result.json
+    when: "'json' in nso_update_result and dry_run | bool"
+    changed_when: nso_update_result.json["dry-run-result"].native
 
 # - name: Update OC Service
 #   cisco.nso.nso_config:
@@ -27,6 +28,7 @@
 #     password: "{{ nso_password }}"
 #     # commit_flags:
 #     #   - 'dry-run=cli'
+#     # state: set
 #     data:
 #         tailf-ncs:devices:
 #           device:

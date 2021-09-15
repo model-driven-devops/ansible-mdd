@@ -1,0 +1,26 @@
+#jinja2: lstrip_blocks: True
+{# hosts:#}
+{# Go through each of the hosts and compare the changes #}
+{% set consolidated_report = [] %}
+{% for host in play_hosts | sort %}
+  {% set found = {'value': false} %}
+  {% set result = hostvars[host]['nso_update_result']['json']['dry-run-result']['native']['device'][0] | default({'data':'unchanged'})  %}
+  {% if result %}
+{#  {{ host }}: "{{ result.data }}"#}
+    {% for entry in consolidated_report %}
+      {% if entry.data == result.data %}
+        {% set _ = found.update({'value': true}) %}
+        {% set _ = entry.hosts.append(host) %}
+      {% endif %}
+    {% endfor %}
+    {% if not found.value | bool %}
+      {% set entry_dict = {'hosts': [host], 'data': result.data} %}
+      {% set _ = consolidated_report.append(entry_dict) %}
+    {% endif %}
+  {% endif %}
+{% endfor %}
+consolidated_report:
+{% for entry in consolidated_report %}
+  - hosts: "{{ entry.hosts }}"
+    data: "{{ entry.data }}"
+{% endfor %}
