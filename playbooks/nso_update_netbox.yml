@@ -3,14 +3,14 @@
   gather_facts: no
   serial: 1
   vars:
-    netbox_host: "{{ lookup('env', 'NETBOX_HOST') | default (hostvars['netbox'].ansible_host) }}"
-    nso_host: "{{ lookup('env', 'NSO_HOST') | default (hostvars['nso'].ansible_host) }}"
+    netbox_api: "{{ lookup('env', 'NETBOX_API') }}"
     netbox_token: "{{ lookup('env', 'NETBOX_TOKEN') }}"
+    nso_host: "{{ lookup('env', 'NSO_HOST') | default (hostvars['nso'].ansible_host) }}"
     netbox_site: 'default'
   tasks:
     # - name: Create Site
     #   netbox.netbox.netbox_site:
-    #     netbox_url: "https://{{ netbox_host }}"
+    #     netbox_url: "{{ netbox_api }}"
     #     netbox_token: "{{ netbox_token }}"
     #     data:
     #       name: "{{ netbox_site }}"
@@ -21,33 +21,36 @@
 
     # - name: Update Device
     #   include_role:
-    #     name: ciscops.devops.netbox
-    #     tasks_from: nso_device
+    #     name: ciscops.mdd.netbox
+    #     tasks_from: add_device
     #   vars:
-    #     device_name: "{{ inventory_hostname }}"
-    #     device_type: "{{ version.model | default('switch') }}"
-    #     device_serial: "{{ version.serial | default(omit) }}"
-    #     device_platform: "{{ version.name | default(omit) }}"
+    #     netbox_device_name: "{{ inventory_hostname }}"
+    #     netbox_device_type: "{{ version.model | default('unknown') }}"
+    #     netbox_device_serial: "{{ version.serial | default(omit) }}"
+    #     netbox_device_platform: "{{ version.name | default(omit) }}"
+    #     netbox_device_role: 'router'
 
     # - name: Update VRFs
     #   include_role:
-    #     name: ciscops.devops.netbox
-    #     tasks_from: nso_vrf
+    #     name: ciscops.mdd.netbox
+    #     tasks_from: add_vrf
     #   vars:
-    #     vrf: "{{ item }}"
+    #     netbox_vrf_name: "{{ item.name }}"
+    #     netbox_vrf_rd: "{{ item.rd | default (omit) }}"
     #   loop: "{{ vrfs }}"
 
     # - name: Update VLANs
     #   include_role:
-    #     name: ciscops.devops.netbox
-    #     tasks_from: nso_vlan
+    #     name: ciscops.mdd.netbox
+    #     tasks_from: add_vlan
     #   vars:
-    #     vlan: "{{ item }}"
+    #     netbox_vlan_name: "{{ item.name }}"
+    #     netbox_vlan_id: "{{ item.id }}"
     #   loop: "{{ vlans }}"
 
     - name: Update Interfaces
       include_role:
-        name: ciscops.devops.netbox
+        name: ciscops.mdd.netbox
         tasks_from: nso_interface
       vars:
         interface: "{{ item }}"

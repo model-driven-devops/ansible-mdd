@@ -1,14 +1,14 @@
 - name: Create VLAN
   netbox.netbox.netbox_vlan:
-    netbox_url: "{{ netbox_url }}"
+    netbox_url: "{{ netbox_api }}"
     netbox_token: "{{ netbox_token }}"
     query_params:
       - name
       - vid
       - site
     data:
-      name: "{{ vlan.name }}"
-      vid: "{{ vlan.id }}"
+      name: "{{ netbox_vlan_name }}"
+      vid: "{{ netbox_vlan_id }}"
       site: "{{ netbox_site }}"
     state: present
     validate_certs: "{{ netbox_validate_certs }}"

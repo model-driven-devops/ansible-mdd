@@ -1,11 +1,11 @@
 - name: Create VRF
   netbox.netbox.netbox_vrf:
-    netbox_url: "{{ netbox_url }}"
+    netbox_url: "{{ netbox_api }}"
     netbox_token: "{{ netbox_token }}"
     query_params:
       - name
     data:
-      name: "{{ vrf.name }}"
-      rd: "{{ vrf.rd | default(omit)}}"
+      name: "{{ netbox_vrf_name }}"
+      rd: "{{ netbox_vrf_rd | default(omit)}}"
     state: present
     validate_certs: "{{ netbox_validate_certs }}"

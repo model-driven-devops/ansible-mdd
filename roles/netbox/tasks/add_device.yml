@@ -1,6 +1,6 @@
 - name: Create device within Netbox with only required information
   netbox.netbox.netbox_device:
-    netbox_url: "https://{{ netbox_host }}"
+    netbox_url: "{{ netbox_api }}"
     netbox_token: "{{ netbox_token }}"
     data:
       name: "{{ netbox_device_name }}"

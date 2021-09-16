@@ -51,7 +51,7 @@
 
 - name: Create Interface {{ interface.name }}
   netbox.netbox.netbox_device_interface:
-    netbox_url: "{{ netbox_url }}"
+    netbox_url: "{{ netbox_api }}"
     netbox_token: "{{ netbox_token }}"
     data:
       device: "{{ inventory_hostname }}"
@@ -80,7 +80,7 @@
 
   - name: Add IP Prefix
     netbox.netbox.netbox_prefix:
-      netbox_url: "{{ netbox_url }}"
+      netbox_url: "{{ netbox_api }}"
       netbox_token: "{{ netbox_token }}"
       data:
         prefix: "{{ ip_subnet }}"
@@ -91,7 +91,7 @@
 
   - name: Add IP address
     netbox.netbox.netbox_ip_address:
-      netbox_url: "{{ netbox_url }}"
+      netbox_url: "{{ netbox_api }}"
       netbox_token: "{{ netbox_token }}"
       data:
         address: "{{ ip_address }}"

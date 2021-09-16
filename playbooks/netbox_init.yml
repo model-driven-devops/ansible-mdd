@@ -2,9 +2,9 @@
   connection: local
   gather_facts: no
   vars:
-    netbox_host: "{{ lookup('env', 'NETBOX_HOST') | default (hostvars['netbox'].ansible_host) }}"
+    netbox_api: "{{ lookup('env', 'NETBOX_API') }}"
     netbox_token: "{{ lookup('env', 'NETBOX_TOKEN') }}"
   tasks:
     - include_role:
-        name: ciscops.devops.netbox
+        name: ciscops.mdd.netbox
         tasks_from: init

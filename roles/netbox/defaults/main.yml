@@ -1,6 +1,6 @@
 ---
 # defaults file for netbox
-netbox_url: "https://{{ netbox_host }}"
+# netbox_url: "https://{{ netbox_host }}"
 netbox_validate_certs: no
 default_netbox_manufacturer: Unknown
 netbox_manufacturers:
@@ -11,7 +11,7 @@ netbox_manufacturers:
     description: Cisco Systems
     slug: cisco
 netbox_device_type: switch
-default_netbox_device_type: unknown
+default_netbox_device_type: Unknown
 netbox_device_types:
   - model: unknown
     slug: unknown
@@ -22,12 +22,18 @@ netbox_device_types:
   - model: switch
     slug: switch
     manufacturer: Cisco
+  - model: CSR1000v
+    slug: csr1000v
+    manufacturer: Cisco
+  - model: IOSv
+    slug: iosv
+    manufacturer: Cisco
 # Default Netbox Site
 netbox_site: main
 netbox_sites:
   - default
   - "{{ netbox_site }}"
-default_netbox_device_role: unknown
+default_netbox_device_role: Unknown
 netbox_device_roles:
   - "{{ default_netbox_device_role }}"
   - router
