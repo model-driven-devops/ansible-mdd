@@ -12,17 +12,15 @@
         nso_host: "{{ custom_fields.nso_host }}"
       when: custom_fields.nso_host is defined
 
-    - block:
-      - name: Get OC Data
-        include_role:
-          name: ciscops.mdd.oc
-          tasks_from: "{{ models }}"
+    - name: Get OC Data
+      include_role:
+        name: ciscops.mdd.oc
+        tasks_from: "{{ models }}"
 
-    - block:
-      - name: Update OC Data
-        include_role:
-          name: ciscops.mdd.nso
-          tasks_from: update_oc
+    - name: Update OC Data
+      include_role:
+        name: ciscops.mdd.nso
+        tasks_from: update_oc
 
 - name: Run update_report
   hosts: all

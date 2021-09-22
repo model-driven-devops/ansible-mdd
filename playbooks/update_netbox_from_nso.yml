@@ -1,0 +1,24 @@
+- name: Add Hosts to NSO
+  hosts: all
+  connection: local
+  gather_facts: no
+  serial: 1
+  tasks:
+    - include_role:
+        name: ciscops.mdd.nso
+        tasks_from: get_nso_host
+
+    - name: Update VLANs
+      include_role:
+        name: ciscops.mdd.nso
+        tasks_from: update_netbox_vlans
+
+    # - name: Update VRFs
+    #   include_role:
+    #     name: ciscops.mdd.nso
+    #     tasks_from: update_netbox_vrfs
+
+    # - name: Update Interfaces
+    #   include_role:
+    #     name: ciscops.mdd.nso
+    #     tasks_from: update_netbox_interfaces

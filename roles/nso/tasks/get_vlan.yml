@@ -1,0 +1,14 @@
+- name: Get VLANs
+  cisco.nso.nso_show:
+    url: "{{ nso_url }}"
+    username: "{{ nso_username }}"
+    password: "{{ nso_password }}"
+    path: '/ncs:devices/device{"{{ nso_device_name | default(inventory_hostname) }}"}/config/vlan'
+    operational: true
+  register: show_result
+
+- set_fact:
+    nso_vlan_list: "{{ show_result.output.data['tailf-ncs:devices']['device'][0]['config'][ned_name]['vlan-list'] }}"
+  vars:
+    ned_name: "{{ show_result.output.data['tailf-ncs:devices']['device'][0]['config'].keys() | first }}"
+  when: "'config' in show_result.output.data['tailf-ncs:devices']['device'][0]"

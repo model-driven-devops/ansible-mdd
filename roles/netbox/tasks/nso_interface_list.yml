@@ -1,0 +1,8 @@
+- name: Update Interfaces
+  include_role:
+    name: ciscops.mdd.netbox
+    tasks_from: nso_interface
+  vars:
+    interface_name: "{{ nso_interface_type }}{{ item.name }}"
+    interface_data: "{{ item }}"
+  with_items: "{{ nso_interface_type_list }}"
