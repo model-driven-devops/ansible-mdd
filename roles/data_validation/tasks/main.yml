@@ -1,0 +1,8 @@
+---
+# tasks file for data_validation
+
+- name: Validate some data
+  datavalidation:
+    data: "{{ input_data }}"
+    schema: "{{ input_schema }}"
+  
