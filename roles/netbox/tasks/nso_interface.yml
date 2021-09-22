@@ -11,9 +11,9 @@
     set_fact:
       interface_mode: 'Access'
       interface_untagged_vlan:
-        vid: "{{ interface.switchport.access.vlan }}"
+        vid: "{{ interface_data.switchport.access.vlan }}"
         site: "{{ netbox_site }}"
-    when: interface.switchport.mode is defined and 'access' in interface.switchport.mode and interface.switchport.access is defined and interface.switchport.access.vlan is defined
+    when: interface_data.switchport.mode is defined and 'access' in interface_data.switchport.mode and interface_data.switchport.access is defined and interface_data.switchport.access.vlan is defined
 
   # This is a tagged switchport
   - block:
@@ -24,45 +24,45 @@
     - name: Set Trunk Native VLAN
       set_fact:
         interface_untagged_vlan:
-          vid: "{{ interface.switchport.trunk.native.vlan }}"
+          vid: "{{ interface_data.switchport.trunk.native.vlan }}"
           site: "{{ netbox_site }}"
-      when: interface.switchport.trunk.native is defined
+      when: interface_data.switchport.trunk.native is defined
 
     - name: Set Trunk Allowed VLANs
       set_fact:
         interface_tagged_vlans: "{{ interface_tagged_vlans + [ {'vid': vlan_id, 'site': netbox_site } ] }}"
-      loop: "{{ interface.switchport.trunk.allowed.vlan.vlans }}"
+      loop: "{{ interface_data.switchport.trunk.allowed.vlan.vlans }}"
       loop_control:
         loop_var: vlan_id
-      when: interface.switchport.trunk.allowed is defined      
-    when: interface.switchport.mode is defined and 'trunk' in interface.switchport.mode
-  when: interface.switchport is defined
+      when: interface_data.switchport.trunk.allowed is defined      
+    when: interface_data.switchport.mode is defined and 'trunk' in interface_data.switchport.mode
+  when: interface_data.switchport is defined
 
 - name: Set Interface Type
   set_fact:
     netbox_interface_type: "{{ netbox_interface_type_lookup[interface_type | lower] | default('Other') }}"
   vars:
-    interface_type: "{{ interface.name | regex_search('^([^0-9]+)[0-9]', '\\1') | first }}"
+    interface_type: "{{ interface_name | regex_search('^([^0-9]+)[0-9]', '\\1') | first }}"
 
 - name: Set Channel Group
   set_fact:
-    interface_channel_group: "Port-channel{{ interface['channel-group'].number }}"
-  when: '"channel-group" in interface'
+    interface_channel_group: "Port-channel{{ interface_data['channel-group'].number }}"
+  when: '"channel-group" in interface_data'
 
-- name: Create Interface {{ interface.name }}
+- name: Create Interface {{ interface_name }}
   netbox.netbox.netbox_device_interface:
     netbox_url: "{{ netbox_api }}"
     netbox_token: "{{ netbox_token }}"
     data:
       device: "{{ inventory_hostname }}"
-      name: "{{ interface.name }}"
-      description: "{{ interface.description | default(omit) }}"
-      enabled: "{{ false if interface.shutdown is defined else true  }}"
+      name: "{{ interface_name }}"
+      description: "{{ interface_data.description | default(omit) }}"
+      enabled: "{{ false if interface_data.shutdown is defined else true  }}"
       type: "{{ netbox_interface_type }}"
       mode: "{{ interface_mode if interface_mode else omit }}"
       tagged_vlans: "{{ interface_tagged_vlans if interface_tagged_vlans else omit }}"
       untagged_vlan: "{{ interface_untagged_vlan if interface_untagged_vlan else omit }}"
-      lag: "{{ interface_channel_group if 'channel-group' in interface else omit }}"
+      lag: "{{ interface_channel_group if 'channel-group' in interface_data else omit }}"
       # mtu: "{{ item.value.mtu | default(omit) }}"
     state: present
     validate_certs: "{{ netbox_validate_certs }}"
@@ -74,9 +74,9 @@
   - set_fact:
       ip_address: "{{ ip_mask | ansible.netcommon.ipaddr('host/prefix') }}"
       ip_subnet: "{{ ip_mask | ansible.netcommon.ipaddr('subnet') }}"
-    when: interface.ip.address is defined and interface.ip.address.primary is defined
+    when: interface_data.ip.address is defined and interface_data.ip.address.primary is defined
     vars:
-      ip_mask: "{{ interface.ip.address.primary.address }}/{{ interface.ip.address.primary.mask }}"
+      ip_mask: "{{ interface_data.ip.address.primary.address }}/{{ interface_data.ip.address.primary.mask }}"
 
   - name: Add IP Prefix
     netbox.netbox.netbox_prefix:
@@ -87,7 +87,7 @@
         site: "{{ netbox_site }}"
       state: present
       validate_certs: "{{ netbox_validate_certs }}"
-    when: interface.ip.address is defined and interface.ip.address.primary is defined and ip_address != ip_subnet
+    when: interface_data.ip.address is defined and interface_data.ip.address.primary is defined and ip_address != ip_subnet
 
   - name: Add IP address
     netbox.netbox.netbox_ip_address:
@@ -96,15 +96,15 @@
       data:
         address: "{{ ip_address }}"
         # vrf: Test
-        description: "{{ interface.description | default(omit) }}"
-        vrf: "{{ interface.vrf.forwarding | default(omit) }}"
+        description: "{{ interface_data.description | default(omit) }}"
+        vrf: "{{ interface_data.vrf.forwarding | default(omit) }}"
         assigned_object:
           device: "{{ inventory_hostname }}"
-          name: "{{ interface.name }}"
+          name: "{{ interface_name }}"
         status: active
       state: present
       validate_certs: "{{ netbox_validate_certs }}"
-    when: interface.ip.address is defined and interface.ip.address.primary is defined
+    when: interface_data.ip.address is defined and interface_data.ip.address.primary is defined
     tags:
     - interface
-  when: interface.ip is defined
+  when: interface_data.ip is defined

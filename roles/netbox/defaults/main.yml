@@ -1,6 +1,7 @@
 ---
 # defaults file for netbox
-# netbox_url: "https://{{ netbox_host }}"
+netbox_api: "{{ lookup('env', 'NETBOX_API') }}"
+netbox_token: "{{ lookup('env', 'NETBOX_TOKEN') }}"
 netbox_validate_certs: no
 default_netbox_manufacturer: Unknown
 netbox_manufacturers:

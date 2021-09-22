@@ -1,15 +1,13 @@
 - hosts: localhost
   gather_facts: no
   vars:
-    nso_hostname: "{{ groups.nso_hosts | first }}"
-    nso_host: "{{ hostvars[nso_hostname].ansible_host | default (nso_hostname) }}"
+    nso_host: "{{ lookup('env', 'NSO_HOST') | default (hostvars['nso'].ansible_host) }}"
     config_dir: "{{ lookup('env', 'PWD') }}/configs"
-    config_extention: "cfg"
   tasks:
-    - name: Find /var/log files equal or greater than 10 megabytes ending with .old or .log.gz via regex
+    - name: Find config files in directory
       find:
         paths: "{{ config_dir }}"
-        patterns: "^.*\\.{{ config_extention }}$"
+        patterns: "^.*\\.(txt|cfg)$"
         use_regex: yes
       register: config_files
 
@@ -18,16 +16,17 @@
     #   loop: "{{ config_files.files }}"
     #   vars:
     #     device_name: "{{ item.path }}"
-    #     device_config_file: "{{ item.path | regex_search('/([^\\/\\.]+)\\.cfg$', '\\1') | first }}"
+    #     device_config_file: "{{ item.path | regex_search('/([^\\/\\.]+)\\.(txt|cfg)$', '\\1') | first }}"
 
     - name: Load Config
       include_role:
-        name: ciscops.devops.nso
+        name: ciscops.mdd.nso
         tasks_from: load_config
       vars:
-        device_name: "{{ item.path | regex_search('/([^\\/\\.]+)\\.cfg$', '\\1') | first }}"
-        device_config: "{{ lookup('file', item.path) }}"
+        nso_device_ipv4: 127.0.0.1
+        nso_device_name: "{{ item.path | regex_search('/([^\\/\\.]+)\\.(txt|cfg)$', '\\1') | first }}"
+        nso_device_config: "{{ lookup('file', item.path) }}"
+        nso_device_admin_state: "southbound-locked"
+        nso_device_description: "Loaded from device config"
+        nso_device_config: "{{ lookup('file', item.path) }}"
       loop: "{{ config_files.files }}"
-
-    # - debug:
-    #     var: device_config
