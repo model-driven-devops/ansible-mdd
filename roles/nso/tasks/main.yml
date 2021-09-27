@@ -9,7 +9,7 @@
 # If not set as an environment variable, then see if we can figure it out from
 # the inventory
 #
-- set_fact:
-    nso_hostname: "{{ groups.nso_hosts | first }}"
-    nso_host: "{{ hostvars[nso_hostname].ansible_host }}"
-  when: not nso_host and (groups.nso_hosts is defined and groups.nso_hosts | length)
+# - set_fact:
+#     nso_hostname: "{{ groups.nso_hosts | first }}"
+#     nso_host: "{{ hostvars[nso_hostname].ansible_host }}"
+#   when: not nso_host and (groups.nso_hosts is defined and groups.nso_hosts | length)

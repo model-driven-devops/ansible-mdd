@@ -17,7 +17,7 @@ $(TARBALL_NAME): galaxy.yml
 build: $(TARBALL_NAME) ## Build Collection
 
 publish: $(TARBALL_NAME) ## Public Collection
-	ansible-galaxy collection publish $(TARBALL_NAME)
+	ansible-galaxy collection publish $(TARBALL_NAME) --token=$(GALAXY_TOKEN)
 
 test: ## Run Sanity Tests
 	ansible-test sanity --docker default -v
