@@ -1,8 +1,8 @@
   - name: Update System Information
     uri:
       url: "{{ nso_rest_url }}/restconf/data/tailf-ncs:devices/device={{ inventory_hostname }}/mdd:openconfig{{ '?dry-run=native' if dry_run | bool else '' }}" 
-      url_username: admin
-      url_password: admin
+      url_username: "{{ nso_username }}"
+      url_password: "{{ nso_password }}"
       force_basic_auth: yes
       validate_certs: no
       status_code: [200,201,204]
@@ -34,6 +34,7 @@
 #           device:
 #           - name: "{{ inventory_hostname }}"
 #             mdd:openconfig: "{{ mdd_data['mdd:openconfig'] }}"
+#             __state: set
 #   register: config_result
 
 # - debug:

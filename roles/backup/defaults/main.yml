@@ -1,3 +1,0 @@
----
-network_backup_dir: "{{ playbook_dir }}/backups"
-network_backup_file: "{{ network_backup_dir }}/{{ inventory_hostname }}.cfg"

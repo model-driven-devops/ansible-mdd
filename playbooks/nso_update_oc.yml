@@ -2,9 +2,9 @@
   hosts: all
   connection: local
   gather_facts: no
+  roles:
+    - ciscops.mdd.nso
   vars:
-    nso_hostname: "{{ groups.nso_hosts | first }}"
-    nso_host: "{{ hostvars[nso_hostname].ansible_host }}"
     dry_run: true
     models: all
   tasks:
@@ -26,6 +26,8 @@
   hosts: all
   connection: local
   gather_facts: no
+  roles:
+    - ciscops.mdd.nso
   vars:
     dry_run: true
   tasks:
