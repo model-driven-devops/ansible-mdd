@@ -14,12 +14,13 @@
       body: 
         "{{ mdd_data }}"
       return_content: yes
+      timeout: 600
     register: nso_update_result
 
-  - debug:
-      var: nso_update_result.json
-    when: "'json' in nso_update_result and dry_run | bool"
-    changed_when: nso_update_result.json["dry-run-result"].native
+  # - debug:
+  #     var: nso_update_result.json
+  #   when: "'json' in nso_update_result and dry_run | bool"
+  #   changed_when: nso_update_result.json["dry-run-result"].native
 
 # - name: Update OC Service
 #   cisco.nso.nso_config:

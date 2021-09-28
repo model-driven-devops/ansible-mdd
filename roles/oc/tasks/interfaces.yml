@@ -1,4 +1,6 @@
-- set_fact:
-    oc_interfaces: "{{ lookup('template', 'netbox_interfaces.yml.j2') | from_yaml }}"
-- set_fact:
+- name: Combine Dynamic OC Interface Data
+  set_fact:
     mdd_data: "{{ mdd_data | default({}) | combine(oc_interfaces, recursive=True) }}"
+  vars:
+    oc_interfaces: "{{ lookup('template', 'netbox_interfaces.yml.j2') | from_yaml }}"
+    
