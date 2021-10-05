@@ -27,13 +27,13 @@ Extra Vars:
 
 > Note: Failure means that the device is out of sync
 
-`ciscops.mdd.nso_update_netbox`:
+`ciscops.mdd.update_netbox_from_nso`:
 
     - Update Netbox from NSO
 
 Example:
 ```
-ansible-playbook -i iniventory/nso.yml ciscops.mdd.nso_update_netbox
+ansible-playbook -i inventory/netbox.yml ciscops.mdd.update_netbox_from_nso
 ```
 
 

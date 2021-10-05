@@ -1,0 +1,9 @@
+- name: Update Netbox Local Context
+  netbox.netbox.netbox_device:
+    netbox_url: "{{ netbox_api }}"
+    netbox_token: "{{ netbox_token }}"
+    data:
+      name: "{{ netbox_device_name | default(inventory_hostname) }}"
+      local_context_data: "{{ netbox_device_local_context }}"
+    state: present
+    validate_certs: false

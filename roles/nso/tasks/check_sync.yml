@@ -7,4 +7,4 @@
     input: {}
   register: action_result
   changed_when: False
-  failed_when: "'out-of-sync' in action_result.output.result"
+  failed_when: "action_result.output is defined and 'out-of-sync' in action_result.output.result"

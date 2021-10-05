@@ -1,4 +1,13 @@
-- set_fact:
-    oc_system: "{{ lookup('template', 'oc_system.yml.j2') | from_yaml }}"
-- set_fact:
+- name: Combine Static OC System Data
+  set_fact:
     mdd_data: "{{ mdd_data | default({}) | combine(oc_system, recursive=True) }}"
+  when: "'openconfig-system:system' in hostvars[inventory_hostname]"
+  vars:
+    oc_system:
+      mdd:openconfig:
+        openconfig-system:system: "{{ hostvars[inventory_hostname]['openconfig-system:system'] }}"
+- name: Combine Dynamic OC System Data
+  set_fact:
+    mdd_data: "{{ mdd_data | default({}) | combine(oc_system, recursive=True) }}"
+  vars:
+    oc_system: "{{ lookup('template', 'oc_system.yml.j2') | from_yaml }}"

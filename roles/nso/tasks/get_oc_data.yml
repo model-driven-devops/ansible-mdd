@@ -1,0 +1,11 @@
+- name: Get Config Data
+  cisco.nso.nso_show:
+    url: "{{ nso_url }}"
+    username: "{{ nso_username }}"
+    password: "{{ nso_password }}"
+    path: '/ncs:devices/device{"{{ device_name | default(inventory_hostname) }}"}/mdd:openconfig'
+    operational: no
+  register: show_result
+
+- set_fact:
+    nso_device_oc_data: "{{ show_result.output.data['tailf-ncs:devices']['device'][0] }}"

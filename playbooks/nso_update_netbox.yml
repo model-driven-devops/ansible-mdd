@@ -2,11 +2,6 @@
   connection: local
   gather_facts: no
   serial: 1
-  vars:
-    netbox_api: "{{ lookup('env', 'NETBOX_API') }}"
-    netbox_token: "{{ lookup('env', 'NETBOX_TOKEN') }}"
-    nso_host: "{{ lookup('env', 'NSO_HOST') | default (hostvars['nso'].ansible_host) }}"
-    netbox_site: 'default'
   tasks:
     - name: Create Site
       netbox.netbox.netbox_site:

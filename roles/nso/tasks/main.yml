@@ -1,20 +1,15 @@
-- name: Generate device list
-  import_tasks: nso-generateDeviceList.yml
-  become: false
-  any_errors_fatal: true
-  tags:
-    - start
+#
+# If nso_host was not set in inventory, see if it is an environment variable.
+#
+- set_fact:
+    nso_host: "{{ lookup('env', 'NSO_HOST') | default('') }}"
+  when: nso_host is not defined or not nso_host
 
-- name: Install MDD packages
-  import_tasks: nso-install-mdd-models.yml
-  become: false
-  any_errors_fatal: true
-  tags:
-    - install
-
-- name: Start NSO
-  import_tasks: nso-startNSO.yml
-  become: false
-  any_errors_fatal: true
-  tags:
-    - start
+#
+# If not set as an environment variable, then see if we can figure it out from
+# the inventory
+#
+# - set_fact:
+#     nso_hostname: "{{ groups.nso_hosts | first }}"
+#     nso_host: "{{ hostvars[nso_hostname].ansible_host }}"
+#   when: not nso_host and (groups.nso_hosts is defined and groups.nso_hosts | length)

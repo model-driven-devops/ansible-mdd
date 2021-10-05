@@ -2,15 +2,16 @@
   hosts: all
   connection: local
   gather_facts: no
+  roles:
+    - ciscops.mdd.nso
   vars:
-    nso_hostname: "{{ groups.nso_hosts | first }}"
-    nso_host: "{{ hostvars[nso_hostname].ansible_host }}"
     dry_run: true
     models: all
   tasks:
-    - set_fact:
-        nso_host: "{{ custom_fields.nso_host }}"
-      when: custom_fields.nso_host is defined
+    - include_role:
+        name: ciscops.mdd.nso
+        tasks_from: check_sync
+      when: not dry_run | bool
 
     - name: Get OC Data
       include_role:
@@ -22,10 +23,26 @@
         name: ciscops.mdd.nso
         tasks_from: update_oc
 
+    - block:
+      - name: Get OC All Data
+        include_role:
+          name: ciscops.mdd.nso
+          tasks_from: get_oc_data
+
+      - name: Update Local Context
+        include_role:
+          name: ciscops.mdd.netbox
+          tasks_from: update_local_context
+        vars:
+          netbox_device_local_context: "{{ nso_device_oc_data }}"
+      when: not dry_run | bool
+
 - name: Run update_report
   hosts: all
   connection: local
   gather_facts: no
+  roles:
+    - ciscops.mdd.nso
   vars:
     dry_run: true
   tasks:

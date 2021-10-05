@@ -11,16 +11,16 @@ nso_devices_seed_template: "nso-deviceSetup.xml.j2"
 # admin_password: admin
 # ansible_user: "{{ admin_user }}"
 # ansible_password: "{{ admin_password }}"
-nso_username: admin
-nso_password: admin
+nso_username: "{{ lookup('env', 'NSO_USERNAME') | default ('admin') }}"
+nso_password: "{{ lookup('env', 'NSO_PASSWORD') | default ('admin') }}"
 # The auth groups to add.  Override in the inventory
 nso_auth_groups:
   default:
     remote_name: admin
     remote_password: admin
-nso_default_ned: cisco-ios-cli-6.69
+nso_default_ned: cisco-ios-cli-6.75
 nso_ned_dict:
-  ios: "cisco-ios-cli-6.69"
+  ios: "cisco-ios-cli-6.75"
 nso_package_repos:
   - name: mdd
     repo: https://github.com/model-driven-devops/nso-oc-services.git
