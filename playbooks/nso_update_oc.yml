@@ -8,10 +8,6 @@
     dry_run: true
     models: all
   tasks:
-    - set_fact:
-        nso_host: "{{ custom_fields.nso_host }}"
-      when: custom_fields.nso_host is defined
-
     - include_role:
         name: ciscops.mdd.nso
         tasks_from: check_sync
