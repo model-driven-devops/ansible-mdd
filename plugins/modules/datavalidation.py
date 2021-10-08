@@ -4,7 +4,7 @@ __metaclass__ = type
 import argparse
 import json
 import traceback
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 try:

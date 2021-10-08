@@ -6,10 +6,9 @@
   vars:
     check_list:
       - bgp_neighbors
+    schema_dir: "{{ lookup('env', 'PWD') }}/schemas"
   tasks:
-    - name: Get OC Data
+    - name: Run Checks
       include_role:
-        name: ciscops.mdd.nso
-        tasks_from: exec_command
-      vars:
-        nso_exec_command: 'show ip route'
+        name: ciscops.mdd.check
+        tasks_from: find_schema
