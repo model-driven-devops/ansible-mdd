@@ -1,0 +1,14 @@
+- hosts: all
+  connection: local
+  gather_facts: no
+  roles:
+    - ciscops.mdd.nso
+  vars:
+    check_list:
+      - bgp_neighbors
+  tasks:
+    - name: Get OC Data
+      include_role:
+        name: ciscops.mdd.check
+        tasks_from: "{{ item }}"
+      with_items: "{{ check_list }}"

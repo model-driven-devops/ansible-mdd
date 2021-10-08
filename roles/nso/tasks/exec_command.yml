@@ -1,0 +1,22 @@
+- name: Update System Information
+  uri:
+    url: "{{ nso_rest_url }}/restconf/operations/tailf-ncs:devices/device={{ inventory_hostname }}/live-status/exec/any" 
+    url_username: "{{ nso_username }}"
+    url_password: "{{ nso_password }}"
+    force_basic_auth: yes
+    validate_certs: no
+    status_code: [200,201,204]
+    method: POST
+    headers: "{
+      'Content-Type': 'application/yang-data+json',
+      'Accept': 'application/yang-data+json'}"
+    body_format: json
+    body: 
+      input:
+        args: "{{ nso_exec_command }}"
+    return_content: yes
+    timeout: 600
+  register: nso_exec_command_result
+
+- debug:
+    var: nso_exec_command

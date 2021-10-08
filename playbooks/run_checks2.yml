@@ -1,0 +1,15 @@
+- hosts: all
+  connection: local
+  gather_facts: no
+  roles:
+    - ciscops.mdd.nso
+  vars:
+    check_list:
+      - bgp_neighbors
+  tasks:
+    - name: Get OC Data
+      include_role:
+        name: ciscops.mdd.nso
+        tasks_from: exec_command
+      vars:
+        nso_exec_command: 'show ip route'
