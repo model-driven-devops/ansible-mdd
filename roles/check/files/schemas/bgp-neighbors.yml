@@ -1,3 +1,6 @@
+#
+# Check to make sure that any enabled neighbors are established
+#
 title: BGP Neighbor Check
 type: object
 required:

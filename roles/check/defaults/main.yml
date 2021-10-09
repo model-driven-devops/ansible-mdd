@@ -1,2 +1,10 @@
 ---
 schema_dir: "{{ lookup('env', 'PWD') }}/schemas"
+check_list:
+  - bgp_neighbors
+
+check_table:
+  bgp_neighbors:
+    command: 'show bgp neighbors'
+    schema: 'bgp-neighbors.yml'
+    method: nso_exec_command
