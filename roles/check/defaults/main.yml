@@ -1,2 +1,2 @@
 ---
-# defaults file for check
+schema_dir: "{{ lookup('env', 'PWD') }}/schemas"

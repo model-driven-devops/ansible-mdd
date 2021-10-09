@@ -1,0 +1,17 @@
+- name: Generate paths for schema file
+  set_fact:
+    schema_dir_list: "{{ ( [ slashed_schema_dir ] | product(group_list) | map('join') | list ) + [ slashed_schema_dir, role_path + '/files/schemas/' ]}}"
+    schema_file: ''
+  vars:
+    group_list: "{{ [ inventory_hostname ] + sites + regions }}"
+    slashed_schema_dir: "{{ schema_dir | regex_replace('^(.+[^/])/?$', '\\1/') }}"
+
+- name: Search for schema file
+  set_fact:
+    schema_file: "{{ lookup('first_found', params, errors='ignore') }}"
+  vars:
+    params:
+      files:
+        - '{{ schema_name }}'
+      paths: "{{ schema_dir_list }}"
+  

@@ -1,4 +1,4 @@
-- name: Update System Information
+- name: Run command through NSO
   uri:
     url: "{{ nso_rest_url }}/restconf/operations/tailf-ncs:devices/device={{ inventory_hostname }}/live-status/exec/any" 
     url_username: "{{ nso_username }}"
@@ -18,5 +18,8 @@
     timeout: 600
   register: nso_exec_command_result
 
-- debug:
-    var: nso_exec_command
+- set_fact:
+    nso_command_output: "{{ nso_exec_command_result['json'][ned_name]['result'] | replace(inventory_hostname + '#','') }}"
+  vars:
+    ned_name: "{{ nso_exec_command_result['json'].keys() | first }}"
+  when: "'json' in nso_exec_command_result"

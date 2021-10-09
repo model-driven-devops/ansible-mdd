@@ -1,0 +1,18 @@
+- hosts: all
+  connection: local
+  gather_facts: no
+  roles:
+    - ciscops.mdd.nso
+  tasks:
+    - name: Run Checks
+      include_role:
+        name: ciscops.mdd.check
+        tasks_from: run_check
+      with_items: "{{ check_list }}"
+      loop_control:
+        loop_var: 'check_name'
+
+    - debug:
+        var: failed_checks
+      when: failed_checks is defined and failed_checks
+      failed_when: failed_checks is defined and failed_checks
