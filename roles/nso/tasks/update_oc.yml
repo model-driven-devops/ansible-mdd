@@ -5,7 +5,7 @@
       url_password: "{{ nso_password }}"
       force_basic_auth: yes
       validate_certs: no
-      status_code: [200,201,204]
+      status_code: [200, 201, 204]
       method: PUT
       headers: "{
         'Content-Type': 'application/yang-data+json',

@@ -1,10 +1,27 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+from ansible.module_utils.six import raise_from
+import traceback
 import argparse
-import ipaddress
 import json
-from jsonschema import validate, Draft7Validator, FormatChecker, draft7_format_checker, validators
-from jsonschema.exceptions import ValidationError
+
+
+try:
+  from jsonschema import validate, Draft7Validator, FormatChecker, draft7_format_checker, validators
+  from jsonschema.exceptions import ValidationError
+except ImportError:
+  HAS_JSONSCHEMA = False
+  JSONSCHEMA_IMPORT_ERROR = traceback.format_exc()
+else:
+  HAS_JSONSCHEMA = True
+
+try:
+  import ipaddress
+except ImportError:
+  HAS_IPADDRESS = False
+  IPADDRESS_IMPORT_ERROR = traceback.format_exc()
+else:
+  HAS_IPADDRESS = True
 
 def in_subnet(validator, value, instance, schema):
   if not ipaddress.ip_address(instance) in ipaddress.ip_network(value):
@@ -16,7 +33,6 @@ def is_ip_address(checker, instance):
   except ValueError:
     return False
   return True
-
 
 def validate_schema(data, schema):
   Draft7Validator.META_SCHEMA['definitions']['simpleTypes']['enum'].append('ipaddress')
