@@ -1,12 +1,28 @@
-#!/usr/bin/env python
-
+#!/usr/bin/python
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 import argparse
-import ipaddress
 import json
-from jsonschema import validate, Draft7Validator, FormatChecker, draft7_format_checker, validators
-from jsonschema.exceptions import ValidationError
+import traceback
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
-from ansible.module_utils.basic import AnsibleModule
+
+try:
+  from jsonschema import validate, Draft7Validator, FormatChecker, draft7_format_checker, validators
+  from jsonschema.exceptions import ValidationError
+except ImportError:
+  HAS_JSONSCHEMA = False
+  JSONSCHEMA_IMPORT_ERROR = traceback.format_exc()
+else:
+  HAS_JSONSCHEMA = True
+
+try:
+  import ipaddress
+except ImportError:
+  HAS_IPADDRESS = False
+  IPADDRESS_IMPORT_ERROR = traceback.format_exc()
+else:
+  HAS_IPADDRESS = True
 
 def in_subnet(validator, value, instance, schema):
   if not ipaddress.ip_address(instance) in ipaddress.ip_network(value):
@@ -53,13 +69,24 @@ def main():
     data = dict(required=True, type=dict),
     schema = dict(required=True, type=dict),
     monk=dict(required=False),
-
   )
 
   module = AnsibleModule(
     argument_spec=arguments,
     supports_check_mode=False
   )
+
+  if not HAS_JSONSCHEMA:
+      # Needs: from ansible.module_utils.basic import missing_required_lib
+      module.fail_json(
+          msg=missing_required_lib('jsonschema'),
+          exception=JSONSCHEMA_IMPORT_ERROR)
+
+  if not HAS_IPADDRESS:
+      # Needs: from ansible.module_utils.basic import missing_required_lib
+      module.fail_json(
+          msg=missing_required_lib('ipaddress'),
+          exception=IPADDRESS_IMPORT_ERROR)
 
   data = module.params['data']
   schema = module.params['schema']

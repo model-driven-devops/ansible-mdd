@@ -28,5 +28,5 @@
         nso_device_config: "{{ lookup('file', item.path) }}"
         nso_device_admin_state: "southbound-locked"
         nso_device_description: "Loaded from device config"
-        nso_device_config: "{{ lookup('file', item.path) }}"
       loop: "{{ config_files.files }}"
+      

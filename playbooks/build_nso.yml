@@ -22,4 +22,3 @@
         tasks_from: add_auth_groups
       tags:
         - auth_groups
-

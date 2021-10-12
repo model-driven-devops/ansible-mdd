@@ -1,0 +1,23 @@
+- hosts: all
+  connection: local
+  gather_facts: no
+  vars:
+    models: all
+    schema_dir: "{{ lookup('env', 'PWD') }}/schemas"
+  tasks:
+    - name: Get OC Data
+      include_role:
+        name: ciscops.mdd.oc
+        tasks_from: "{{ models }}"
+
+    - name: include the role
+      include_role:
+        name: ciscops.mdd.data_validation
+      vars:
+        validation_input_data: "{{ hostvars[inventory_hostname]['mdd_data']['mdd:openconfig'] }}"
+
+    - debug:
+        msg: "Failed schemas: {{ validation_failures | join(',') }}"
+      failed_when: validation_failures | length
+      when: validation_failures | length
+        

@@ -1,0 +1,20 @@
+- name: Get BGP Neighbors
+  cisco.nso.nso_show:
+    url: "{{ nso_url }}"
+    username: "{{ nso_username }}"
+    password: "{{ nso_password }}"
+    path: '/ncs:devices/device{"{{ nso_device_name | default(inventory_hostname) }}"}/live-status/bgp/ipv4/unicast/neighbors'
+    operational: true
+  register: show_result
+
+- set_fact:
+    bgp_neighbor_status: "{{ show_result.output.data['tailf-ncs:devices']['device'][0]['live-status'][ned_name]}}"
+  vars:
+    ned_name: "{{ show_result.output.data['tailf-ncs:devices']['device'][0]['live-status'].keys() | first }}"
+  when: "'live-status' in show_result.output.data['tailf-ncs:devices']['device'][0]"
+
+- name: Validate data
+  datavalidation:
+    data: "{{ bgp_neighbor_status }}"
+    schema: "{{ check_bgp_neighbors }}"
+  register: validation_output
