@@ -2,6 +2,7 @@
 COLLECTION_NAME="ciscops.mdd"
 COLLECTION_VERSION := $(shell awk '/^version:/{print $$NF}' galaxy.yml)
 TARBALL_NAME=ciscops-mdd-${COLLECTION_VERSION}.tar.gz
+PYDIRS="plugins"
 
 help: ## Display help
 	@awk -F ':|##' \
@@ -16,8 +17,11 @@ $(TARBALL_NAME): galaxy.yml
 
 build: $(TARBALL_NAME) ## Build Collection
 
-publish: $(TARBALL_NAME) ## Public Collection
+publish: $(TARBALL_NAME) ## Publish Collection (set env:GALAXY_TOKEN)
 	ansible-galaxy collection publish $(TARBALL_NAME) --token=$(GALAXY_TOKEN)
+
+format: ## Format Python code
+	yapf --style=yapf.ini -i -r *.py $(PYDIRS)
 
 test: ## Run Sanity Tests
 	ansible-test sanity --docker default -v

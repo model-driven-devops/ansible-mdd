@@ -1,9 +1,9 @@
 - name: Generate paths for schema file
   set_fact:
-    schema_dir_list: "{{ ( [ slashed_schema_dir ] | product(group_list) | map('join') | list ) + [ slashed_schema_dir, role_path + '/files/schemas/' ]}}"
+    schema_dir_list: "{{ ( [ slashed_schema_dir ] | product(schema_group_dirs + ['']) | map('join') | list ) + [ role_path + '/files/schemas/' ]}}"
     schema_file: ''
   vars:
-    group_list: "{{ [ inventory_hostname ] + sites + regions }}"
+    group_list: "{{ [ inventory_hostname ] + sites | default([]) + regions | default([])}}"
     slashed_schema_dir: "{{ schema_dir | regex_replace('^(.+[^/])/?$', '\\1/') }}"
 
 - name: Search for schema file
@@ -14,4 +14,11 @@
       files:
         - '{{ schema_name }}'
       paths: "{{ schema_dir_list }}"
-  
+
+- name: Check to make sure that we found a schema
+  assert:
+    that:
+      - schema_file is defined
+      - schema_file
+    fail_msg: "{{ check_table[check_name].schema }} cannot be found"
+    success_msg: "Found {{ schema_file }}"

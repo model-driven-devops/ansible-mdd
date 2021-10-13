@@ -1,0 +1,10 @@
+- name: Get the output via cli_parse and PyATS
+  ansible.utils.cli_parse:
+    command: "{{ check_command }}"
+    parser:
+        name: ansible.netcommon.pyats
+  connection: network_cli
+  register: cli_parse_results
+
+- set_fact:
+    parsed_output: "{{ cli_parse_results.parsed }}"

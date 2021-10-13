@@ -3,4 +3,5 @@
     mdd_data: "{{ mdd_data | default({}) | combine(oc_interfaces, recursive=True) }}"
   vars:
     oc_interfaces: "{{ lookup('template', 'netbox_interfaces.yml.j2') | from_yaml }}"
+  when: hostvars[inventory_hostname]['openconfig-interfaces:interfaces'] is defined
     

@@ -1,0 +1,8 @@
+- name: Run Checks
+  include_role:
+    name: ciscops.mdd.check
+    tasks_from: run_check
+  with_items: "{{ check_list }}"
+  when: check_table[check_name].tags | intersect(tags | default([])) | length
+  loop_control:
+    loop_var: 'check_name'

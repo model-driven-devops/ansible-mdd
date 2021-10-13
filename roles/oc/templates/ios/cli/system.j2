@@ -1,0 +1,23 @@
+{% if 'openconfig-system:system' in hostvars[inventory_hostname] %}
+{% set oc_system_data = hostvars[inventory_hostname]['openconfig-system:system'] %}
+{% if oc_system_data.config is defined %}
+{#                                                                             #}
+{# Hostname                                                                    #}
+{#                                                                             #}
+{% if oc_system_data.config.hostname is defined %}
+hostname {{ oc_system_data.config.hostname }}
+{% endif %}
+{#                                                                             #}
+{# Domain Name                                                                 #}
+{#                                                                             #}
+{% if oc_system_data.config['domain-name'] is defined %}
+ip domain name {{ oc_system_data.config['domain-name'] }}
+{% endif %}
+{#                                                                             #}
+{# MOTD Banner                                                                 #}
+{#                                                                             #}
+{% if oc_system_data.config['motd-banner'] is defined %}
+banner motd ^{{ oc_system_data.config['motd-banner'] }}^
+{% endif %}
+{% endif %}
+{% endif %}

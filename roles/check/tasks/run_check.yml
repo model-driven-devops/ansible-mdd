@@ -1,35 +1,26 @@
-- name: Run Checks
+- name: Find schema
   include_role:
     name: ciscops.mdd.check
     tasks_from: find_schema
   vars:
     schema_name: "{{ check_table[check_name].schema }}"
 
-- name: Check to make sure that we found a schema
-  assert:
-    that:
-      - schema_file is defined
-      - schema_file
-    fail_msg: "{{ check_table[check_name].schema }} cannot be found"
-    success_msg: "Found {{ schema_file }}"
-
-- name: Run Command
+- name: Run command {{ check_table[check_name].command }}
   include_role:
-    name: ciscops.mdd.nso
-    tasks_from: exec_command
+    name: ciscops.mdd.check
+    tasks_from: "{{ check_table[check_name].method }}"
   vars:
-    nso_exec_command: "{{ check_table[check_name].command }}"
+    check_command: "{{ check_table[check_name].command }}"
 
-- name: Parsing output
-  set_fact:
-    parsed_output: "{{ nso_command_output | cisco.pyats.pyats_parser(check_table[check_name].command, 'iosxe') }}"
+- debug:
+    var: parsed_output
 
 - block:
-  - name: Validate data
-    datavalidation:
-      data: "{{ parsed_output }}"
-      schema: "{{ lookup('file', schema_file) | from_yaml }}"
-    register: validation_output
+    - name: Validate data against schema {{ schema_file }}
+      datavalidation:
+        data: "{{ parsed_output }}"
+        schema: "{{ lookup('file', schema_file) | from_yaml }}"
+      register: validation_output
   rescue:
-  - set_fact:
-      failed_checks: "{{ (failed_checks | default([])) + [check_name] }}"
+    - set_fact:
+        failed_checks: "{{ (failed_checks | default([])) + [check_name] }}"

@@ -1,10 +1,25 @@
 ---
 schema_dir: "{{ lookup('env', 'PWD') }}/schemas"
+#
+# The list of group names to append to schema_dir to search for schemas
+#
+schema_group_dirs: "{{ group_names }}"
+
 check_list:
   - bgp_neighbors
+  - check_routes
 
 check_table:
+  check_routes:
+    command: 'show ip route'
+    schema: 'show_ip_route.yml'
+    method: cli_parse
+    tags:
+      - router
+      - bgp
   bgp_neighbors:
     command: 'show bgp neighbors'
     schema: 'bgp-neighbors.yml'
-    method: nso_exec_command
+    method: cli_parse
+    tags:
+      - bgp

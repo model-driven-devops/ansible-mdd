@@ -1,0 +1,10 @@
+- name: Run Command
+  include_role:
+    name: ciscops.mdd.nso
+    tasks_from: exec_command
+  vars:
+    nso_exec_command: "{{ check_command }}"
+
+- name: Parsing output
+  set_fact:
+    parsed_output: "{{ nso_command_output | cisco.pyats.pyats_parser(check_command, 'iosxe') }}"
