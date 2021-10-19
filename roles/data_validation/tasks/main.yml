@@ -1,28 +1,18 @@
 ---
-# tasks file for data_validation
+- name: Generate paths for schema file
+  set_fact:
+    schema_dir_list: "{{ ( [ slashed_schema_dir ] | product(schema_group_dirs + ['']) | map('join') | list ) + [ role_path + '/files/schemas/' ]}}"
+  vars:
+    group_list: "{{ [ inventory_hostname ] + sites | default([]) + regions | default([])}}"
+    slashed_schema_dir: "{{ schema_dir | regex_replace('^(.+[^/])/?$', '\\1/') }}"
 
-- name: Find schema files
-  find:
-    paths: "{{ schema_dir | default(role_path + '/files/schemas') }}"
-    patterns: '*.yml,*.yaml'
-  register: schema_dir
-
-- name: Validate data
-  datavalidation:
-    data: "{{ validation_input_data }}"
-    schema: "{{ lookup('file', item.path) | from_yaml }}"
-  register: validation_output
-  loop: "{{ schema_dir.files }}"
-  ignore_errors: yes
-
-# - debug:
-#     var: validation_output.results
-
-- set_fact:
-    validation_failures: '{{ validation_output.results | selectattr("failed", "equalto", True) | map(attribute="item") | map(attribute="path") | list | default([]) }}'
-
-- debug:
-    msg: "Failed schemas: {{ validation_failures | join(',') }}"
-  failed_when: validation_failures | length
-  when: validation_failures | length
+- name: Run Validation Groups
+  include_tasks: validate_schema_group.yml
+  with_items: "{{ schema_group_list }}"
+  when: "'all' in schema_group_table[schema_group_name].tags | default(['all']) or schema_group_table[schema_group_name].tags | default([]) | intersect(tags | default([])) | length"
+  loop_control:
+    loop_var: 'schema_group_name'
+  vars:
+    schema_path_list: "{{ schema_dir_list }}"
+    schema_list: "{{ schema_group_table[schema_group_name].schema_list }}" 
     

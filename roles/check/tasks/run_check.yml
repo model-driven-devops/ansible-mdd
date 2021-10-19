@@ -1,10 +1,3 @@
-- name: Find schema
-  include_role:
-    name: ciscops.mdd.check
-    tasks_from: find_schema
-  vars:
-    schema_name: "{{ check_table[check_name].schema }}"
-
 - name: Run command {{ check_table[check_name].command }}
   include_role:
     name: ciscops.mdd.check
@@ -12,15 +5,20 @@
   vars:
     check_command: "{{ check_table[check_name].command }}"
 
-- debug:
-    var: parsed_output
+# - debug:
+#     var: parsed_output
 
 - block:
     - name: Validate data against schema {{ schema_file }}
       datavalidation:
         data: "{{ parsed_output }}"
-        schema: "{{ lookup('file', schema_file) | from_yaml }}"
+        schema: "{{ lookup('file', lookup('first_found', params)) | from_yaml }}"
       register: validation_output
+      vars:
+        params:
+          files:
+            - '{{ check_table[check_name].schema }}'
+          paths: "{{ schema_path_list }}"
   rescue:
     - set_fact:
         failed_checks: "{{ (failed_checks | default([])) + [check_name] }}"

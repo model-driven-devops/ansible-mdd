@@ -1,0 +1,34 @@
+#jinja2: lstrip_blocks: True
+{% if 'openconfig-network-instance:network-instances' in hostvars[inventory_hostname] %}
+mdd:openconfig:
+  'openconfig-network-instance:network-instances':
+    network-instance:
+{#                                                                             #}
+{# Begin Instances                                                             #}
+{#                                                                             #}      
+{% for instance in hostvars[inventory_hostname]['openconfig-network-instance:network-instances']['network-instance'] %}
+      - name: {{ instance.name }}
+        {{ instance.config | to_nice_yaml(8) }}
+{% if 'interfaces' in instance %}
+        interfaces:
+          interface:
+
+{% endif %}
+{#                                                                             #}
+{# Begin Instances Protcols                                                    #}
+{#                                                                             #}
+{% if 'protocols' in instance %}
+        protocols:
+          protocol:
+{% for protocol in instance.protocols %}
+
+{% endfor %}
+{% endif %}
+{#                                                                             #}
+{# End Instances Protcols                                                      #}
+{#                                                                             #} 
+{% endfor %}
+{#                                                                             #}
+{# End Instances                                                               #}
+{#                                                                             #}    
+{% endif %}

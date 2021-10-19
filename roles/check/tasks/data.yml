@@ -1,0 +1,35 @@
+---
+- name: Run Data Checks
+  include_role:
+    name: ciscops.mdd.check
+    tasks_from: run_check
+  with_items: "{{ config_check_list }}"
+  when: config_check_table[check_name].tags | intersect(tags | default([])) | length
+  loop_control:
+    loop_var: 'check_name'
+
+- name: Find schema files
+  find:
+    paths: "{{ schema_dir | default(role_path + '/files/schemas') }}"
+    patterns: '*.yml,*.yaml'
+  register: schema_dir
+
+- name: Validate data
+  datavalidation:
+    data: "{{ validation_input_data }}"
+    schema: "{{ lookup('file', item.path) | from_yaml }}"
+  register: validation_output
+  loop: "{{ schema_dir.files }}"
+  ignore_errors: yes
+
+# - debug:
+#     var: validation_output.results
+
+- set_fact:
+    validation_failures: '{{ validation_output.results | selectattr("failed", "equalto", True) | map(attribute="item") | map(attribute="path") | list | default([]) }}'
+
+- debug:
+    msg: "Failed schemas: {{ validation_failures | join(',') }}"
+  failed_when: validation_failures | length
+  when: validation_failures | length
+    

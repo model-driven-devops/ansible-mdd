@@ -1,0 +1,90 @@
+- name: Push OC Interfaces to NSO
+  hosts: all
+  connection: local
+  gather_facts: no
+  roles:
+    - ciscops.mdd.oc
+  vars:
+    dry_run: true
+    ansible_network_os: ansible.netcommon.restconf
+    ansible_httpapi_use_ssl: yes
+    ansible_httpapi_validate_certs: no
+  tasks:
+    - debug:
+        var: ansible_host
+
+    - set_fact:
+        oc_payload:
+          openconfig-interfaces:interfaces: "{{ mdd_data['mdd:openconfig']['openconfig-interfaces:interfaces'] }}"
+
+    - name: Restconf
+      ansible.netcommon.restconf_get:
+        path: /data/openconfig-interfaces:interfaces
+        content: config
+      connection: ansible.netcommon.httpapi
+      register: restconf_get_results
+
+    - name: Show the difference in path format
+      ansible.utils.fact_diff:
+        before: "{{ restconf_get_results.response | ansible.utils.to_paths }}"
+        after: "{{ restconf_get_results.response | combine(mdd_data['mdd:openconfig'] , recursive=True) | ansible.utils.to_paths }}"
+
+    - debug:
+        msg: "{{ restconf_get_results.response | combine(mdd_data['mdd:openconfig'] , recursive=True, list_merge='replace') }}"
+
+    # - name: Restconf
+    #   ansible.netcommon.restconf_config:
+    #     path: /data/openconfig-interfaces:interfaces
+    #     method: patch
+    #     content: "{{ restconf_get_results.response | to_json }}"
+    #   connection: ansible.netcommon.httpapi
+
+    # - name: Update System Information
+    #   uri:
+    #     url: "https://{{ ansible_host }}/restconf/data/openconfig-interfaces:interfaces"
+    #     user: "{{ ansible_user }}"
+    #     password: "{{ ansible_password }}"
+    #     force_basic_auth: yes
+    #     validate_certs: no
+    #     status_code: [200, 201, 204]
+    #     method: PATCH
+    #     headers: "{
+    #       'Content-Type': 'application/yang-data+json',
+    #       'Accept': 'application/yang-data+json'}"
+    #     body_format: json
+    #     body: 
+    #       "{{ oc_payload }}"
+    #     return_content: yes
+    #     timeout: 600
+    #   register: rest_update_result
+
+
+    # - block:
+    #   - name: Get OC All Data
+    #     include_role:
+    #       name: ciscops.mdd.nso
+    #       tasks_from: get_oc_data
+
+    #   - name: Update Local Context
+    #     include_role:
+    #       name: ciscops.mdd.netbox
+    #       tasks_from: update_local_context
+    #     vars:
+    #       netbox_device_local_context: "{{ nso_device_oc_data }}"
+    #   when: not dry_run | bool
+
+# - name: Run update_report
+#   hosts: all
+#   connection: local
+#   gather_facts: no
+#   roles:
+#     - ciscops.mdd.nso
+#   vars:
+#     dry_run: true
+#   tasks:
+#     - name: Update OC Data
+#       include_role:
+#         name: ciscops.mdd.nso
+#         tasks_from: update_report
+#       run_once: true
+#       when: dry_run | bool

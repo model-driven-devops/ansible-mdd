@@ -1,2 +1,15 @@
 ---
 # defaults file for oc
+model_list:
+  - system
+  - interfaces
+  - 'network-instance'
+oc_model_map:
+  system: 'openconfig-system:system'
+  interfaces: 'openconfig-interfaces:interfaces'
+  network-instance: 'openconfig-network-instance:network-instances'
+oc_level_list:
+    - oc_org
+    - oc_region
+    - oc_site
+    - oc_host

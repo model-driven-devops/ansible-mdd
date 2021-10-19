@@ -1,0 +1,31 @@
+#jinja2: lstrip_blocks: True
+{# hosts:#}
+{# Go through each of the hosts and compare the changes #}
+{% set consolidated_report = [] %}
+{% set passed_all = [] %}
+{% for host in play_hosts | sort %}
+  {% set found = {'value': false} %}
+  {% set result = hostvars[host]['validation_failures'] | default({'data':'unchanged'}) %}
+  {% if result %}
+{#  {{ host }}: "{{ result.data }}"#}
+    {% for entry in consolidated_report %}
+      {% if entry.data == result %}
+        {% set _ = found.update({'value': true}) %}
+        {% set _ = entry.hosts.append(host) %}
+      {% endif %}
+    {% endfor %}
+    {% if not found.value | bool %}
+      {% set entry_dict = {'hosts': [host], 'data': result} %}
+      {% set _ = consolidated_report.append(entry_dict) %}
+    {% endif %}
+  {% else %}
+    {% set _ = passed_all.append(host) %}
+  {% endif %}
+{% endfor %}
+consolidated_report:
+  failures:
+{% for entry in consolidated_report %}
+    - hosts: "{{ entry.hosts }}"
+      schemas: "{{ entry.data }}"
+{% endfor %}
+  passed: {{ passed_all }}

@@ -1,13 +1,11 @@
-- name: Combine Static OC System Data
+- name: Combine different levels of OC System Data
   set_fact:
-    mdd_data: "{{ mdd_data | default({}) | combine(oc_system, recursive=True) }}"
-  when: "'openconfig-system:system' in hostvars[inventory_hostname]"
+    mdd_data: "{{ mdd_data | default({}) | ciscops.mdd.oc_combine(oc_data, recursive=True) }}"
   vars:
-    oc_system:
+    oc_data:
       mdd:openconfig:
-        openconfig-system:system: "{{ hostvars[inventory_hostname]['openconfig-system:system'] }}"
-- name: Combine Dynamic OC System Data
-  set_fact:
-    mdd_data: "{{ mdd_data | default({}) | combine(oc_system, recursive=True) }}"
-  vars:
-    oc_system: "{{ lookup('template', 'oc_system.yml.j2') | from_yaml }}"
+        openconfig-system:system: "{{ hostvars[inventory_hostname][oc_level]['openconfig-system:system'] }}"
+  when: hostvars[inventory_hostname][oc_level] is defined and hostvars[inventory_hostname][oc_level]['openconfig-system:system'] is defined
+  loop: "{{ oc_level_list }}"
+  loop_control:
+    loop_var: oc_level

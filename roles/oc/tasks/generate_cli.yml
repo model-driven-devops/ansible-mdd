@@ -1,4 +1,0 @@
-- name: Generate CLI
-  set_fact:
-    day0_config: "{{ lookup('template', ansible_network_os + '/cli.j2' ) }}"
-  when: cml_config is defined and cml_config

@@ -1,0 +1,23 @@
+- name: Validate data
+  datavalidation:
+    data: "{{ validation_input_data }}"
+    schema: "{{ lookup('file', lookup('first_found', params)) | from_yaml }}"
+  register: validation_output
+  loop: "{{ schema_list }}"
+  loop_control:
+    loop_var: schema_name
+  vars:
+    schema_file: "{{ lookup('first_found', params) }}"
+    params:
+      files:
+        - "{{ schema_name }}"
+      paths: "{{ schema_path_list }}"
+  ignore_errors: yes
+
+- set_fact:
+    validation_failures: '{{ validation_output.results | selectattr("failed", "equalto", True) | map(attribute="schema_name") | list | default([]) }}'
+
+# - debug:
+#     msg: "Failed schemas: {{ validation_failures | join(',') }}"
+#   failed_when: validation_failures | length
+#   when: validation_failures | length

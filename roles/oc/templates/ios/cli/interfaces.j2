@@ -1,0 +1,37 @@
+{% macro config4_to_ip_mask(ipv4_config) -%}
+{% set ip4_cidr = ipv4_config['ip'] ~ '/' ~ ipv4_config['prefix-length'] %}
+{{ ip4_cidr | ipaddr('address') }} {{ ip4_cidr | ipaddr('netmask') }}
+{%- endmacro -%}
+
+{% if 'openconfig-interfaces:interfaces' in hostvars[inventory_hostname] %}
+{% set oc_interface_data = hostvars[inventory_hostname]['openconfig-interfaces:interfaces'] %}
+{% for interface in oc_interface_data.interface %}
+interface {{ interface.name }}
+  {{ 'no ' if interface.config.enabled else '' }}shutdown
+{#                                                                             #}
+{# Begin Sub Interfaces                                                        #}
+{#                                                                             #}
+{% if interface.subinterfaces is defined %}
+{% for subinterface in interface.subinterfaces.subinterface %}
+{% if subinterface.index == '0' %}
+{#                                                                             #}
+{# Begin IPv4                                                                  #}
+{#                                                                             #}
+{% if 'openconfig-if-ip:ipv4' in subinterface %}
+{% if subinterface['openconfig-if-ip:ipv4']['config']['dhcp-client'] | bool %}
+  ip address dhcp
+{% elif 'addresses' in subinterface['openconfig-if-ip:ipv4'] %}
+  ip address {{ config4_to_ip_mask(subinterface['openconfig-if-ip:ipv4'].addresses.address[0].config) }}
+{% endif %}
+{% endif %}
+{#                                                                             #}
+{# End IPv4                                                                    #}
+{#                                                                             #}
+{% endif %}
+{% endfor %}
+{% endif %}
+{#                                                                             #}
+{# End Sub Interfaces                                                          #}
+{#                                                                             #}
+{% endfor %}
+{% endif %}

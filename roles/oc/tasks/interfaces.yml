@@ -1,7 +1,17 @@
-- name: Combine Dynamic OC Interface Data
+- name: Combine different levels of OC Interface Data
+  set_fact:
+    mdd_data: "{{ mdd_data | default({}) | ciscops.mdd.oc_combine(oc_data, recursive=True) }}"
+  vars:
+    oc_data:
+      mdd:openconfig:
+        openconfig-interfaces:interfaces: "{{ hostvars[inventory_hostname][oc_level]['openconfig-interfaces:interfaces'] }}"
+  when: hostvars[inventory_hostname][oc_level] is defined and hostvars[inventory_hostname][oc_level]['openconfig-interfaces:interfaces'] is defined
+  loop: "{{ oc_level_list }}"
+  loop_control:
+    loop_var: oc_level
+- name: Combine Netbox OC Interface Data
   set_fact:
     mdd_data: "{{ mdd_data | default({}) | combine(oc_interfaces, recursive=True) }}"
   vars:
-    oc_interfaces: "{{ lookup('template', 'netbox_interfaces.yml.j2') | from_yaml }}"
-  when: hostvars[inventory_hostname]['openconfig-interfaces:interfaces'] is defined
-    
+    oc_interfaces: "{{ lookup('template', 'netbox-interfaces.yml.j2') | from_yaml }}"
+  when: hostvars[inventory_hostname]['interfaces'] is defined and hostvars[inventory_hostname]['interfaces']['name'] is defined

@@ -1,3 +1,11 @@
+- name: Generate paths for schema file
+  set_fact:
+    schema_dir_list: "{{ ( [ slashed_schema_dir ] | product(schema_group_dirs + ['']) | map('join') | list ) + [ role_path + '/files/schemas/' ]}}"
+    schema_file: ''
+  vars:
+    group_list: "{{ [ inventory_hostname ] + sites | default([]) + regions | default([])}}"
+    slashed_schema_dir: "{{ schema_dir | regex_replace('^(.+[^/])/?$', '\\1/') }}"
+
 - name: Run Checks
   include_role:
     name: ciscops.mdd.check
@@ -6,3 +14,5 @@
   when: check_table[check_name].tags | intersect(tags | default([])) | length
   loop_control:
     loop_var: 'check_name'
+  vars:
+    schema_path_list: "{{ schema_dir_list }}"

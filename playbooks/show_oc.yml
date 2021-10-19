@@ -1,13 +1,8 @@
 - hosts: all
   connection: local
   gather_facts: no
-  vars:
-    models: all
+  roles:
+    - ciscops.mdd.oc
   tasks:
-    - name: Get OC Data
-      include_role:
-        name: ciscops.mdd.oc
-        tasks_from: "{{ models }}"
-
     - debug:
         var: mdd_data

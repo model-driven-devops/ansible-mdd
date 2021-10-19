@@ -1,0 +1,11 @@
+- name: Combine different levels of OC Network Instance Data
+  set_fact:
+    mdd_data: "{{ mdd_data | default({}) | ciscops.mdd.oc_combine(oc_data, recursive=True) }}"
+  vars:
+    oc_data:
+      mdd:openconfig:
+        openconfig-network-instance:network-instances: "{{ hostvars[inventory_hostname][oc_level]['openconfig-network-instance:network-instances'] }}"
+  when: hostvars[inventory_hostname][oc_level] is defined and hostvars[inventory_hostname][oc_level]['openconfig-network-instance:network-instances'] is defined
+  loop: "{{ oc_level_list }}"
+  loop_control:
+    loop_var: oc_level  
