@@ -7,4 +7,4 @@
 
 - name: Parsing output
   set_fact:
-    parsed_output: "{{ nso_command_output | cisco.pyats.pyats_parser(check_command, 'iosxe') }}"
+    parsed_output: "{{ nso_command_output | ciscops.mdd.pyats_parser(check_command, ansible_network_os | default('ios')) }}"

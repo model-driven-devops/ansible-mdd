@@ -20,8 +20,11 @@ except ImportError as imp_exc:
 else:
     PYATS_IMPORT_ERROR = None
 
+ansible_os_map = {
+    "ios": "iosxe"
+}
 
-def pyats_parser(self, cli_output, command, os):
+def pyats_parser(cli_output, command, os):
     if not PY3:
         raise AnsibleFilterError("Genie requires Python 3")
 
@@ -34,6 +37,10 @@ def pyats_parser(self, cli_output, command, os):
         raise_from(
             AnsibleError('pyats must be installed to use this plugin'),
             PYATS_IMPORT_ERROR)
+
+    # Translate from ansible_network_os values to pyATS
+    if os in ansible_os_map.keys():
+        os = ansible_os_map[os]
 
     device = Device("uut", os=os)
 
