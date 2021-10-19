@@ -4,18 +4,13 @@
   gather_facts: no
   roles:
     - ciscops.mdd.nso
+    - ciscops.mdd.oc
   vars:
     dry_run: true
-    models: all
   tasks:
     - include_role:
         name: ciscops.mdd.nso
         tasks_from: check_sync
-
-    - name: Get OC Data
-      include_role:
-        name: ciscops.mdd.oc
-        tasks_from: "{{ models }}"
 
     - name: Update OC Data
       include_role:

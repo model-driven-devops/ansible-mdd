@@ -4,6 +4,7 @@
   gather_facts: no
   roles:
     - ciscops.mdd.nso
+    - ciscops.mdd.oc
   tasks:
     - block:
       - name: Add Host to NSO
