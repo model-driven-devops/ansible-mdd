@@ -1,0 +1,8 @@
+- hosts: nso
+  gather_facts: no
+  become: yes
+  tasks:
+    - name: Start NSO
+      include_role:
+        name: ciscops.mdd.nso
+        tasks_from: install

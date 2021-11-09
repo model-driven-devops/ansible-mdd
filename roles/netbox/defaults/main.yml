@@ -1,5 +1,6 @@
 ---
 # defaults file for netbox
+netbox_host_group: 'netbox'
 netbox_api: "{{ lookup('env', 'NETBOX_API') }}"
 netbox_token: "{{ lookup('env', 'NETBOX_TOKEN') }}"
 netbox_validate_certs: no
@@ -49,3 +50,4 @@ netbox_interface_type_lookup:
   'vasileft': Virtual
   'vasiright': Virtual
   'port-channel': LAG
+  'lisp': Virtual

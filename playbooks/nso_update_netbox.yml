@@ -1,52 +1,27 @@
-- hosts: all
+- name: Add Hosts to NSO
+  hosts: network
   connection: local
   gather_facts: no
   serial: 1
+  roles:
+    - ciscops.mdd.netbox
+    - ciscops.mdd.nso
   tasks:
-    - name: Create Site
-      netbox.netbox.netbox_site:
-        netbox_url: "{{ netbox_api }}"
-        netbox_token: "{{ netbox_token }}"
-        data:
-          name: "{{ netbox_site }}"
-          slug: "{{ netbox_site | lower }}"
-        state: present
-        validate_certs: false
-      delegate_to: localhost
-
-    - name: Update Device
-      include_role:
-        name: ciscops.mdd.netbox
-        tasks_from: add_device
-      vars:
-        netbox_device_name: "{{ inventory_hostname }}"
-        netbox_device_type: "{{ version.model | default('unknown') }}"
-        netbox_device_serial: "{{ version.serial | default(omit) }}"
-        netbox_device_platform: "{{ version.name | default(omit) }}"
-        netbox_device_role: 'router'
-
-    - name: Update VRFs
-      include_role:
-        name: ciscops.mdd.netbox
-        tasks_from: add_vrf
-      vars:
-        netbox_vrf_name: "{{ item.name }}"
-        netbox_vrf_rd: "{{ item.rd | default (omit) }}"
-      loop: "{{ vrfs }}"
+    # - include_role:
+    #     name: ciscops.mdd.nso
+    #     tasks_from: get_device_list
 
     - name: Update VLANs
       include_role:
-        name: ciscops.mdd.netbox
-        tasks_from: add_vlan
-      vars:
-        netbox_vlan_name: "{{ item.name }}"
-        netbox_vlan_id: "{{ item.id }}"
-      loop: "{{ vlans }}"
+        name: ciscops.mdd.nso
+        tasks_from: update_netbox_vlans
+
+    # - name: Update VRFs
+    #   include_role:
+    #     name: ciscops.mdd.nso
+    #     tasks_from: update_netbox_vrfs
 
     - name: Update Interfaces
       include_role:
-        name: ciscops.mdd.netbox
-        tasks_from: nso_interface
-      vars:
-        interface: "{{ item }}"
-      loop: "{{ interfaces | default ([]) }}"
+        name: ciscops.mdd.nso
+        tasks_from: update_netbox_interfaces

@@ -24,3 +24,6 @@
     password: "{{ nso_password }}"
     path: '/ncs:devices/device{"{{ device_name | default(inventory_hostname) }}"}/ssh/fetch-host-keys'
     input: {}
+  register: nso_results
+  failed_when: "nso_results.output.result == 'failed'"
+  changed_when: "nso_results.output.result == 'changed'"

@@ -11,8 +11,8 @@
         'Content-Type': 'application/yang-data+json',
         'Accept': 'application/yang-data+json'}"
       body_format: json
-      body: 
-        "{{ mdd_data }}"
+      body:
+        mdd:openconfig: "{{ mdd_data }}"
       return_content: yes
       timeout: 600
     register: nso_update_result

@@ -7,7 +7,6 @@ schema_group_dirs: "{{ group_names }}"
 
 check_list:
   - bgp_neighbors
-  - check_routes
 
 check_table:
   check_routes:

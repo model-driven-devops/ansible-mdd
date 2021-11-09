@@ -1,0 +1,13 @@
+- name: Start NSO
+  hosts: nso
+  gather_facts: no
+  become: yes
+  roles:
+    - ciscops.mdd.nso
+  tasks:
+    - name: Install MDD packages
+      include_role:
+        name: ciscops.mdd.nso
+        tasks_from: install_packages
+      tags:
+        - packages

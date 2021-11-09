@@ -1,20 +1,16 @@
 ---
 # defaults file location for data_validation
-schema_dir: "{{ lookup('env', 'PWD') }}/schemas"
+schema_root: "{{ lookup('env', 'PWD') }}/schemas"
 # The list of groups to append to schema_dir in which to search for files.
 # Note: role_dir/files/schemas is appended to the end as a default location.
 schema_group_dirs: "{{ group_names }}"
 #
-# The list of group names to append to schema_dir to search for schemas
+# The list of schmema groups to validate
 #
-validation_input_data: "{{ mdd_data['mdd:openconfig'] }}"
-
 schema_group_list:
-  - local
+  - stig
 schema_group_table:
-  local:
-    schema_list:
-      - banner.yml
-      - dns-servers.yml
+  stig:
+    path: stig
     tags:
       - all

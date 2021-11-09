@@ -1,0 +1,6 @@
+---
+- name: Copy NSO packages
+  get_url:
+    url: "{{ item }}"
+    dest: "{{ nso_upload_dir }}/{{ item }}"
+  loop: "{{ nso_package_list }}"

@@ -1,2 +1,32 @@
 ---
-# tasks file for netbox
+#
+# If netbox_api was not set in inventory, see if it is an environment variable.
+#
+- set_fact:
+    netbox_api: "{{ lookup('env', 'NETBOX_API') | default('') }}"
+  when: netbox_api is not defined or not netbox_api
+
+#
+# If not set as an environment variable, then see if we can figure it out from
+# the inventory
+#
+- set_fact:
+    netbox_api: "https://{{ hostvars[netbox_host].ansible_host }}"
+  when: "not netbox_api and netbox_host_group in groups"
+  vars:
+    netbox_host: "{{ groups[netbox_api_group] | first }}"
+
+- set_fact:
+    netbox_token: "{{ lookup('env', 'NETBOX_TOKEN') }}"
+  when: netbox_token is not defined or not netbox_token
+
+- name: Make sure that we have an Netbox host to talk to
+  assert:
+    that:
+      - netbox_api is defined
+      - netbox_api
+      - netbox_token is defined
+      - netbox_token
+    fail_msg: "Cannot find an Netbox API endpoint to use"
+    success_msg: "Using Netbox API Endpoint: {{ netbox_api }}"
+    

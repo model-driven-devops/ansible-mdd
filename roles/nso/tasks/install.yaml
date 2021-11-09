@@ -1,0 +1,191 @@
+---
+- name: Install prerequisites for NSO
+  apt:
+    name:
+      - default-jdk
+      - openssh-client
+      - ant
+      - make
+      - libxml2-utils
+      - xsltproc
+    update_cache: yes
+    install-recommends: no
+
+# - name: Clean up any previous NSO installation
+#   hosts: nso_hosts
+#   connection: ssh
+#   vars:
+#     ansible_user: "{{ admin_user }}"
+#     ansible_ssh_private_key_file: "{{ admin_private_key_file }}"
+#     ansible_python_interpreter: "/usr/bin/python3"
+#   tags:
+#     - cleanup
+#     - nso
+#   any_errors_fatal: true
+#   gather_facts: no
+#   tasks:
+#     - name: Remove install directory
+#       file:
+#         path: '/home/{{ admin_user }}/{{ nso_install_dir }}'
+#         state: absent
+
+#     - name: Remove run directory
+#       file:
+#         path: '/home/{{ admin_user }}/{{ nso_run_dir }}'
+#         state: absent
+
+# - name: NSO install
+#   hosts: nso_hosts
+#   connection: ssh
+#   vars:
+#     ansible_user: "{{ admin_user }}"
+#     ansible_ssh_private_key_file: "{{ admin_private_key_file }}"
+#     ansible_python_interpreter: "/usr/bin/python3"
+#   tags:
+#     - setup
+#     - nso
+#   any_errors_fatal: true
+#   gather_facts: no
+#   tasks:
+#     - name: Remove install directory
+- name: Create temporary installer directory
+  file:
+    path: "{{ nso_tmp_dir }}"
+    state: directory
+
+- name: Upload the NSO installer
+  copy:
+    src: "{{ nso_package_src }}/{{ nso_installer_name }}"
+    dest: "{{ nso_tmp_dir }}/{{ nso_installer_name }}"
+  register: copy_results
+
+- block:
+  - set_fact:
+      installer: '{{ nso_installer_name }}'
+
+  - block:
+      - name: "Unpack '{{ nso_installer_name }}'"
+        shell: 'cd {{ nso_tmp_dir }}; sh ./{{ nso_installer_name }} --skip-verification'
+
+      - set_fact:
+          installer: '{{ nso_installer_name | regex_replace("signed.bin$","installer.bin") }}'
+    when: '"signed.bin" in nso_installer_name'
+
+  - name: Run the NSO installer
+    shell: 'sh {{ nso_tmp_dir }}/{{ installer }} --system-install'
+  when: copy_results.changed
+
+- name: Find NSO packages
+  find:
+    paths: "{{ nso_package_src }}"
+    patterns: 'ncs-*.signed.bin'
+  delegate_to: localhost
+  become: no
+  register: find_results
+
+- name: Upload the NSO packages
+  copy:
+    src: "{{ item }}"
+    dest: "{{ nso_tmp_dir }}"
+  loop: "{{ find_results.files | map(attribute='path') | list }}"
+  register: copy_results
+
+- debug:
+    var: copy_results
+
+- name: Unpack NSO packages
+  shell: 'cd {{ nso_tmp_dir }}; sh {{ item.dest }} --skip-verification'
+  loop: "{{ copy_results.results }}"
+  when: item.changed
+
+- name: Extract packages into {{ nso_run_dir }}/packages
+  ansible.builtin.unarchive:
+    src: "{{ item.dest | regex_replace('signed.bin$', 'tar.gz') }}"
+    dest: "{{ nso_run_dir }}/packages"
+    remote_src: yes
+  loop: "{{ copy_results.results }}"
+  when: item.changed
+
+- name: Create {{ nso_etc_dir }}/ncs.conf
+  ansible.builtin.template:
+    src: ncs.conf.j2
+    dest: "{{ nso_etc_dir }}/ncs.conf"
+
+- name: Add NSO groups
+  ansible.builtin.group:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - ncsadmin
+    - ncsoper
+
+- name: Add {{ nso_username }} to ncsadmin
+  ansible.builtin.user:
+    name: "{{ nso_username }}"
+    groups: ncsadmin
+    append: yes
+
+- name: Set password for {{ nso_username }}
+  ansible.builtin.user:
+    name: "{{ nso_username }}"
+    password: "{{ nso_password | password_hash('sha512') }}"
+
+- name: Tweak bash profile
+  blockinfile:
+    path: '/home/{{ nso_username }}/.bashrc'
+    insertafter: EOF
+    block: |
+      if [ -f ~/{{ nso_install_dir }}/ncsrc ]; then
+          . ~/{{ nso_install_dir }}/ncsrc
+      fi
+      export NCS_JAVA_VM_OPTIONS="{{ nso_java_opts }}"
+
+# - name: Clean up installer
+#   file:
+#     path: '{{ tempdir.path }}'
+#     state: absent
+
+#     - name: Tweak bash profile
+#       blockinfile:
+#         path: '/home/{{ admin_user }}/.bashrc'
+#         insertafter: EOF
+#         block: |
+#           if [ -f ~/{{ nso_install_dir }}/ncsrc ]; then
+#               . ~/{{ nso_install_dir }}/ncsrc
+#           fi
+#           export NCS_JAVA_VM_OPTIONS="{{ nso_java_opts }}"
+
+#     - name: Initial NSO setup
+#       shell: '$HOME/{{ nso_install_dir }}/bin/ncs-setup --dest $HOME/{{ nso_run_dir }}'
+
+# - name: Install additional NSO packages/NEDs
+#   hosts: nso_hosts
+#   connection: ssh
+#   vars:
+#     ansible_user: "{{ admin_user }}"
+#     ansible_ssh_private_key_file: "{{ admin_private_key_file }}"
+#     ansible_python_interpreter: "/usr/bin/python3"
+#   tags:
+#     - setup
+#     - nso_packages
+#     - nso
+#   any_errors_fatal: true
+#   gather_facts: no
+#   tasks:
+#     - name: Process package list
+#       block:
+#         - name: Create temporary package holding directory
+#           tempfile:
+#             state: directory
+#             suffix: pkg
+#           register: tempdir
+
+#         - name: Process each package
+#           include_tasks: nso-installNSOPackage.yaml
+#           loop: "{{ nso_package_list }}"
+
+#         - name: Remove temporary package holding directory
+#           file:
+#             path: '{{ tempdir.path }}'
+#             state: absent
+#       when: nso_package_list is defined

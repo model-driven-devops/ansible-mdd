@@ -2,17 +2,21 @@
   hosts: network
   connection: local
   gather_facts: no
-  vars:
-    nso_host: "{{ lookup('env', 'NSO_HOST') | default (hostvars['nso'].ansible_host) }}"
-    nso_username: "{{ lookup('env', 'NSO_USERNAME') | default ('admin') }}"
-    nso_password: "{{ lookup('env', 'NSO_PASSWORD') | default ('admin') }}"
+  roles:
+    - ciscops.mdd.nso
   tasks:
+    - name: Add Auth Groups to NSO
+      include_role:
+        name: ciscops.mdd.nso
+        tasks_from: add_auth_groups
+      run_once: true
+
     - name: Add Host to NSO
       include_role:
         name: ciscops.mdd.nso
         tasks_from: add_host
 
-    - name: Sync Host
+    - name: Sync Hosst
       include_role:
         name: ciscops.mdd.nso
         tasks_from: sync_host

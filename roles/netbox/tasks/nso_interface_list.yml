@@ -5,4 +5,5 @@
   vars:
     interface_name: "{{ nso_interface_type }}{{ item.name }}"
     interface_data: "{{ item }}"
+  when: "'name' in item"
   with_items: "{{ nso_interface_type_list }}"

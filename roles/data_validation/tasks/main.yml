@@ -1,11 +1,4 @@
 ---
-- name: Generate paths for schema file
-  set_fact:
-    schema_dir_list: "{{ ( [ slashed_schema_dir ] | product(schema_group_dirs + ['']) | map('join') | list ) + [ role_path + '/files/schemas/' ]}}"
-  vars:
-    group_list: "{{ [ inventory_hostname ] + sites | default([]) + regions | default([])}}"
-    slashed_schema_dir: "{{ schema_dir | regex_replace('^(.+[^/])/?$', '\\1/') }}"
-
 - name: Run Validation Groups
   include_tasks: validate_schema_group.yml
   with_items: "{{ schema_group_list }}"
@@ -13,6 +6,5 @@
   loop_control:
     loop_var: 'schema_group_name'
   vars:
-    schema_path_list: "{{ schema_dir_list }}"
-    schema_list: "{{ schema_group_table[schema_group_name].schema_list }}" 
+    schema_path: "{{ schema_group_table[schema_group_name].path }}"
     

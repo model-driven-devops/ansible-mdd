@@ -1,6 +1,6 @@
 - set_fact:
     netbox_inventory: "{{ query('netbox.netbox.nb_lookup', 'devices',
-            api_endpoint=netbox_url,
+            api_endpoint=netbox_api,
             token=netbox_token,
             validate_certs=False) }}"
 - set_fact:

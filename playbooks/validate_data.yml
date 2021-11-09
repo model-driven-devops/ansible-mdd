@@ -5,7 +5,7 @@
   roles:
     - ciscops.mdd.oc               # Loads the OC Data
     - ciscops.mdd.data_validation  # Validates the OC Data
-
+    
 - name: Run update_report
   hosts: all
   connection: local

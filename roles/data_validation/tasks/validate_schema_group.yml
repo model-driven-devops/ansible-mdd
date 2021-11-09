@@ -1,17 +1,18 @@
+- name: Find all schemas
+  find:
+    paths: "{{ schema_root }}/{{ schema_path }}"
+    recurse: yes
+    patterns: '*.yml,*.yaml,*.json'
+  register: find_results
+
 - name: Validate data
   datavalidation:
-    data: "{{ validation_input_data }}"
-    schema: "{{ lookup('file', lookup('first_found', params)) | from_yaml }}"
+    data: "{{ mdd_data }}"
+    schema_file: "{{ schema_file }}"
   register: validation_output
-  loop: "{{ schema_list }}"
+  loop: "{{ find_results.files | map(attribute='path') | list }}"
   loop_control:
-    loop_var: schema_name
-  vars:
-    schema_file: "{{ lookup('first_found', params) }}"
-    params:
-      files:
-        - "{{ schema_name }}"
-      paths: "{{ schema_path_list }}"
+    loop_var: schema_file
   ignore_errors: yes
 
 - set_fact:

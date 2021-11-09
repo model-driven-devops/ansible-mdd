@@ -65,7 +65,9 @@ EXAMPLES = r"""
 
 import argparse
 import json
+import yaml
 import traceback
+import os
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 try:
@@ -127,7 +129,10 @@ def validate_schema(data, schema):
 
 def main():
 
-    arguments = dict(data=dict(required=True, type='dict'), schema=dict(required=True, type='dict'))
+    arguments = dict( data=dict(required=True, type='dict'),
+                    schema=dict(required=False, type='dict'),
+                    schema_file=dict(required=False, type='str')
+                    )
 
     module = AnsibleModule(argument_spec=arguments, supports_check_mode=False)
 
@@ -140,7 +145,21 @@ def main():
         module.fail_json(msg=missing_required_lib('ipaddress'), exception=IPADDRESS_IMPORT_ERROR)
 
     data = module.params['data']
-    schema = module.params['schema']
+    if module.params['schema_file']:
+        schema_file = module.params['schema_file']
+        # Read in the datafile
+        if not os.path.exists(schema_file):
+            raise Exception(f"Cannot find file {schema_file}")
+        with open(schema_file) as f:
+            if schema_file.endswith('.yaml') or schema_file.endswith('.yml'):
+                schema = yaml.safe_load(f)
+            else:
+                schema = json.load(f)
+    elif module.params['schema']:
+        schema = module.params['schema']
+    else:
+        raise Exception(f"Need either schema_file or schema")
+
     module.debug("*****************")
     # print(module.params)
     module.debug(type(schema))

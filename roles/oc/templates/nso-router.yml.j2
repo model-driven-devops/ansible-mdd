@@ -1,0 +1,159 @@
+#jinja2: lstrip_blocks: True
+{#                                                                            #}
+{# Neighbor/Neighbor Tag Elements Macro                                       #}
+{#                                                                            #}
+{% macro process_entry(entry, entry_type, bgp_config) -%}
+-  config:
+   {% if entry_type == 'peer-group' %}
+      peer-group-name: '{{ entry['id'] }}'
+   {% else %}
+      neighbor-address: '{{ entry['id'] }}'
+   {% endif %}
+   {% if entry['remote-as'] is defined %}
+      peer-as: '{{ entry['remote-as'] }}'  # same as above
+   {% endif %} 
+   {% if entry['activate'] is defined %}
+      enabled: True
+   {% endif %}
+   {% if entry['description'] is defined %}
+      description: '{{ entry['description'] }}'
+   {% endif %}
+   {% if entry['remote-as'] is defined %}
+      peer-as: '{{ entry['remote-as'] }}'  # same as above
+   {% endif %}
+   {% if entry['peer-group'] is defined and entry_type == 'neighbor' %}
+      peer-group: '{{ entry['peer-group'] }}'  # same as above
+   {% endif %}
+   {% if entry['send-community'] is defined and entry['send-community']['send-community-where'] is defined %}
+      send-community: '{{ entry['send-community']['send-community-where'] | upper }}'
+   {% endif %}
+{% if entry['ebgp-multihop'] is defined and entry['ebgp-multihop']['max-hop'] %}
+   ebgp-multihop:  # neighbor {ip-address | ipv6-address | peer-group-name} ebgp-multihop [ttl]
+      config:
+         enabled: true
+         multihop-ttl: '{{ entry['ebgp-multihop']['max-hop'] }}'
+{% endif %}
+{% if entry_type == 'peer-group' %}
+   peer-group-name: '{{ entry['id'] }}'
+{% else %}
+   neighbor-address: '{{ entry['id'] }}'
+{% endif %}
+{% if entry['route-reflector-client'] is defined %}
+   route-reflector:
+      config:
+         route-reflector-client: true  # neighbor {ip-address | ipv6-address | peer-group-name} route-reflector-client
+      {% if bgp_data['cluster-id'] is defined %}
+         route-reflector-cluster-id: '{{ bgp_data['cluster-id'] }}'  # neighbor {ip-address | ipv6-address} cluster-id cluster-id
+      {% endif %}
+{% endif %}
+{% if entry['timers'] is defined %}
+   timers:  # neighbor [ip-address | peer-group-name] timers keepalive holdtime [min-holdtime]
+      config:
+      {% if entry['timers']['holdtime'] is defined %}
+         hold-time: '{{ entry['timers']['holdtime'] }}'
+      {% endif %}
+      {% if entry['timers']['keepalive-interval'] is defined %}
+         keepalive-interval: '{{ entry['timers']['keepalive-interval'] }}'
+   {% endif %}
+{% endif %}
+   transport:  # neighbor {ip-address | peer-group-name} transport {connection-mode {active | passive} | path-mtu-discovery [disable] | multi-session}
+      config:
+         mtu-discovery: true
+         passive-mode: false
+{%- endmacro -%}
+{#                                                                            #}
+{# Neighbor Macro                                                             #}
+{#                                                                            #}
+{% macro process_neighbor_list(bgp_neighbor_list, bgp_neighbor_map, bgp_config) -%}
+{% if bgp_neighbor_list %}
+neighbors:
+   neighbor:
+{% for neighbor in bgp_neighbor_list %}
+   {% if bgp_neighbor_map[neighbor.id] is defined %}
+      {% set entry = neighbor | combine(bgp_neighbor_map[neighbor.id]) %}
+   {% else %}
+      {% set entrsy = neighbor %}
+   {% endif %}
+   {{ process_entry(entry, 'neighbor', bgp_config) | indent(3) }}
+{% endfor %}
+{% endif %}
+{%- endmacro -%}
+{#                                                                            #}
+{# Neighbor Tag (Peer Groups) Macro                                           #}
+{#                                                                            #}
+{% macro process_neighbor_tag_list(bgp_neighbor_tag_list, bgp_config) -%}
+{% if bgp_neighbor_tag_list %}
+peer-groups:
+   peer-group:
+{% for neighbor_tag in bgp_neighbor_tag_list %}
+   {{ process_entry(neighbor_tag, 'peer-group', bgp_config) | indent(3) }}
+{% endfor %}
+{% endif %}
+{%- endmacro -%}
+{#                                                                            #}
+{# Instance Macro                                                             #}
+{#                                                                            #}
+{% macro process_address_family(instance_name, instance_type, bgp_config, af_data, bgp_neighbor_map, bgp_neighbor_tag_map) -%}
+-  name: '{{ instance_name }}'
+   config:
+      name: '{{ instance_name }}'
+      type: '{{ instance_type }}'
+      enabled: true
+   protocols:
+      protocol:
+      -  name: BGP
+         identifier: BGP
+         config:
+            enabled: true
+            identifier: BGP
+            name: BGP
+         bgp:
+            global:
+               config:
+                  as: {{ bgp_config['as-no'] }}
+               {% if bgp_config['router-id'] is defined %}
+                  router-id: {{ bgp_config['router-id'] }}
+               {% endif %}
+            {{ process_neighbor_list(af_data.neighbor, bgp_neighbor_map, bgp_config) | indent(15) }}
+            {{ process_neighbor_tag_list(bgp_neighbor_tag_map, bgp_config) | indent(15) }}
+{%- endmacro -%}
+{#                                                                            #}
+{# Template Start                                                             #}
+{#                                                                            #}
+{% set nso_bgp_data = nso_routing_list | default([]) | json_query('bgp') %}
+{% if nso_bgp_data %}
+mdd_tags:
+   - all
+mdd_data:
+   openconfig-network-instance:network-instances:
+      network-instance:
+      {% for bgp_process in nso_bgp_data %}
+         {#                                                                            #}
+         {# Create a BGP info structure to pass in to the macros                       #}
+         {#                                                                            #}
+         {% set bgp_config = bgp_process['bgp'] %}
+         {% set _ = bgp_config.update({'as-no': bgp_process['as-no']}) %}
+         {#                                                                            #}
+         {# Need to create a map of the neighbors at the root of the structure         #}
+         {#                                                                            #}
+         {% set bgp_neighbor_map = {} %}
+         {% for neighbor in bgp_process.neighbor %}
+            {% set _ = bgp_neighbor_map.update({neighbor.id: neighbor}) %}
+         {% endfor %}
+         {#                                                                            #}
+         {# Build Neighbor Tag Map (BGP Peer Groups)                                   #}
+         {#                                                                            #}
+         {% set bgp_neighbor_tag_list = bgp_process | json_query('"neighbor-tag".neighbor') | default([]) %}
+         {% set af_ipv4_default = bgp_process | json_query('"address-family".ipv4') | default([]) %}
+         {% if af_ipv4_default %}
+            {{ process_address_family('default', 'DEFAULT_INSTANCE', bgp_config, af_ipv4_default[0], bgp_neighbor_map, bgp_neighbor_tag_list) | indent(12) }}
+         {% endif %}
+         {% set af_ipv4_vrfs = bgp_process | json_query('"address-family"."with-vrf".ipv4') | default([]) %}
+         {% if af_ipv4_vrfs %}
+            {% for vrf in af_ipv4_vrfs[0].vrf %}
+            {{ process_address_family(vrf.name, 'L3VRF', bgp_config, bgp_process['address-family']['ipv4'][0], bgp_neighbor_map, bgp_neighbor_tag_list) | indent(12) }}
+            {% endfor %}
+         {% endif %}
+         {% set af_vpnv4 = bgp_process | json_query('"address-family".vpnv4') | default([]) %}
+      {% endfor %}
+{% endif %}

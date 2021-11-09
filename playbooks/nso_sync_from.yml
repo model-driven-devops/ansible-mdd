@@ -1,5 +1,5 @@
 - name: Add Hosts to NSO
-  hosts: all
+  hosts: network
   connection: local
   gather_facts: no
   roles:

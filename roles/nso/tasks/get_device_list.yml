@@ -1,7 +1,7 @@
 - name: Get device list from NSO
   cisco.nso.nso_query:
     url: "{{ nso_url }}"
-    username: "{{ nso_user }}"
+    username: "{{ nso_username }}"
     password: "{{ nso_password }}"
     xpath: /ncs:devices/device
     fields:

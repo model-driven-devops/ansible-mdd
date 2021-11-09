@@ -1,9 +1,8 @@
 - hosts: localhost
   connection: local
   gather_facts: no
-  vars:
-    netbox_api: "{{ lookup('env', 'NETBOX_API') }}"
-    netbox_token: "{{ lookup('env', 'NETBOX_TOKEN') }}"
+  roles:
+    - ciscops.mdd.netbox
   tasks:
     - include_role:
         name: ciscops.mdd.netbox

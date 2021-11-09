@@ -44,6 +44,10 @@
   vars:
     interface_type: "{{ interface_name | regex_search('^([^0-9]+)[0-9]', '\\1') | first }}"
 
+# - name: Set Interface Parent
+#   set_fact:
+#     interface_parent: "{{ interface_name | regex_search('^[^.]+\.(.+)$', '\\1') | first }}"    
+
 - name: Set Channel Group
   set_fact:
     interface_channel_group: "Port-channel{{ interface_data['channel-group'].number }}"

@@ -1,10 +1,9 @@
 - name: Add Hosts to NSO
-  hosts: all
+  hosts: network
   connection: local
   gather_facts: no
   roles:
     - ciscops.mdd.nso
-    - ciscops.mdd.oc
   tasks:
     - block:
       - name: Add Host to NSO
@@ -15,5 +14,5 @@
       - name: Sync Host
         include_role:
           name: ciscops.mdd.nso
-          tasks_from: sync_host
+          tasks_from: sync_from
       when: ansible_host is defined

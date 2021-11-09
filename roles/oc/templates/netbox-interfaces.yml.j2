@@ -1,56 +1,54 @@
 #jinja2: lstrip_blocks: True
-mdd:openconfig:
 {% set vrf_interfaces = dict() %}
-   'openconfig-interfaces:interfaces':
-      interface:
+{% if interfaces %}
+openconfig-interfaces:interfaces:
+   interface:
 {% for interface in interfaces | default([]) %}
    {% set dhcp_enabled = [] %}
-      -  name: {{ interface.name }}
-         config:
+   -  name: {{ interface.name }}
+      config:
    {% if interface.description %}
-            description: "{{ interface.description }}"
+         description: "{{ interface.description }}"
    {% endif %}
-            enabled: true
-            name: {{ interface.name }}
+         enabled: true
+         name: {{ interface.name }}
    {% if interface.mtu is defined and interface.mtu %} 
-            mtu: {{ interface.mtu }}
+         mtu: {{ interface.mtu }}
    {% endif %}{# if interface.mtu is defined and interface.mtu #}
    {% set interface_type = {"virtual": "softwareLoopback", "lag": "ieee8023adLag"}[interface.type.value] | default('ethernetCsmacd') %}               
-            type: {{ interface_type }}
-            enabled: {{ 'true' if interface.enabled | bool else 'false' }}
+         type: {{ interface_type }}
+         enabled: {{ 'true' if interface.enabled | bool else 'false' }}
    {% if interface_type == 'ethernetCsmacd' %}
-         'openconfig-if-ethernet:ethernet':
-            config:
-               auto-negotiate: true
-               enable-flow-control: false
+      openconfig-if-ethernet:ethernet:
+         config: {}
       {% if interface.mode is defined and interface.mode %}
-            'openconfig-vlan:switched-vlan':
-               config:
+         openconfig-vlan:switched-vlan:
+            config:
          {% if interface.mode.value == "access" %}                     
-                  'access-vlan': {{ interface.untagged_vlan.id }}
-                  'interface-mode': ACCESS
+               'access-vlan': {{ interface.untagged_vlan.id }}
+               'interface-mode': ACCESS
          {% elif interface.mode.value == "tagged" %}
-                  'interface-mode': TRUNK
-                  'native-vlan': {{ interface.untagged_vlan.id }}
+               'interface-mode': TRUNK
+               'native-vlan': {{ interface.untagged_vlan.id }}
             {% set tagged_vlans = [] %}
             {% for vlan in interface.tagged_vlans %}
                {% set _ = tagged_vlans.append(vlan.id) %}
             {% endfor %}{# for vlan in interface.tagged_vlans #}
-                  'trunk-vlans': [ {{ tagged_vlans|join(',') }} ]
+               'trunk-vlans': [ {{ tagged_vlans|join(',') }} ]
          {% endif %}{# if interface.mode.value #}
       {% endif %}{# if interface.mode #}
    {% endif %}{# if interface_type #}
    {% if interface.ip_addresses is defined and interface.ip_addresses or interface_type == "softwareLoopback" %}
-         subinterfaces:
-            subinterface:
-            -  index: '0'
-               config:
-                  index: '0'
+      subinterfaces:
+         subinterface:
+         -  index: '0'
+            config:
+               index: '0'
       {% if interface.ip_addresses is defined and interface.ip_addresses %}
-               openconfig-if-ip:ipv4:
+            openconfig-if-ip:ipv4:
          {% if interface.ip_addresses[0].status.value != 'dhcp' %}
-                  addresses:
-                     address:
+               addresses:
+                  address:
          {% for address_item in interface.ip_addresses | default([]) %}
             {% if address_item.vrf %}
                {% if vrf_interfaces[address_item.vrf.name] is not defined %}
@@ -60,37 +58,40 @@ mdd:openconfig:
                {% set _ = temp_list.append(interface.name) %}
                {% set _ = vrf_interfaces.update({address_item.vrf.name: temp_list}) %}
             {% endif %}
-                     -  ip: {{ address_item.address.split('/')[0] }}
-                        config:
-                           ip: {{ address_item.address.split('/')[0] }}
-                           prefix-length: {{ address_item.address.split('/')[1] }}
+                  -  ip: {{ address_item.address.split('/')[0] }}
+                     config:
+                        ip: {{ address_item.address.split('/')[0] }}
+                        prefix-length: {{ address_item.address.split('/')[1] }}
          {% endfor %}{# for address_item in interface.ip_addresses #}
-                  config:
-                     'dhcp-client': false
+               config:
+                  'dhcp-client': false
          {% else %}
-                  config:
-                     'dhcp-client': true
+               config:
+                  'dhcp-client': true
          {% endif %}                    
       {% endif %}{# if interface.ip_addresses is defined and interface.ip_addresses #}
    {% endif %}{# if interface.ip_addresses is defined and interface.ip_addresses or interface_type == "softwareLoopback" #}
 {% endfor %}{# for interface in interfaces #}
-   openconfig-network-instance:network-instances:
-      network-instance:
+{% if vrf_interfaces.items() | length %}
+openconfig-network-instance:network-instances:
+   network-instance:
 {% for key, value in vrf_interfaces.items() %}
-      -  name: {{ key }}
-         config:
-            name: {{ key }}
-            type: 'L3VRF'
-            enabled: true
-            enabled-address-families:
-            -  'IPV4'
-         interfaces:
-            interface:
+   -  name: {{ key }}
+      config:
+         name: {{ key }}
+         type: 'L3VRF'
+         enabled: true
+         enabled-address-families:
+         -  'IPV4'
+      interfaces:
+         interface:
    {% for vrf_interface in vrf_interfaces[key] %}
-            -  id: {{ vrf_interface }}
-               config:
-                  id: {{ vrf_interface }}
-                  interface: {{ vrf_interface }}
-                  subinterface: '0'
+         -  id: {{ vrf_interface }}
+            config:
+               id: {{ vrf_interface }}
+               interface: {{ vrf_interface }}
+               subinterface: '0'
    {% endfor %}
 {% endfor %}
+{% endif %}
+{% endif %}

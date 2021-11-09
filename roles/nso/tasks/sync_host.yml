@@ -1,7 +1,0 @@
-- name: Sync NSO device
-  cisco.nso.nso_action:
-    url: "{{ nso_url }}"
-    username: "{{ nso_username }}"
-    password: "{{ nso_password }}"
-    path: '/ncs:devices/device{"{{ device_name | default(inventory_hostname) }}"}/sync-from'
-    input: {}

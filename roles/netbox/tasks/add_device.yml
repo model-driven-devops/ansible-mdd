@@ -10,7 +10,7 @@
       serial: "{{ netbox_device_serial | default(omit) }}"
       primary_ip4: "{{ netbox_device_ip4 | default(omit) }}"
       platform: "{{ netbox_device_platform | default(omit) }}"
-      custom_fields:
-        nso_host: "{{ nso_host }}"
+      # custom_fields:
+      #   nso_host: "{{ nso_host }}"
     state: present
     validate_certs: false

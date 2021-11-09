@@ -4,8 +4,13 @@
     netbox_token: "{{ netbox_token }}"
     query_params:
       - name
+      - rd
     data:
       name: "{{ netbox_vrf_name }}"
-      rd: "{{ netbox_vrf_rd | default(omit)}}"
+      rd: "{{ netbox_vrf_rd | default('')}}"
+      description: "{{ netbox_description | default(omit)}}"
+      import_targets: "{{ netbox_import_targets | default(omit)}}"
+      export_targets: "{{ netbox_export_targets | default(omit)}}"
     state: present
     validate_certs: "{{ netbox_validate_certs }}"
+  ignore_errors: yes

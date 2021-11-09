@@ -3,36 +3,37 @@
   environment:
     NCS_JAVA_VM_OPTIONS: "{{ nso_java_opts }}"
   block:
+    - name: Remove old package directory
+      file:
+        path: "{{ nso_run_dir }}/packages/{{ item.repo }}"
+        state: absent
+      loop: "{{ nso_package_repos }}"
+
     - name: Clone model-driven-devops nso-oc-services repo
       ansible.builtin.git:
-        repo: '{{ item.repo }}'
-        dest: '/tmp/{{ item.name }}'
-      with_items: "{{ nso_package_repos }}"
+        repo: "{{ item.repo }}"
+        dest: "/tmp/{{ item.name }}"
+      loop: "{{ nso_package_repos }}"
 
     - name: Copy models to packages directory
       copy:
-        src: "/tmp/{{ item[0].name }}/{{ item[1] }}"
+        src: "/tmp/{{ item.0.name }}/{{ item.1 }}"
         dest: "{{ nso_run_dir }}/packages"
         remote_src: yes
+      register: copy_results
       with_subelements:
         - "{{ nso_package_repos }}"
         - service_list
 
-    - name: Remove old package directory
-      file:
-        path: "/tmp/{{ item[0].name }}/{{ item[1] }}"
-        state: absent
-      with_subelements:
-        - "{{ nso_package_repos }}"
-        - service_list
+    - debug:
+        var: copy_results
 
     - name: Make packages
       command:
-        chdir: '{{ nso_run_dir }}/packages/{{ item[1] }}/src/'
+        chdir: '{{ item.dest }}/src/'
         cmd: '/bin/bash -c "source {{ nso_install_dir }}/ncsrc; make"'
-      with_subelements:
-        - "{{ nso_package_repos }}"
-        - service_list
+      loop: "{{ copy_results.results }}"
+      when: item.changed
 
     - name: Remove repo
       file:
@@ -40,11 +41,12 @@
         state: absent
       with_items: "{{ nso_package_repos }}"
 
-    - name: Check device sync
+    - name: Reload Packages
       cisco.nso.nso_action:
         url: "{{ nso_url }}"
         username: "{{ nso_username }}"
         password: "{{ nso_password }}"
         path: /ncs:packages/reload
         input: {}
+      when: copy_results.changed
   when: nso_package_repos is defined

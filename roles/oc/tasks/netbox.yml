@@ -1,0 +1,6 @@
+- name: Combine Netbox OC Interface Data
+  set_fact:
+    mdd_data: "{{ mdd_data | default({}) | ciscops.mdd.oc_combine(oc_data, recursive=True) }}"
+  vars:
+    oc_data: "{{ lookup('template', 'netbox-interfaces.yml.j2') | from_yaml }}"
+  when: hostvars[inventory_hostname]['interfaces'] is defined and hostvars[inventory_hostname]['interfaces'][0]['name'] is defined

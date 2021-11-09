@@ -9,5 +9,8 @@
         tasks_from: add_vrf
       vars:
         netbox_vrf_name: "{{ item.name }}"
-        netbox_vrf_rd: "{{ item.rd | default (omit) }}"
+        netbox_vrf_rd: "{{ item.rd | default ('') }}"
+        netbox_description: "{{ item.description | default ('') }}"
+        # netbox_import_targets: "{{ [] if 'route-target' not in item else item['route-target']['import'] | selectattr('asn-ip', 'defined') | map(attribute='asn-ip') | list }}"
+        # netbox_output_targets: "{{ [] if 'route-target' not in item else item['route-target']['export'] | selectattr('asn-ip', 'defined') | map(attribute='asn-ip') | list }}"
       loop: "{{ nso_vrf_list | default ([]) }}"

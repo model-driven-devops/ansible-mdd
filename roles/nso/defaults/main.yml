@@ -1,26 +1,30 @@
 ---
-nso_host: "{{ ansible_host | default(inventory_hostname) }}"
+nso_host_group: 'nso'
 nso_url: "http://{{ nso_host }}:8080/jsonrpc"
 nso_rest_url: "http://{{ nso_host }}:8080"
-nso_install_dir: /pkgs/nso-install
-nso_run_dir: /home/ubuntu/ncs-run
+nso_package_src: "{{ lookup('env', 'PWD') }}/packages"
+nso_installer_name: "nso-5.5.3.linux.x86_64.signed.bin"
+nso_install_dir: /opt/ncs/current
+nso_run_dir: /var/opt/ncs
+nso_etc_dir: /etc/ncs
+nso_tmp_dir: /tmp/nso
+nso_upload_dir: /tmp/nso
 nso_java_opts: "-Xmx2G -Xms1G"
-nso_devices_seed_template: "nso-deviceSetup.xml.j2"
 # Default username/password for the NSO host
 # admin_user: ubuntu
 # admin_password: admin
 # ansible_user: "{{ admin_user }}"
 # ansible_password: "{{ admin_password }}"
-nso_username: "{{ lookup('env', 'NSO_USERNAME') | default ('admin') }}"
+nso_username: "{{ lookup('env', 'NSO_USERNAME') | default ('ubuntu') }}"
 nso_password: "{{ lookup('env', 'NSO_PASSWORD') | default ('admin') }}"
 # The auth groups to add.  Override in the inventory
 nso_auth_groups:
   default:
-    remote_name: admin
-    remote_password: admin
-nso_default_ned: cisco-ios-cli-6.75
+    remote_name: "admin"
+    remote_password: "admin"
+nso_default_ned: cisco-ios-cli-6.76
 nso_ned_dict:
-  ios: "cisco-ios-cli-6.75"
+  ios: "cisco-ios-cli-6.76"
 nso_package_repos:
   - name: mdd
     repo: https://github.com/model-driven-devops/nso-oc-services.git
