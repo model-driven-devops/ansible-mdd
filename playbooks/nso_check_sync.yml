@@ -1,12 +1,10 @@
 - name: Add Hosts to NSO
-  hosts: all
+  hosts: network
   connection: local
   gather_facts: no
+  roles:
+    - ciscops.mdd.nso
   tasks:
-    - include_role:
-        name: ciscops.mdd.nso
-        tasks_from: get_nso_host
-
     - include_role:
         name: ciscops.mdd.nso
         tasks_from: check_sync
