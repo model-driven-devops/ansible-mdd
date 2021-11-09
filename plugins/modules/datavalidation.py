@@ -116,16 +116,11 @@ def validate_schema(data, schema):
     # validate the input file against the supplied schema
     # validate(instance=input, schema=schema, cls=MDDValidator, format_checker=draft7_format_checker)
     errors = mdd_validator.iter_errors(data)
-    output = ""
+    error_list = []
     for error in errors:
-        output += "*****************\n"
-        output += str(error)
+        error_list.append(error.message)
 
-    if output == "":
-        return None
-    else:
-        return output
-
+    return error_list
 
 def main():
 
@@ -160,18 +155,19 @@ def main():
     else:
         raise Exception(f"Need either schema_file or schema")
 
-    module.debug("*****************")
-    # print(module.params)
-    module.debug(type(schema))
-    module.debug(type(data))
-    module.debug("*****************")
+    # module.debug("*****************")
+    # # print(module.params)
+    # module.debug(type(schema))
+    # module.debug(type(data))
+    # module.debug("*****************")
 
-    result = validate_schema(data, schema)
-    if result is None:
-        module.exit_json(changed=False)
+    error_list = validate_schema(data, schema)
+    if error_list:
+        error_string = ','.join(error_list)
+        module.fail_json(msg=f"Schema Failed: {error_string}", x_error_list=error_list)
     else:
-        module.fail_json(msg=result)
-
+        module.exit_json(changed=False)
+        
 
 if __name__ == '__main__':
     main()
