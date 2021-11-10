@@ -1,0 +1,3 @@
+- name: Restore Config
+  ansible.netcommon.cli_config:
+    config: "{{ mdd_device_dir }}/{{ inventory_hostname }}.cfg"

@@ -56,10 +56,12 @@
          keepalive-interval: '{{ entry['timers']['keepalive-interval'] }}'
    {% endif %}
 {% endif %}
+{# Need to figure out what this looks like in the NED model
    transport:  # neighbor {ip-address | peer-group-name} transport {connection-mode {active | passive} | path-mtu-discovery [disable] | multi-session}
       config:
          mtu-discovery: true
          passive-mode: false
+#}
 {%- endmacro -%}
 {#                                                                            #}
 {# Neighbor Macro                                                             #}

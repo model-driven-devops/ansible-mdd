@@ -1,4 +1,4 @@
-- hosts: all
+- hosts: network
   connection: local
   gather_facts: no
   ignore_errors: yes
@@ -7,7 +7,7 @@
     - ciscops.mdd.data_validation  # Validates the OC Data
     
 - name: Run update_report
-  hosts: all
+  hosts: network
   connection: local
   gather_facts: no
   tasks:

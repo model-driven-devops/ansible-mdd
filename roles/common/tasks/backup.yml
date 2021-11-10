@@ -1,0 +1,6 @@
+- name: Backup Config
+  ansible.netcommon.cli_config:
+    backup: yes
+    backup_options:
+      filename: "{{ inventory_hostname }}.cfg"
+      dir_path: "{{ mdd_device_dir }}"

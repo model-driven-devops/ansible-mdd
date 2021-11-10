@@ -4,4 +4,4 @@
   tasks:
     - include_role:
         name: ciscops.mdd.common
-        tasks_from: backup
+        tasks_from: restore
