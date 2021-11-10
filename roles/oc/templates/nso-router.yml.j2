@@ -74,9 +74,9 @@ neighbors:
    {% if bgp_neighbor_map[neighbor.id] is defined %}
       {% set entry = neighbor | combine(bgp_neighbor_map[neighbor.id]) %}
    {% else %}
-      {% set entrsy = neighbor %}
+      {% set entry = neighbor %}
    {% endif %}
-   {{ process_entry(entry, 'neighbor', bgp_config) | indent(3) }}
+   {{ process_entry(neighbor, 'neighbor', bgp_config) | indent(3) }}
 {% endfor %}
 {% endif %}
 {%- endmacro -%}
@@ -101,6 +101,10 @@ peer-groups:
       name: '{{ instance_name }}'
       type: '{{ instance_type }}'
       enabled: true
+   {% if instance_name != 'default' %}
+      enabled-address-families:
+      - 'IPV4'
+   {% endif %}
    protocols:
       protocol:
       -  name: BGP
