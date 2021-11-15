@@ -1,17 +1,39 @@
 #jinja2: lstrip_blocks: True
 {% set vrf_interfaces = dict() %}
 {% if interfaces %}
+{#                                                                            #}
+{# Create a dictionary of interface parents as keys each with a list of       #}
+{# subinterfaces.                                                             #}
+{#                                                                            #}
+{% set interface_dict = dict() %}
+{% for interface in interfaces %}
+   {% set interface_parent, interface_index = interface.name | regex_search('^(?P<name>[^.]+)(\.)?(?P<index>[^.]+)?$', '\\g<name>', '\\g<index>') %}
+   {% set _ = interface.update({'parent': interface_parent}) %}
+   {% if interface_dict[interface_parent] is not defined %}
+      {% set _ = interface_dict.update({interface_parent: []}) %}
+   {% endif %}
+   {% set temp_list = interface_dict[interface_parent] %}
+   {% if not interface_index %}
+      {% set _ = interface.update({'index': '0'}) %}
+      {% set temp_list = [interface] + temp_list %}
+   {% else %}
+      {% set _ = interface.update({'index': interface_index}) %}
+      {% set temp_list = temp_list + [interface]  %}
+   {% endif %}
+   {% set _ = interface_dict.update({interface_parent: temp_list}) %}
+{% endfor %}
 openconfig-interfaces:interfaces:
    interface:
-{% for interface in interfaces | default([]) %}
+{% for interface_parent, subinterface_list in interface_dict.items() %}
+   {% set interface = subinterface_list[0] %}
    {% set dhcp_enabled = [] %}
-   -  name: {{ interface.name }}
+   -  name: {{ interface_parent }}
       config:
    {% if interface.description %}
          description: "{{ interface.description }}"
    {% endif %}
          enabled: true
-         name: {{ interface.name }}
+         name: {{ interface_parent }}
    {% if interface.mtu is defined and interface.mtu %} 
          mtu: {{ interface.mtu }}
    {% endif %}{# if interface.mtu is defined and interface.mtu #}
@@ -38,44 +60,50 @@ openconfig-interfaces:interfaces:
          {% endif %}{# if interface.mode.value #}
       {% endif %}{# if interface.mode #}
    {% endif %}{# if interface_type #}
-   {% if interface.ip_addresses is defined and interface.ip_addresses or interface_type == "softwareLoopback" %}
       subinterfaces:
          subinterface:
-         -  index: '0'
+         {% for subinterface in subinterface_list %}
+         -  index: '{{ subinterface.index }}'
             config:
-               index: '0'
-      {% if interface.ip_addresses is defined and interface.ip_addresses %}
+               index: '{{ subinterface.index }}'
+               enabled: {{ 'true' if subinterface.enabled | bool else 'false' }}
+            {% if subinterface.mode and subinterface.mode.value == 'access' %}
+            openconfig-vlan:vlan:
+               config:
+                  vlan-id: '{{ subinterface.untagged_vlan.vid }}'
+            {% endif %}
+            {% if subinterface.ip_addresses is defined and subinterface.ip_addresses %}
             openconfig-if-ip:ipv4:
-         {% if interface.ip_addresses[0].status.value != 'dhcp' %}
+            {% if subinterface.ip_addresses[0].status.value != 'dhcp' %}
                addresses:
                   address:
-         {% for address_item in interface.ip_addresses | default([]) %}
-            {% if address_item.vrf %}
-               {% if vrf_interfaces[address_item.vrf.name] is not defined %}
-                  {% set _ = vrf_interfaces.update({address_item.vrf.name: []}) %}
-               {% endif %}
-               {% set temp_list = vrf_interfaces[address_item.vrf.name] %}
-               {% set _ = temp_list.append(interface.name) %}
-               {% set _ = vrf_interfaces.update({address_item.vrf.name: temp_list}) %}
-            {% endif %}
+               {% for address_item in subinterface.ip_addresses | default([]) %}
+                  {% if address_item.vrf %}
+                     {% if vrf_interfaces[address_item.vrf.name] is not defined %}
+                        {% set _ = vrf_interfaces.update({address_item.vrf.name: []}) %}
+                     {% endif %}
+                     {% set temp_list = vrf_interfaces[address_item.vrf.name] %}
+                     {% set _ = temp_list.append(subinterface) %}
+                     {% set _ = vrf_interfaces.update({address_item.vrf.name: temp_list}) %}
+                  {% endif %}
                   -  ip: {{ address_item.address.split('/')[0] }}
                      config:
                         ip: {{ address_item.address.split('/')[0] }}
                         prefix-length: {{ address_item.address.split('/')[1] }}
-         {% endfor %}{# for address_item in interface.ip_addresses #}
+               {% endfor %}{# for address_item in interface.ip_addresses #}
                config:
                   'dhcp-client': false
-         {% else %}
+            {% else %}
                config:
                   'dhcp-client': true
-         {% endif %}                    
-      {% endif %}{# if interface.ip_addresses is defined and interface.ip_addresses #}
-   {% endif %}{# if interface.ip_addresses is defined and interface.ip_addresses or interface_type == "softwareLoopback" #}
+            {% endif %}                    
+            {% endif %}{# if interface.ip_addresses is defined and interface.ip_addresses #}
+         {% endfor %}
 {% endfor %}{# for interface in interfaces #}
 {% if vrf_interfaces.items() | length %}
 openconfig-network-instance:network-instances:
    network-instance:
-{% for key, value in vrf_interfaces.items() %}
+{% for key, interfaces in vrf_interfaces.items() %}
    -  name: {{ key }}
       config:
          name: {{ key }}
@@ -85,12 +113,12 @@ openconfig-network-instance:network-instances:
          -  'IPV4'
       interfaces:
          interface:
-   {% for vrf_interface in vrf_interfaces[key] %}
-         -  id: {{ vrf_interface }}
+   {% for interface in interfaces %}
+         -  id: {{ interface.name }}
             config:
-               id: {{ vrf_interface }}
-               interface: {{ vrf_interface }}
-               subinterface: '0'
+               id: {{ interface.name }}
+               interface: {{ interface.parent }}
+               subinterface: {{ interface.index }}
    {% endfor %}
 {% endfor %}
 {% endif %}

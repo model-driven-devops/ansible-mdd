@@ -38,6 +38,29 @@
     when: interface_data.switchport.mode is defined and 'trunk' in interface_data.switchport.mode
   when: interface_data.switchport is defined
 
+- block:
+  - name: Set interface encapsulation
+    set_fact:
+      interface_mode: 'Access'
+      interface_untagged_vlan:
+        vid: "{{ interface_data['encapsulation']['dot1Q']['vlan-id'] }}"
+        site: "{{ netbox_site }}"
+
+  - name: Create VLAN
+    netbox.netbox.netbox_vlan:
+      netbox_url: "{{ netbox_api }}"
+      netbox_token: "{{ netbox_token }}"
+      query_params:
+        - vid
+        - site
+      data:
+        name: "Vlan{{ interface_data['encapsulation']['dot1Q']['vlan-id'] }}"
+        vid: "{{ interface_data['encapsulation']['dot1Q']['vlan-id'] }}"
+        site: "{{ netbox_site }}"
+      state: present
+      validate_certs: "{{ netbox_validate_certs }}"
+  when: interface_data.encapsulation is defined
+
 - name: Set Interface Type
   set_fact:
     netbox_interface_type: "{{ netbox_interface_type_lookup[interface_type | lower] | default('Other') }}"

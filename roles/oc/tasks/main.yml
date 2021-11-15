@@ -31,4 +31,4 @@
   vars:
     mdd_file: "{{ lookup('template', item ) | from_yaml }}"
 
-# - include_tasks: netbox.yml
+- include_tasks: netbox.yml
