@@ -4,7 +4,7 @@
 {% set consolidated_report = [] %}
 {% for host in play_hosts | sort %}
   {% set found = {'value': false} %}
-  {% set result = hostvars[host]['nso_update_result']['json']['dry-run-result']['native']['device'][0] | default({'data':'unchanged'})  %}
+  {% set result = hostvars[host] | json_query('nso_config_result.commit_result[0].dry_run_result.native.device[0]') | default({'data':'unchanged'}) %}
   {% if result %}
 {#  {{ host }}: "{{ result.data }}"#}
     {% for entry in consolidated_report %}

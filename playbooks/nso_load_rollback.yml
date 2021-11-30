@@ -1,0 +1,27 @@
+- hosts: network
+  connection: local
+  gather_facts: no
+  roles:
+    - ciscops.mdd.nso
+  run_once: true
+  vars:
+    rollback_file: "{{ lookup('env', 'PWD') }}/rollback.yaml"
+  tasks:
+    - name: Check the Rollback File
+      stat:
+        path: "{{ rollback_file }}"
+      register: stat_results
+
+    - assert:
+        that:
+          - stat_results.stat.exists
+        fail_msg: "Cannot find rollback file {{ rollback_file }}"
+        success_msg: "Using rollback file {{ rollback_file }}"
+
+    - name: Read Rollback File
+      include_vars: "{{ rollback_file }}"
+
+    - name: Load Roolback {{ rollback_id }}
+      include_role:
+        name: ciscops.mdd.nso
+        tasks_from: rollback

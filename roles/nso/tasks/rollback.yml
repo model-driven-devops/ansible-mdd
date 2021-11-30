@@ -1,0 +1,8 @@
+- name: Rollback Changes
+  cisco.nso.nso_rollback:
+    url: "{{ nso_url }}"
+    username: "{{ nso_username }}"
+    password: "{{ nso_password }}"
+    id: "{{ rollback_id }}"
+  register: nso_rollback_facts
+  delegate_to: localhost

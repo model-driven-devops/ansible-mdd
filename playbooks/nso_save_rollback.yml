@@ -1,0 +1,26 @@
+- hosts: network
+  connection: local
+  gather_facts: no
+  roles:
+    - ciscops.mdd.nso
+  run_once: true
+  vars:
+    rollback_file: "{{ lookup('env', 'PWD') }}/rollback.yaml"
+  tasks:
+    - include_role:
+        name: ciscops.mdd.nso
+        tasks_from: get_rollbacks
+
+    - set_fact:
+        file_content:
+          rollback_id: "{{ rollback_id }}"
+      when: rollback_id is defined
+      vars:
+        rollback_id: "{{ nso_rollback_facts | json_query('data[0].rollback_nr') }}"
+
+    - name: Save Rollback file
+      copy:
+        dest: "{{ rollback_file }}"
+        content: "{{ file_content | to_nice_yaml(2) }}"
+      when: file_content is defined
+      

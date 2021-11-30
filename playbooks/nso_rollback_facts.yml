@@ -1,0 +1,16 @@
+- hosts: network
+  gather_facts: no
+  roles:
+    - ciscops.mdd.nso
+  run_once: true
+  tasks:
+    - include_role:
+        name: ciscops.mdd.nso
+        tasks_from: get_rollbacks
+
+    - debug:
+        var: nso_rollback_facts
+
+    - debug:
+        msg: "Last Rollback {{ nso_rollback_facts.data.0.rollback_nr }}"
+      when: rollback_id is not defined
