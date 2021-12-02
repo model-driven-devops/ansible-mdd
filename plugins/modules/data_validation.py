@@ -118,7 +118,7 @@ def validate_schema(data, schema):
     errors = mdd_validator.iter_errors(data)
     error_list = []
     for error in errors:
-        error_list.append(error.message)
+        error_list.append(f"{error.json_path}: {error.message}")
 
     return error_list
 
@@ -140,6 +140,7 @@ def main():
         module.fail_json(msg=missing_required_lib('ipaddress'), exception=IPADDRESS_IMPORT_ERROR)
 
     data = module.params['data']
+    schema = {}
     if module.params['schema_file']:
         schema_file = module.params['schema_file']
         # Read in the datafile
@@ -150,6 +151,8 @@ def main():
                 schema = yaml.safe_load(f)
             else:
                 schema = json.load(f)
+        base_dir = os.path.dirname(schema_file)
+        os.chdir(base_dir)
     elif module.params['schema']:
         schema = module.params['schema']
     else:
@@ -160,13 +163,19 @@ def main():
     # module.debug(type(schema))
     # module.debug(type(data))
     # module.debug("*****************")
+    if module.params['schema_file']:
+        schema_title = os.path.basename(schema_file)
+    elif 'title' in schema:
+        schema_title = schema['title']
+    else:
+        schema_title = '<input>'
 
     error_list = validate_schema(data, schema)
     if error_list:
         error_string = ','.join(error_list)
-        module.fail_json(msg=f"Schema Failed: {error_string}", x_error_list=error_list)
+        module.fail_json(msg=f"Schema Failed: {error_string}", failed_schema=schema_title, x_error_list=error_list)
     else:
-        module.exit_json(changed=False)
+        module.exit_json(changed=False, failed=False)
         
 
 if __name__ == '__main__':

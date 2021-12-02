@@ -11,6 +11,6 @@ schema_group_list:
   - stig
 schema_group_table:
   stig:
-    path: stig
+    path: 'stig/CISC-ND_IOSXE.schema'
     tags:
       - all

@@ -10,20 +10,3 @@
 
     - debug:
         var: nso_rollback_facts
-
-
-    # - name: Rollback
-    #   uri:
-    #     url: "http://{{ nso_ip }}:8080/restconf/data/tailf-rollback:rollback-files/apply-rollback-file"
-    #     url_username: admin
-    #     url_password: admin
-    #     force_basic_auth: yes
-    #     validate_certs: no
-    #     status_code: [ 204 ]
-    #     method: POST
-    #     headers: "{
-    #       'Content-Type': 'application/yang-data+xml'}"
-    #     body: |
-    #       <input xmlns="http://tail-f.com/ns/rollback">
-    #         <id>0</id>
-    #       </input>

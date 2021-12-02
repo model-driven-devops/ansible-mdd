@@ -1,4 +1,4 @@
-# Ansible Collection - ciscops.mdd
+# Cisco Model Driven Devops Ansible Collection
 
 ## Dependancies
 ### Environmnet Variables
@@ -14,11 +14,11 @@
 
 Example:
 ```
-ansible-playbook -i inventory/netbox.yml ciscops.mdd.nso_update_oc
+ansible-playbook ciscops.mdd.nso_update_oc
 ```
 
 Extra Vars:
-- dry_run: Whether to do a dry run or a commit (default: true)
+- `dry_run` (optional): Whether to do a dry run or a commit (default: true)
 
 ### `ciscops.mdd.show_oc`
 
@@ -28,7 +28,7 @@ Extra Vars:
 
     - Run the list of checks defined in `check_list`
 
-### Required Data Structues
+#### Required Data Structures
 
 - `check_list`: List of checks to run
 - `check_table`: Dictionary defining the checks
@@ -47,7 +47,7 @@ Extra Vars:
 
 Example:
 ```
-ansible-playbook -i inventory/netbox.yml ciscops.mdd.update_netbox_from_nso
+ansible-playbook ciscops.mdd.update_netbox_from_nso
 ```
 
 ### `ciscops.mdd.netbox_init`
@@ -68,59 +68,89 @@ ansible-playbook ciscops.mdd.netbox_init
 #### Requirements
 - nso and neds in packages directory
 
-### `ciscops.mdd.nso_update_packages
+### `ciscops.mdd.nso_update_packages`
 
 - Update the MDD packages on the NSO hosts
 
 target: The group of nso hosts
 
-### `ciscops.mdd.netbox_init
+### `ciscops.mdd.netbox_init`
 
 - Initialize Netbox
 
 ansible-playbook ciscops.mdd.netbox_init
 
-### `ciscops.mdd.cml_update_netbox
+### `ciscops.mdd.cml_update_netbox`
 
 - Add hosts from CML into netbox
 
+Inventory Source: CML
+
 Example:
 ```
-ansible-playbook -i inventory/cml.yml cml_update_netbox
+ansible-playbook cml_update_netbox
 ```
 
-### `ciscops.mdd.nso_update_netbox
+### `ciscops.mdd.nso_update_netbox`
 
 - Update Netbox devices from NSO
 
 Example:
 ```
-ansible-playbook -i inventory/netbox.yml nso_update_netbox
+ansible-playbook nso_update_netbox
 ```
 
-### `ciscops.mdd.nso_init
+### `ciscops.mdd.nso_init`
 
 - Initialize NSO
-s
+
 Example:
 ```
-ansible-playbook -i inventory/netbox.yml nso_init
+ansible-playbook nso_init
 ```
 
-### `ciscops.mdd.nso_update_device
+### `ciscops.mdd.nso_update_device`
 
 - Update NSO devices from inventory source
 
 Example:
 ```
-ansible-playbook -i inventory/netbox.yml nso_update_netbox
+ansible-playbook nso_update_netbox
 ```
 
-### `ciscops.mdd.nso_sync_from
+### `ciscops.mdd.nso_sync_from`
 
 - Run sync_from for device
 
 Example:
 ```
-ansible-playbook -i inventory/netbox.yml nso_sync_from
+ansible-playbook nso_sync_from
 ```
+
+### `ciscops.mdd.nso_rollback_facts`
+
+- Summary of rollbacks
+
+Extra Vars:
+- `rollback_id` (optional): List information for specific Rollback ID
+
+### `ciscops.mdd.nso_rollback`
+
+- Rollback to specific Rollback ID
+
+Extra Vars:
+- `rollback_id` (required): Rollback ID
+
+### `ciscops.mdd.nso_save_rollback`
+
+- Save a file with the current Rollback ID
+
+Extra Vars:
+- `rollback_file` (optional): The file containing the Rollback ID
+
+### `ciscops.mdd.nso_load_rollback`
+
+- Load a file with a Rollback ID and rollback to that ID
+
+Extra Vars:
+- `rollback_file` (optional): The file containing the Rollback ID

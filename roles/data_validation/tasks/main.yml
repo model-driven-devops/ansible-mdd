@@ -1,4 +1,7 @@
 ---
+#
+# Iterate through each of the schema groups and run the schema(s) if the tags match
+#
 - name: Run Validation Groups
   include_tasks: validate_schema_group.yml
   with_items: "{{ schema_group_list }}"
