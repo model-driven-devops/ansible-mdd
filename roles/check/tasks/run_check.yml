@@ -10,7 +10,7 @@
 
 - block:
     - name: Validate data against schema {{ schema_file }}
-      datavalidation:
+      ciscops.mdd.data_validation:
         data: "{{ parsed_output }}"
         schema: "{{ lookup('file', lookup('first_found', params)) | from_yaml }}"
       register: validation_output

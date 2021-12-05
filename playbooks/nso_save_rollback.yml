@@ -1,3 +1,12 @@
+---
+#
+# Name: nso_save_rollback
+#
+# Purpose: Create a file with the last rollback ID to save the state
+#          before a change is made.  The files is then read by
+#          `nso_load_rollback` to return the device configuration back
+#          to that state.
+#
 - hosts: network
   connection: local
   gather_facts: no
@@ -23,4 +32,3 @@
         dest: "{{ rollback_file }}"
         content: "{{ file_content | to_nice_yaml(2) }}"
       when: file_content is defined
-      

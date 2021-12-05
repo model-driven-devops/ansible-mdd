@@ -9,7 +9,7 @@ oc_model_map:
   interfaces: 'openconfig-interfaces:interfaces'
   network-instance: 'openconfig-network-instance:network-instances'
 
-oc_group_list: "{{ regions }}"
+oc_group_list: "{{ sites + regions }}"
 oc_file_patterns:
   - 'oc-*.yml'
 oc_data_root: "{{ lookup('env', 'PWD') }}/mdd-data"

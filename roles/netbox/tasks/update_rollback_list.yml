@@ -1,0 +1,45 @@
+#
+# Name: update_rollback_list
+#
+# Purpose:
+#   1) Retrieve `rollback_list` from the device's local_context
+#   2) Check to see if it includes `rollback_id`
+#   3) Add `rollback_id` to `rollback_list` if it is not there and
+#      store it back on the device
+#
+# Parameters:
+#   rollback_id
+#
+# Returns:
+#    rollback_list
+#
+- assert:
+    that:
+      - rollback_id is defined
+      - rollback_id
+    fail_msg: "'rollback_id' is a required parameter"
+
+- name: Get device data
+  set_fact:
+    device_data: "{{ query('netbox.netbox.nb_lookup', 'devices', api_filter=api_filter, api_endpoint=netbox_api, token=netbox_token) }}" 
+  vars:
+    api_filter: "name={{ inventory_hostname }}"
+
+- name: Get rollback_list
+  set_fact:
+    rollback_list: "{{ device_data | json_query(query) | default([], true) }}" 
+  vars:
+    api_filter: "device={{ inventory_hostname }}"
+    query: "[0].value.local_context_data.rollback_list"
+
+- name: Add rollback_id to rollback_list
+  netbox.netbox.netbox_device:
+    netbox_url: "{{ netbox_api }}"
+    netbox_token: "{{ netbox_token }}"
+    data:
+      name: "{{ netbox_device_name | default(inventory_hostname) }}"
+      local_context_data:
+        rollback_list: "{{ [ rollback_id | int ] + rollback_list }}"
+    state: present
+    validate_certs: "{{ netbox_validate_certs }}"
+  when: not rollback_list or rollback_id not in rollback_list

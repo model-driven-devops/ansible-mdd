@@ -10,4 +10,4 @@
         name: ciscops.mdd.nso
         tasks_from: action
       vars:
-        nso_action: 'sync-from'
+        nso_action: 'sync-to'

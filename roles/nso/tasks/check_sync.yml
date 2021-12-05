@@ -5,6 +5,23 @@
     password: "{{ nso_password }}"
     path: '/ncs:devices/device{"{{ device_name | default(inventory_hostname) }}"}/check-sync'
     input: {}
-  register: action_result
+  register: check_result
   changed_when: False
-  failed_when: "(action_result.output is defined and 'out-of-sync' in action_result.output.result) or (action_result.msg is defined and 'error' in action_result.msg)"
+  failed_when: "check_result.msg is defined and 'error' in check_result.msg"
+
+- block:
+  - name: Compare Config
+    cisco.nso.nso_action:
+      url: "{{ nso_url }}"
+      username: "{{ nso_username }}"
+      password: "{{ nso_password }}"
+      path: '/ncs:devices/device{"{{ device_name | default(inventory_hostname) }}"}/compare-config'
+      input: {}
+    register: compare_result
+    changed_when: False
+
+  - debug:
+      var: compare_result.output.diff
+    failed_when: True
+
+  when: "(check_result.output is defined and 'out-of-sync' in check_result.output.result)"

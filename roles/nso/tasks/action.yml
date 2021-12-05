@@ -3,7 +3,7 @@
     url: "{{ nso_url }}"
     username: "{{ nso_username }}"
     password: "{{ nso_password }}"
-    path: '/ncs:devices/device{"{{ device_name | default(inventory_hostname) }}"}/sync-from'
+    path: '/ncs:devices/device{"{{ device_name | default(inventory_hostname) }}"}/{{ nso_action }}'
     input: {}
   register: nso_results
   failed_when: "nso_results.output.result == 'false'"

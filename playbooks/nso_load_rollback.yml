@@ -1,3 +1,13 @@
+---
+#
+# Playbook Name: nso_load_rollback
+#
+# Purpose: To read the rollback file created by `nso_save_rollback`, find the
+#          rollback that immediately proceeds the rollback listed in the file,
+#          and then rollback NSO to that point.  That will leave the devices
+#          at the state they were when `nso_save_rollback` was executed.  If
+#          the system is already at that state (i.e. nr == 0), nothing is done.
+#
 - hosts: network
   connection: local
   gather_facts: no
@@ -7,6 +17,10 @@
   vars:
     rollback_file: "{{ lookup('env', 'PWD') }}/rollback.yaml"
   tasks:
+    - include_role:
+        name: ciscops.mdd.nso
+        tasks_from: get_rollbacks
+
     - name: Check the Rollback File
       stat:
         path: "{{ rollback_file }}"
@@ -21,7 +35,22 @@
     - name: Read Rollback File
       include_vars: "{{ rollback_file }}"
 
-    - name: Load Roolback {{ rollback_id }}
-      include_role:
-        name: ciscops.mdd.nso
-        tasks_from: rollback
+    - set_fact:
+        current_nr: "{{ nso_rollback_facts.data | selectattr('rollback_nr', 'equalto', rollback_id | int) | map(attribute='nr') | first }}"
+
+    - debug:
+        msg: "Current Rollback ID: {{ rollback_id }} NR: {{ current_nr }}"
+
+    - block:
+        - set_fact:
+            previous_rollback_id: "{{ nso_rollback_facts.data | selectattr('nr', 'equalto', previous_nr | int) | map(attribute='rollback_nr') | first }}"
+          vars:
+            previous_nr: "{{ ( current_nr | int ) - 1 }}"
+
+        - name: Load Rollback {{ previous_rollback_id }}
+          include_role:
+            name: ciscops.mdd.nso
+            tasks_from: rollback
+          vars:
+            rollback_id: "{{ previous_rollback_id }}"
+      when: current_nr != '0'
