@@ -1,0 +1,35 @@
+---
+#
+# Name: files_in_path
+#
+# Purpose: To find all files matching a list of patterns in a path derived
+# from a list of elements passed in:
+#
+# Inputs:
+#   - dir_item_list
+#   - file_pattern_list
+#   - dir_root
+#
+# Returns:
+#   - file_list
+#
+# Create a hierarchical directory derived from the list of elements passed in.
+#
+- name: Create search directory list
+  set_fact:
+    search_dir_list: "{{ search_dir_list + [ [ search_dir_list | last | default ('') , item ] | join('/') ] }}"
+  loop: "{{ mdd_dir_items }}"
+  vars:
+    search_dir_list: "{{ [ mdd_root ] }}"
+
+#
+# Find OC data file in the path to the device from generic to specific.
+#
+- name: Find OC data files in the directory
+  find:
+    paths: "{{ search_dir_list }}"
+    patterns: "{{ mdd_file_patterns }}"
+  register: find_results
+
+- set_fact:
+    mdd_file_list: "{{ find_results.files | map(attribute='path') | list }}"

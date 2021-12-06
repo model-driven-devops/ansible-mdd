@@ -4,21 +4,13 @@
 # is a part of.  This can be set via the oc_group_list variable with a default
 # in the role.
 #
-- name: Create search directory list
-  set_fact:
-    search_dir_list: "{{ search_dir_list + [ [ search_dir_list | last | default ('') , item ] | join('/') ] }}"
-  loop: "{{ oc_group_list | reverse + [ inventory_hostname ] }}"
+- include_role:
+    name: ciscops.mdd.common
+    tasks_from: files_in_path
   vars:
-    search_dir_list: "{{ [ oc_data_root ] }}"
-
-#
-# Find OC data file in the path to the device from generic to specific.
-#
-- name: Find OC data files in the directory
-  find:
-    paths: "{{ search_dir_list }}"
-    patterns: "{{ oc_file_patterns }}"
-  register: find_results
+    mdd_root: "{{ oc_data_root }}"
+    mdd_dir_items: "{{ oc_group_list | reverse + [ inventory_hostname ] }}"
+    mdd_file_patterns: "{{ oc_file_patterns }}"
 
 #
 # Merge in the data from the file if the tags match with the host (or are not specified)
@@ -26,7 +18,7 @@
 - name: Combine the OC Data
   set_fact:
     mdd_data: "{{ mdd_data | default({}) | ciscops.mdd.oc_combine(mdd_file.mdd_data | default({}), recursive=True) }}"
-  loop: "{{ find_results.files | map(attribute='path') | list }}"
+  loop: "{{ mdd_file_list }}"
   when: ('all' in mdd_file.mdd_tags | default(['all'])) or (mdd_file.mdd_tags | intersect(tags | default([])))
   vars:
     mdd_file: "{{ lookup('template', item ) | from_yaml }}"
