@@ -2,7 +2,9 @@
   connection: local
   gather_facts: no
   roles:
-    - ciscops.mdd.nso
+    - role: ciscops.mdd.nso
+      vars:
+        nso_required: no
   tasks:
     - name: Run Checks
       include_role:

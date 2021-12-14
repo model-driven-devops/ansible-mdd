@@ -1,12 +1,12 @@
 - name: Create host inventory directory
   ansible.builtin.file:
-    path: "{{ host_data_directory }}"
+    path: "{{ mdd_device_dir }}"
     state: directory
 
 - name: Write OC Host Data to inventory file 
   copy:
     content: "{{ oc_routing_data | to_nice_yaml(indent=2) }}"
-    dest: "{{ host_data_directory }}/oc-routing.yml"
+    dest: "{{ mdd_device_dir }}/oc-routing.yml"
   delegate_to: localhost
   when: nso_routing_list is defined and nso_routing_list
   vars:

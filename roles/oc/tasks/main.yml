@@ -1,7 +1,7 @@
 ---
 #
 # Create a heirarchical directory derived from the groups/regions this device
-# is a part of.  This can be set via the oc_group_list variable with a default
+# is a part of.  This can be set via the oc_dir_items variable with a default
 # in the role.
 #
 - include_role:
@@ -9,7 +9,7 @@
     tasks_from: files_in_path
   vars:
     mdd_root: "{{ oc_data_root }}"
-    mdd_dir_items: "{{ oc_group_list | reverse + [ inventory_hostname ] }}"
+    mdd_dir_items: "{{ oc_dir_items }}"
     mdd_file_patterns: "{{ oc_file_patterns }}"
 
 #

@@ -15,16 +15,16 @@ nso_java_opts: "-Xmx2G -Xms1G"
 # admin_password: admin
 # ansible_user: "{{ admin_user }}"
 # ansible_password: "{{ admin_password }}"
-nso_username: "{{ lookup('env', 'NSO_USERNAME') | default ('ubuntu') }}"
-nso_password: "{{ lookup('env', 'NSO_PASSWORD') | default ('admin') }}"
+nso_username: "{{ lookup('env', 'NSO_USERNAME') | default ('ubuntu', true) }}"
+nso_password: "{{ lookup('env', 'NSO_PASSWORD') | default ('admin', true) }}"
 # The auth groups to add.  Override in the inventory
 nso_auth_groups:
   default:
     remote_name: "admin"
     remote_password: "admin"
-nso_default_ned: cisco-ios-cli-6.76
+nso_default_ned: cisco-ios-cli-6.77
 nso_ned_dict:
-  ios: "cisco-ios-cli-6.76"
+  ios: "cisco-ios-cli-6.77"
 nso_package_repos:
   - name: mdd
     repo: https://github.com/model-driven-devops/nso-oc-services.git

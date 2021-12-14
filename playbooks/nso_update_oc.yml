@@ -4,6 +4,9 @@
   gather_facts: no
   roles:
     - ciscops.mdd.nso
+    - role: ciscops.mdd.netbox
+      vars:
+        netbox_required: no
     - ciscops.mdd.oc
   vars:
     dry_run: true
@@ -20,7 +23,7 @@
     - include_role:
         name: ciscops.mdd.netbox
         tasks_from: update_rollback_list
-      when: rollback_id is defined and rollback_id
+      when: rollback_id is defined and rollback_id and netbox_available 
 
 - name: Run update_report
   hosts: all

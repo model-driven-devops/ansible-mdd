@@ -2,7 +2,7 @@
   gather_facts: no
   become: yes
   tasks:
-    - name: Start NSO
+    - name: Install NSO
       include_role:
         name: ciscops.mdd.nso
         tasks_from: install
