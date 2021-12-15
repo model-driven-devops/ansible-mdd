@@ -23,7 +23,7 @@
     - include_role:
         name: ciscops.mdd.netbox
         tasks_from: update_rollback_list
-      when: rollback_id is defined and rollback_id and netbox_available 
+      when: rollback_id is defined and rollback_id and netbox_available | default(no)
 
 - name: Run update_report
   hosts: all
