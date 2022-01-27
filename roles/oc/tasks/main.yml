@@ -8,9 +8,7 @@
     name: ciscops.mdd.common
     tasks_from: files_in_path
   vars:
-    mdd_root: "{{ oc_data_root }}"
-    mdd_dir_items: "{{ oc_dir_items }}"
-    mdd_file_patterns: "{{ oc_file_patterns }}"
+    mdd_file_patterns: "{{ mdd_oc_patterns }}"
 
 #
 # Merge in the data from the file if the tags match with the host (or are not specified)

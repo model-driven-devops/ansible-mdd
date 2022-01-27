@@ -1,0 +1,25 @@
+#jinja2: lstrip_blocks: True
+{#                                                                           #}
+{# Template Start                                                            #}
+{#                                                                           #}
+{% if nso_interface_dict %}
+mdd_tags:
+   - all
+mdd_data:
+   openconfig-interfaces:interfacses:
+      interface:
+      {#                                                                     #}
+      {# Iterrate through the interface types                                #}
+      {#                                                                     #}     
+      {% for interface_type, interface_list in nso_interface_dict.items() %}
+         {#                                                                  #}
+         {# Iterrate through each interface                                  #}
+         {#                                                                  #}     
+         {% for interface in interface_list %}
+      - config:
+         name: {{ interface_type }}{{ interface.name }}
+         enabled: {{ 'false' if interface.shutdown is defined else 'true' }}
+        name: {{ interface_type }}{{ interface.name }}
+         {% endfor %}
+      {% endfor %}
+{% endif %}

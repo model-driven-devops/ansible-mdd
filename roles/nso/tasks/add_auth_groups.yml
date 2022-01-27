@@ -1,5 +1,3 @@
-- debug:
-    msg: "{{ nso_username }} {{ nso_password }}"
 - name: Add Auth Groups
   cisco.nso.nso_config:
     url: "{{ nso_url }}"

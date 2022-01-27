@@ -1,0 +1,9 @@
+    - name: Get Interface Information
+      include_role:
+        name: ciscops.mdd.nso
+        tasks_from: get_interface
+
+    - name: Convert Routing Information to OC
+      include_role:
+        name: ciscops.mdd.oc
+        tasks_from: nso-interfaces

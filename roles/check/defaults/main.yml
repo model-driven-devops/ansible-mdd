@@ -1,24 +1,11 @@
 ---
-schema_dir: "{{ lookup('env', 'PWD') }}/schemas"
-#
-# The list of group names to append to schema_dir to search for schemas
-#
-schema_group_dirs: "{{ group_names }}"
-
-check_list:
-  - bgp_neighbors
-
-check_table:
-  check_routes:
-    command: 'show ip route'
-    schema: 'show_ip_route.yml'
-    method: cli_parse
-    tags:
-      - router
-      - bgp
-  bgp_neighbors:
-    command: 'show bgp neighbors'
-    schema: 'bgp-neighbors.yml'
-    method: cli_parse
-    tags:
-      - bgp
+# The root directory where the MDD Data is stored
+mdd_data_root: "{{ lookup('env', 'PWD') }}/mdd-data"
+# The directory items that make up the direct path from the highest level
+# to the device specific level
+mdd_dir_items: "{{ ((regions + sites) | intersect(group_names)) + [ inventory_hostname ] }}"
+# The data directory for the particular device
+mdd_device_dir: "{{ mdd_data_root }}/{{ mdd_dir_items | join('/') }}"
+# The file pattern for files that specify state checks
+mdd_check_patterns:
+  - 'check-*.yml'

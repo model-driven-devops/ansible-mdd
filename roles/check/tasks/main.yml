@@ -1,2 +1,33 @@
 ---
 # tasks file for check
+- name: Search for check files
+  include_role:
+    name: ciscops.mdd.common
+    tasks_from: files_in_path
+  vars:
+    mdd_file_patterns: "{{ mdd_check_patterns }}"
+
+- name: Read in check files
+  set_fact:
+    check_file: "{{ lookup('file', item) | from_yaml }}"
+  loop: "{{ mdd_file_list }}"
+  register: check_file_list
+
+- name: Find relevant checks
+  set_fact:
+    mdd_check_list: "{{ mdd_check_list | default([]) + mdd_item.mdd_checks }}"
+  with_items: "{{ check_file_list.results | map(attribute='ansible_facts.check_file') | default([]) }}"
+  when: ('all' in mdd_item.mdd_tags) or (mdd_item.mdd_tags | intersect(tags | default([])) | length)
+  loop_control:
+    loop_var: 'mdd_item'
+  vars:
+    mdd_check_list: []
+
+- name: Run Checks
+  include_role:
+    name: ciscops.mdd.check
+    tasks_from: run_check
+  with_items: "{{ mdd_check_list | default([]) }}"
+  loop_control:
+    loop_var: 'check_item'
+   

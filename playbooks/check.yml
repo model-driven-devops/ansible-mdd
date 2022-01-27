@@ -9,7 +9,6 @@
     - name: Run Checks
       include_role:
         name: ciscops.mdd.check
-        tasks_from: run_check_list
 
     - debug:
         var: failed_checks

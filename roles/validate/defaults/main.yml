@@ -1,6 +1,4 @@
 ---
-# defaults file for oc
-#
 # The root directory where the MDD Data is stored
 mdd_data_root: "{{ lookup('env', 'PWD') }}/mdd-data"
 # The directory items that make up the direct path from the highest level
@@ -8,6 +6,8 @@ mdd_data_root: "{{ lookup('env', 'PWD') }}/mdd-data"
 mdd_dir_items: "{{ ((regions + sites) | intersect(group_names)) + [ inventory_hostname ] }}"
 # The data directory for the particular device
 mdd_device_dir: "{{ mdd_data_root }}/{{ mdd_dir_items | join('/') }}"
-# The file pattern for files that specify OD Data
-mdd_oc_patterns:
-  - 'oc-*.yml'
+# default file location for JSON schemas
+mdd_schema_root: "{{ lookup('env', 'PWD') }}/schemas"
+# The file pattern for files that specify data validation
+mdd_validate_patterns:
+  - 'validate-*.yml'
