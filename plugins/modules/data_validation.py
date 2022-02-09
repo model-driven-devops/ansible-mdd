@@ -24,9 +24,10 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ['preview'], 'supported_by': 'community'}
 
+
 DOCUMENTATION = r"""
 ---
-module: datavalidation
+module: data_validation
 short_description: Validate data against a schema
 description:
   - Validate data against a schema
@@ -35,6 +36,7 @@ author:
 requirements:
   - jsonschema
   - ipaddress
+  - yaml
 version_added: '0.1.0'
 options:
     data:
@@ -43,8 +45,12 @@ options:
         type: dict
     schema:
         description: The schema used to check the data
-        required: true
+        required: false
         type: dict
+    schema_file:
+        description: The file containint the schema used to check the data
+        required: false
+        type: str
 """
 
 EXAMPLES = r"""
@@ -65,7 +71,6 @@ EXAMPLES = r"""
 
 import argparse
 import json
-import yaml
 import traceback
 import os
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
@@ -87,6 +92,14 @@ except ImportError:
 else:
     HAS_IPADDRESS = True
 
+try:
+    import yaml
+except ImportError:
+    HAS_YAML = False
+    YAML_IMPORT_ERROR = traceback.format_exc()
+else:
+    HAS_YAML = True
+
 
 def in_subnet(validator, value, instance, schema):
     if not ipaddress.ip_address(instance) in ipaddress.ip_network(value):
@@ -106,29 +119,23 @@ def validate_schema(data, schema):
     all_validators = dict(Draft7Validator.VALIDATORS)
     all_validators['in_subnet'] = in_subnet
     type_checker = Draft7Validator.TYPE_CHECKER.redefine_many({"ipaddress": is_ip_address})
-    # MDDValidator = validators.create(
-    #     meta_schema=Draft7Validator.META_SCHEMA,
-    #     validators=all_validators,
-    #     type_checker=type_checker,
-    # )
     MDDValidator = validators.extend(Draft7Validator, type_checker=type_checker, validators=all_validators)
     mdd_validator = MDDValidator(schema=schema)
-    # validate the input file against the supplied schema
-    # validate(instance=input, schema=schema, cls=MDDValidator, format_checker=draft7_format_checker)
     errors = mdd_validator.iter_errors(data)
     error_list = []
     for error in errors:
-        error_list.append(f"{error.json_path}: {error.message}")
+        error_list.append("{0}: {1}".format(error.json_path, error.message))
 
     return error_list
 
+
 def main():
 
-    arguments = dict( data=dict(required=True, type='dict'),
-                    schema=dict(required=False, type='dict'),
-                    schema_file=dict(required=False, type='str')
-                    )
-
+    arguments = dict(
+        data=dict(required=True, type='dict'),
+        schema=dict(required=False, type='dict'),
+        schema_file=dict(required=False, type='str')
+    )
     module = AnsibleModule(argument_spec=arguments, supports_check_mode=False)
 
     if not HAS_JSONSCHEMA:
@@ -139,13 +146,17 @@ def main():
         # Needs: from ansible.module_utils.basic import missing_required_lib
         module.fail_json(msg=missing_required_lib('ipaddress'), exception=IPADDRESS_IMPORT_ERROR)
 
+    if not HAS_YAML:
+        # Needs: from ansible.module_utils.basic import missing_required_lib
+        module.fail_json(msg=missing_required_lib('yaml'), exception=IPADDRESS_IMPORT_ERROR)
+
     data = module.params['data']
     schema = {}
     if module.params['schema_file']:
         schema_file = module.params['schema_file']
         # Read in the datafile
         if not os.path.exists(schema_file):
-            raise Exception(f"Cannot find file {schema_file}")
+            raise Exception("Cannot find file {0}".format(schema_file))
         with open(schema_file) as f:
             if schema_file.endswith('.yaml') or schema_file.endswith('.yml'):
                 schema = yaml.safe_load(f)
@@ -156,13 +167,8 @@ def main():
     elif module.params['schema']:
         schema = module.params['schema']
     else:
-        raise Exception(f"Need either schema_file or schema")
+        raise Exception("Need either schema_file or schema")
 
-    # module.debug("*****************")
-    # # print(module.params)
-    # module.debug(type(schema))
-    # module.debug(type(data))
-    # module.debug("*****************")
     if module.params['schema_file']:
         schema_title = os.path.basename(schema_file)
     elif 'title' in schema:
@@ -173,10 +179,10 @@ def main():
     error_list = validate_schema(data, schema)
     if error_list:
         error_string = ','.join(error_list)
-        module.fail_json(msg=f"Schema Failed: {error_string}", failed_schema=schema_title, x_error_list=error_list)
+        module.fail_json(msg="Schema Failed: {0}".format(error_string), failed_schema=schema_title, x_error_list=error_list)
     else:
         module.exit_json(changed=False, failed=False)
-        
+
 
 if __name__ == '__main__':
     main()
