@@ -13,7 +13,7 @@
       register: validation_output
       vars:
         check_vars: "{{ check_item.check_vars }}"
-        schema: "{{ schema_root }}/{{ check_item.schema }}"
+        schema: "{{ mdd_schema_root }}/{{ check_item.schema }}"
   rescue:
     - set_fact:
         failed_checks: "{{ (failed_checks | default([])) + [check_item.name] }}"
