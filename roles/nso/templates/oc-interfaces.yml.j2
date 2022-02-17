@@ -1,0 +1,64 @@
+#jinja2: lstrip_blocks: True
+{#                                                                           #}
+{# Template Start                                                            #}
+{#                                                                           #}
+{% if nso_interface_dict %}
+mdd_tags:
+   - all
+mdd_data:
+   openconfig-interfaces:interfaces:
+      interface:
+      {#                                                                     #}
+      {# Iterrate through the interface types                                #}
+      {#                                                                     #}     
+      {% for interface_type, interface_list in nso_interface_dict.items() %}
+         {#                                                                  #}
+         {# Iterrate through each interface                                  #}
+         {#                                                                  #}     
+         {% for interface in interface_list %}
+         {% set primary_ipv4_addr = interface | json_query('ip.address.primary.address') %}
+         {% set primary_ipv4_mask = interface | json_query('ip.address.primary.mask') %}
+         {% set interface_switchport = interface | json_query('switchport.mode') | default ({}) %}
+         {% set interface_oc_type = {"Loopback": "softwareLoopback", "Port-Channel": "ieee8023adLag"}[interface_type] | default('ethernetCsmacd') %}
+      -  config:
+            name: {{ interface_type }}{{ interface.name }}
+            enabled: {{ 'false' if interface.shutdown is defined else 'true' }}
+            type: '{{ interface_oc_type }}'
+         name: {{ interface_type }}{{ interface.name }}
+      {% if interface_switchport %}
+         openconfig-if-ethernet:ethernet:
+            openconfig-vlan:switched-vlan:
+               config:
+               {% if 'trunk' in interface_switchport %}
+                  {% set trunk_native_vlan = interface | json_query('switchport.trunk.native.vlan') | default ('') %}
+                  {% set trunk_allowed_vlans = interface | json_query('switchport.trunk.allowed.vlan.vlans') | default ([]) %}
+                  interface-mode: 'TRUNK'
+                  {% if trunk_native_vlan %}
+                  native-vlan: '{{ trunk_native_vlan }}'
+                  {% endif %}
+                  {% if trunk_allowed_vlans %}
+                  trunk-vlans: {{ trunk_allowed_vlans }}
+                  {% endif %}
+               {% else %}
+                  interface-mode: 'ACCESS'
+                  access-vlan: '{{ interface.switchport.access.vlan }}'
+               {% endif %}
+      {% else %}
+         subinterfaces:
+            subinterface:
+            -  config:
+                  index: 0
+               index: 0
+            {% if primary_ipv4_addr and primary_ipv4_mask %}
+               openconfig-if-ip:ipv4:
+                  addresses:
+                     address:
+                     -  config:
+                           ip: '{{ primary_ipv4_addr }}'
+                           prefix-length: '{{ (primary_ipv4_addr + '/' + primary_ipv4_mask) | ipaddr('prefix') }}'
+                        ip: '{{ primary_ipv4_addr }}'
+            {% endif %}
+      {% endif %}       
+         {% endfor %}
+      {% endfor %}
+{% endif %}

@@ -1,5 +1,13 @@
 # Cisco Model Driven Devops Ansible Collection
 
+This Ansible Collection is an implementation of Model-Driven DevOps and includes the following roles:
+* [oc](https://github.com/model-driven-devops/ansible-mdd/blob/main/roles/oc/README.md)
+* [check](https://github.com/model-driven-devops/ansible-mdd/blob/main/roles/check/README.md)
+* [validate](https://github.com/model-driven-devops/ansible-mdd/blob/main/roles/validate/README.md)
+* [common](https://github.com/model-driven-devops/ansible-mdd/blob/main/roles/common/README.md)
+* [netbox](https://github.com/model-driven-devops/ansible-mdd/blob/main/roles/netbox/README.md)
+* [nso](https://github.com/model-driven-devops/ansible-mdd/blob/main/roles/nso/README.md)
+
 ## Dependancies
 ### Environmnet Variables
 
@@ -8,108 +16,6 @@
 
 ## Playbooks
 
-### NSO Host Operations
-
-- These operations act on the NSO host itself
-- The inventory should contain the NSO hosts in an `nso` group
-- `--limit` can be used to limit operation to specific NSO hosts
-
-#### `ciscops.mdd.nso_install`
-
-- Install NSO on host
-
-#### Requirements
-- nso and neds packages in `packages` directory
-
-#### `ciscops.mdd.nso_update_packages`
-
-- Update the MDD packages on the NSO hosts
-
-target: The group of nso hosts
-
-### NSO Device Operations
-
-- These operations act on the device through the NSO host
-- The inventory should include the devices in a `network` group
-- `--limit` can be used to limit operation to specific devices
-
-#### `ciscops.mdd.nso_update_oc`
-
-    - Push OC data to the host through NSO
-
-Example:
-```
-ansible-playbook ciscops.mdd.nso_update_oc
-```
-
-Extra Vars:
-- `dry_run` (optional): Whether to do a dry run or a commit (default: true)
-
-#### `ciscops.mdd.nso_sync_from`
-
-- Run sync_from for device
-
-Example:
-```
-ansible-playbook nso_sync_from
-```
-
-#### `ciscops.mdd.nso_sync_to`
-
-- Run sync_to for device
-
-Example:
-```
-ansible-playbook nso_sync_to
-```
-
-#### `ciscops.mdd.nso_check_sync`
-
-- Check to make sure that the device is in sync with NSO
-- playbook fails if device is out-of-sync
-
-Example:
-```
-ansible-playbook nso_sync_to
-```
-
-#### `ciscops.mdd.nso_rollback_facts`
-
-- Summary of rollbacks
-
-Extra Vars:
-- `rollback_id` (optional): List information for specific Rollback ID
-
-#### `ciscops.mdd.nso_rollback`
-
-- Rollback to specific Rollback ID
-
-Extra Vars:
-- `rollback_id` (required): Rollback ID
-
-#### `ciscops.mdd.nso_save_rollback`
-
-- Save a file with the current Rollback ID
-
-Extra Vars:
-- `rollback_file` (optional): The file containing the Rollback ID
-
-#### `ciscops.mdd.nso_load_rollback`
-
-- Load a file with a Rollback ID and rollback to that ID
-
-Extra Vars:
-- `rollback_file` (optional): The file containing the Rollback ID
-
-### OpenConfig Data Operation
-
-#### `ciscops.mdd.show_oc`
-
-    - Show OC values for host
-
-#### `ciscops.mdd.validate_data`
-
-    - Validate OC data for host
 
 
 ### Status Check Operations

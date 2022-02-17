@@ -1,9 +1,18 @@
-    - name: Get Interface Information
-      include_role:
-        name: ciscops.mdd.nso
-        tasks_from: get_interface
+- name: Get Interface Information
+  include_role:
+    name: ciscops.mdd.nso
+    tasks_from: get_interface
 
-    - name: Convert Routing Information to OC
-      include_role:
-        name: ciscops.mdd.oc
-        tasks_from: nso-interfaces
+- name: Create host inventory directory
+  ansible.builtin.file:
+    path: "{{ mdd_device_dir }}"
+    state: directory
+
+- name: Write OC Host Data to inventory file 
+  copy:
+    content: "{{ oc_interface_data | to_nice_yaml(indent=2) }}"
+    dest: "{{ mdd_device_dir }}/oc-interfaces.yml"
+  delegate_to: localhost
+  when: nso_interface_dict is defined and nso_interface_dict
+  vars:
+    oc_interface_data: "{{ lookup('template', 'oc-interfaces.yml.j2') | from_yaml }}"
