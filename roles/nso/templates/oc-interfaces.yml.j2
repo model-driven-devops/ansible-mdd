@@ -10,11 +10,11 @@ mdd_data:
       interface:
       {#                                                                     #}
       {# Iterrate through the interface types                                #}
-      {#                                                                     #}     
+      {#                                                                     #}
       {% for interface_type, interface_list in nso_interface_dict.items() %}
          {#                                                                  #}
          {# Iterrate through each interface                                  #}
-         {#                                                                  #}     
+         {#                                                                  #}
          {% for interface in interface_list %}
          {% set primary_ipv4_addr = interface | json_query('ip.address.primary.address') %}
          {% set primary_ipv4_mask = interface | json_query('ip.address.primary.mask') %}
@@ -50,15 +50,27 @@ mdd_data:
                   index: 0
                index: 0
             {% if primary_ipv4_addr and primary_ipv4_mask %}
+               {% set standby_list = interface | json_query('standby."standby-list"') | default ([]) %}
                openconfig-if-ip:ipv4:
                   addresses:
                      address:
                      -  config:
                            ip: '{{ primary_ipv4_addr }}'
-                           prefix-length: '{{ (primary_ipv4_addr + '/' + primary_ipv4_mask) | ipaddr('prefix') }}'
+                           prefix-length: '{{ (primary_ipv4_addr + "/" + primary_ipv4_mask) | ipaddr("prefix") }}'
                         ip: '{{ primary_ipv4_addr }}'
+                     {% if standby_list %}
+                        vrrp:
+                           vrrp-group:
+                           {% for standby in standby_list %}
+                           -  config:
+                                 virtual-address:
+                                 -  '{{ standby.ip.address }}'
+                                 virtual-router-id: {{ standby['group-number'] }}
+                              virtual-router-id: {{ standby['group-number'] }}
+                           {% endfor %}
+                     {% endif %}
             {% endif %}
-      {% endif %}       
+      {% endif %}
          {% endfor %}
       {% endfor %}
 {% endif %}
