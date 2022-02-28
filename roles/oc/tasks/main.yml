@@ -13,12 +13,16 @@
 #
 # Merge in the data from the file if the tags match with the host (or are not specified)
 #
-- name: Combine the OC Data
+- name: Gather the OC Data
   set_fact:
-    mdd_data: "{{ mdd_data | default({}) | ciscops.mdd.oc_combine(mdd_file.mdd_data | default({}), recursive=True) }}"
+    mdd_data_list: "{{ ( mdd_data_list | default([]) ) + [ mdd_file.mdd_data ] }}"
   loop: "{{ mdd_file_list }}"
   when: ('all' in mdd_file.mdd_tags | default(['all'])) or (mdd_file.mdd_tags | intersect(tags | default([])))
   vars:
     mdd_file: "{{ lookup('template', item ) | from_yaml }}"
 
-- include_tasks: netbox.yml
+- name: Combine the OC Data
+  set_fact:
+    mdd_data: "{{ mdd_data_list | ciscops.mdd.oc_combine(recursive=True) }}"
+
+- include_tasks: netbox.yml 
