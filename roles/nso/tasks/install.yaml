@@ -93,9 +93,6 @@
   loop: "{{ nso_ned_files }}"
   register: copy_results
 
-- debug:
-    var: copy_results
-
 - name: Unpack NSO packages
   shell: 'cd {{ nso_tmp_dir }}; sh {{ item.dest }} --skip-verification'
   loop: "{{ copy_results.results }}"

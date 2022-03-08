@@ -2,6 +2,9 @@
   gather_facts: no
   become: yes
   tasks:
+    - name: Wait for host to become reachable/usable
+      wait_for_connection:
+
     - name: Install NSO
       include_role:
         name: ciscops.mdd.nso
