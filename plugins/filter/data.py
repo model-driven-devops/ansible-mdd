@@ -149,9 +149,8 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
             else:
                 x[key] = merge_list(x_value, y_value, 'list_merge')
             continue
-
-        else:
         # else just override x's element with y's one
+        else:
             x[key] = y_value
 
     return x
