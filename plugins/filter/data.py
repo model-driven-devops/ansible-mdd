@@ -10,7 +10,9 @@ from ansible.errors import AnsibleError, AnsibleFilterError
 from json import dumps
 
 list_key_map = {
-    "network-instance": "name",
+    "openconfig-network-instance:network-instance": "name",
+    "openconfig-interfaces:interface": "name",
+    "interface": "id",
     "static": "prefix",
     "protocol": "name"
 }
@@ -145,7 +147,7 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
             if key in list_key_map:
                 x[key] = merge_list_by_key(x_value, y_value, list_key_map[key])
             else:
-                x[key] = merge_list(x_value, y_value, list_merge)
+                x[key] = merge_list(x_value, y_value, 'list_merge')
             continue
 
         else:
