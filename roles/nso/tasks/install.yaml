@@ -53,45 +53,45 @@
     path: "{{ nso_tmp_dir }}"
     state: directory
 
-- name: Upload the NSO installer
-  copy:
-    src: "{{ nso_package_src }}/{{ nso_installer_name }}"
-    dest: "{{ nso_tmp_dir }}/{{ nso_installer_name }}"
+- name: Get the NSO installer
+  get_url:
+    url: "{{ nso_installer_file }}"
+    dest: "{{ nso_tmp_dir }}"
+  # copy:
+  #   src: "{{ nso_package_src }}/{{ nso_installer_name }}"
+  #   dest: "{{ nso_tmp_dir }}/{{ nso_installer_name }}"
   register: copy_results
 
 - block:
   - set_fact:
-      installer: '{{ nso_installer_name }}'
+      local_installer_file: "{{ copy_results.dest }}"
 
   - block:
-      - name: "Unpack '{{ nso_installer_name }}'"
-        shell: 'cd {{ nso_tmp_dir }}; sh ./{{ nso_installer_name }} --skip-verification'
+      - name: "Unpack '{{ local_installer_file }}'"
+        shell: 'cd {{ nso_tmp_dir }}; sh {{ local_installer_file }} --skip-verification'
 
       - set_fact:
-          installer: '{{ nso_installer_name | regex_replace("signed.bin$","installer.bin") }}'
-    when: '"signed.bin" in nso_installer_name'
+          nso_installer_bin: '{{ local_installer_file | regex_replace("signed.bin$","installer.bin") }}'
+    when: '"signed.bin" in local_installer_file'
 
   - name: Run the NSO installer
-    shell: 'sh {{ nso_tmp_dir }}/{{ installer }} --system-install'
+    shell: 'sh {{ nso_installer_bin }} --system-install'
   when: copy_results.changed
 
-- name: Find NSO packages
-  find:
-    paths: "{{ nso_package_src }}"
-    patterns: 'ncs-*.signed.bin'
-  delegate_to: localhost
-  become: no
-  register: find_results
+# - name: Find NSO packages
+#   find:
+#     paths: "{{ nso_package_src }}"
+#     patterns: 'ncs-*.signed.bin'
+#   delegate_to: localhost
+#   become: no
+#   register: find_results
 
 - name: Upload the NSO packages
-  copy:
-    src: "{{ item }}"
+  get_url:
+    url: "{{ item }}"
     dest: "{{ nso_tmp_dir }}"
-  loop: "{{ find_results.files | map(attribute='path') | list }}"
+  loop: "{{ nso_ned_files }}"
   register: copy_results
-
-- debug:
-    var: copy_results
 
 - name: Unpack NSO packages
   shell: 'cd {{ nso_tmp_dir }}; sh {{ item.dest }} --skip-verification'
@@ -139,6 +139,12 @@
           . ~/{{ nso_install_dir }}/ncsrc
       fi
       export NCS_JAVA_VM_OPTIONS="{{ nso_java_opts }}"
+
+- name: Enable NCS Service
+  ansible.builtin.systemd:
+    name: ncs.service
+    state: started
+    enabled: yes
 
 # - name: Clean up installer
 #   file:

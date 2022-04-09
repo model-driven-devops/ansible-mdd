@@ -24,6 +24,7 @@ ansible_os_map = {
     "ios": "iosxe"
 }
 
+
 def pyats_parser(cli_output, command, os):
     if not PY3:
         raise AnsibleFilterError("Genie requires Python 3")

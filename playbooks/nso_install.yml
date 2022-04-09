@@ -2,7 +2,14 @@
   gather_facts: no
   become: yes
   tasks:
-    - name: Start NSO
+    - name: Wait for host to become reachable/usable
+      wait_for_connection:
+        timeout: 60
+      register: wait_connection
+      retries: 10
+      until: wait_connection is success
+
+    - name: Install NSO
       include_role:
         name: ciscops.mdd.nso
         tasks_from: install

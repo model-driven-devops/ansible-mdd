@@ -25,9 +25,6 @@
         - "{{ nso_package_repos }}"
         - service_list
 
-    - debug:
-        var: copy_results
-
     - name: Make packages
       command:
         chdir: '{{ item.dest }}/src/'

@@ -6,12 +6,17 @@
 # from a list of elements passed in:
 #
 # Inputs:
-#   - dir_item_list
-#   - file_pattern_list
-#   - dir_root
+#   - mdd_dir_items
+#   - mdd_file_patterns
+#   - mdd_root
 #
 # Returns:
-#   - file_list
+#   - mdd_file_list
+#
+# Set the first level of search as the mdd_data_root 
+#
+- set_fact:
+    search_dir_list: "{{ [ mdd_data_root ] }}"
 #
 # Create a hierarchical directory derived from the list of elements passed in.
 #
@@ -19,13 +24,11 @@
   set_fact:
     search_dir_list: "{{ search_dir_list + [ [ search_dir_list | last | default ('') , item ] | join('/') ] }}"
   loop: "{{ mdd_dir_items }}"
-  vars:
-    search_dir_list: "{{ [ mdd_root ] }}"
 
 #
-# Find OC data file in the path to the device from generic to specific.
+# Find MDD data file in the path to the device from generic to specific.
 #
-- name: Find OC data files in the directory
+- name: Find MDD data files in the directory
   find:
     paths: "{{ search_dir_list }}"
     patterns: "{{ mdd_file_patterns }}"

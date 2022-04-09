@@ -20,13 +20,17 @@
     netbox_token: "{{ lookup('env', 'NETBOX_TOKEN') }}"
   when: netbox_token is not defined or not netbox_token
 
-- name: Make sure that we have an Netbox host to talk to
-  assert:
-    that:
-      - netbox_api is defined
-      - netbox_api
-      - netbox_token is defined
-      - netbox_token
-    fail_msg: "Cannot find an Netbox API endpoint to use"
-    success_msg: "Using Netbox API Endpoint: {{ netbox_api }}"
-    
+- block:
+  - name: Make sure that we have an Netbox host to talk to
+    assert:
+      that:
+        - netbox_api is defined
+        - netbox_api
+        - netbox_token is defined
+        - netbox_token
+      fail_msg: "Cannot find an Netbox API endpoint to use"
+      success_msg: "Using Netbox API Endpoint: {{ netbox_api }}"
+
+  - set_fact:
+      netbox_available: yes
+  when: netbox_required | default('yes') | bool

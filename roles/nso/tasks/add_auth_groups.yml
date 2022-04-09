@@ -1,5 +1,3 @@
-- debug:
-    msg: "{{ nso_username }} {{ nso_password }}"
 - name: Add Auth Groups
   cisco.nso.nso_config:
     url: "{{ nso_url }}"
@@ -14,3 +12,16 @@
               remote-name: "{{ item.value.remote_name }}"
               remote-password: "{{ item.value.remote_password }}"
   loop: "{{ nso_auth_groups | dict2items }}"
+
+- name: Allow Older KEX Devices
+  cisco.nso.nso_config:
+    url: "{{ nso_url }}"
+    username: "{{ nso_username }}"
+    password: "{{ nso_password }}"
+    data:
+      tailf-ncs:devices:
+        global-settings:
+          ssh-algorithms:
+            public-key:
+              - 'ssh-rsa'
+  register: nso_config_results

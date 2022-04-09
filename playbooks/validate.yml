@@ -4,7 +4,7 @@
   ignore_errors: yes
   roles:
     - ciscops.mdd.oc               # Loads the OC Data
-    - ciscops.mdd.data_validation  # Validates the OC Data
+    - ciscops.mdd.validate  # Validates the OC Data
     
 - name: Run update_report
   hosts: network
@@ -13,7 +13,7 @@
   tasks:
     - name: Run Validation Report
       include_role:
-        name: ciscops.mdd.data_validation
+        name: ciscops.mdd.validate
         tasks_from: validation_report
       run_once: true
 

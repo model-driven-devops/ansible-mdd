@@ -1,26 +1,28 @@
 ---
 #
 # Create a heirarchical directory derived from the groups/regions this device
-# is a part of.  This can be set via the oc_group_list variable with a default
+# is a part of.  This can be set via the oc_dir_items variable with a default
 # in the role.
 #
 - include_role:
     name: ciscops.mdd.common
     tasks_from: files_in_path
   vars:
-    mdd_root: "{{ oc_data_root }}"
-    mdd_dir_items: "{{ oc_group_list | reverse + [ inventory_hostname ] }}"
-    mdd_file_patterns: "{{ oc_file_patterns }}"
+    mdd_file_patterns: "{{ mdd_oc_patterns }}"
 
 #
 # Merge in the data from the file if the tags match with the host (or are not specified)
 #
-- name: Combine the OC Data
+- name: Gather the OC Data
   set_fact:
-    mdd_data: "{{ mdd_data | default({}) | ciscops.mdd.oc_combine(mdd_file.mdd_data | default({}), recursive=True) }}"
+    mdd_data_list: "{{ ( mdd_data_list | default([]) ) + [ mdd_file.mdd_data ] }}"
   loop: "{{ mdd_file_list }}"
   when: ('all' in mdd_file.mdd_tags | default(['all'])) or (mdd_file.mdd_tags | intersect(tags | default([])))
   vars:
     mdd_file: "{{ lookup('template', item ) | from_yaml }}"
 
-- include_tasks: netbox.yml
+- name: Combine the OC Data
+  set_fact:
+    mdd_data: "{{ mdd_data_list | ciscops.mdd.oc_combine(recursive=True) }}"
+
+- include_tasks: netbox.yml 

@@ -2,12 +2,13 @@
   connection: local
   gather_facts: no
   roles:
-    - ciscops.mdd.nso
+    - role: ciscops.mdd.nso
+      vars:
+        nso_required: no
   tasks:
     - name: Run Checks
       include_role:
         name: ciscops.mdd.check
-        tasks_from: run_check_list
 
     - debug:
         var: failed_checks

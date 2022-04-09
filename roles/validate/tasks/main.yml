@@ -1,0 +1,54 @@
+---
+# Example showing how to end the play for specific targets
+- name: End the play for hosts that do not have schemas defined
+  meta: end_host
+  when:
+  - mdd_schema_list is not defined
+
+- name: Search for schema data files
+  include_role:
+    name: ciscops.mdd.common
+    tasks_from: files_in_path
+  vars:
+    mdd_file_patterns: "{{ mdd_validate_patterns }}"
+
+- name: Read in schema data files
+  set_fact:
+    mdd_file_data: "{{ lookup('file', item) | from_yaml }}"
+  loop: "{{ mdd_file_list }}"
+  register: mdd_file_list_data
+
+- name: Find relevant schema entries
+  set_fact:
+    mdd_schema_list: "{{ mdd_schema_list | default([]) + mdd_item.mdd_schemas }}"
+  with_items: "{{ mdd_file_list_data.results | map(attribute='ansible_facts.mdd_file_data') | default([]) }}"
+  when: ('all' in mdd_item.mdd_tags | default(['all'])) or (mdd_item.mdd_tags | intersect(tags | default([])) | length)
+  loop_control:
+    loop_var: 'mdd_item'
+  vars:
+    mdd_schema_list: []
+
+#
+# Iterate over each of the schema files ignoring the output and collecting
+# failures for use a a report.
+#
+- name: Validate data
+  ciscops.mdd.data_validation:
+    data: "{{ mdd_data }}"
+    schema_file: "{{ mdd_schema_root }}/{{ mdd_schema_item.file }}"
+  register: validation_output
+  loop: "{{ mdd_schema_list }}"
+  loop_control:
+    loop_var: mdd_schema_item
+  ignore_errors: yes
+  vars:
+    schema_name: "{{ mdd_schema_item.name }}"    
+
+- set_fact:
+    validation_failures: '{{ validation_output.results | selectattr("failed_schema", "defined") | map(attribute="failed_schema") | list | default([]) }}'
+
+- debug:
+    msg: "Failed schemas: {{ validation_failures | join(',') }}"
+  failed_when: validation_failures | length
+  when: validation_failures | length
+    

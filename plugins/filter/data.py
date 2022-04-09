@@ -10,9 +10,11 @@ from ansible.errors import AnsibleError, AnsibleFilterError
 from json import dumps
 
 list_key_map = {
-    "network-instance": "name",
+    "openconfig-network-instance:network-instance": "name",
+    "openconfig-interfaces:interface": "name",
+    "interface": "id",
     "static": "prefix",
-    "protocol": "identifier"
+    "protocol": "name"
 }
 
 
@@ -45,9 +47,13 @@ def merge_list_by_key(x, y, key):
     for item in x:
         if key in item:
             x_hash[item[key]] = item
+        else:
+            raise AnsibleError("Cannot find key {0} in list element".format(key))
     for item in y:
         if key in item:
             y_hash[item[key]] = item
+        else:
+            raise AnsibleError("Cannot find key {0} in list element".format(key))
     merged_hash = merge_hash(x_hash, y_hash, recursive=True, list_merge='replace')
     for key, value in iteritems(merged_hash):
         merged_list.append(value)
@@ -137,15 +143,15 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
         # if both x's element and y's element are lists
         # "merge" them depending on the `list_merge` argument
         # and move on to the next element of y
-        if isinstance(x_value, MutableSequence) and isinstance(y_value, MutableSequence):
+        elif isinstance(x_value, MutableSequence) and isinstance(y_value, MutableSequence):
             if key in list_key_map:
                 x[key] = merge_list_by_key(x_value, y_value, list_key_map[key])
             else:
-                x[key] = merge_list(x_value, y_value, list_merge)
+                x[key] = merge_list(x_value, y_value, 'list_merge')
             continue
-
         # else just override x's element with y's one
-        x[key] = y_value
+        else:
+            x[key] = y_value
 
     return x
 

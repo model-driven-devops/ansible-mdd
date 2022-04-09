@@ -20,11 +20,15 @@
     nso_password: "{{ lookup('env', 'NSO_PASSWORD') | default ('admin') }}"
   when: nso_username is not defined or not nso_username
 
-- name: Make sure that we have an NSO host to talk to
-  assert:
-    that:
-      - nso_host is defined
-      - nso_host
-    fail_msg: "Cannot find an NSO host to use"
-    success_msg: "Using NSO host: {{ nso_host }}"
-    
+- block:
+  - name: Make sure that we have an NSO host to talk to
+    assert:
+      that:
+        - nso_host is defined
+        - nso_host
+      fail_msg: "Cannot find an NSO host to use"
+      success_msg: "Using NSO host: {{ nso_host }}"
+
+  - set_fact:
+      nso_available: yes
+  when: nso_required | default('yes') | bool

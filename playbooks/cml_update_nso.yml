@@ -5,18 +5,22 @@
   roles:
     - ciscops.mdd.nso
   tasks:
-    - name: Add Auth Groups to NSO
-      include_role:
-        name: ciscops.mdd.nso
-        tasks_from: add_auth_groups
-      run_once: true
+    - block:
+      - name: Add Auth Groups to NSO
+        include_role:
+          name: ciscops.mdd.nso
+          tasks_from: add_auth_groups
+        run_once: true
 
-    - name: Add Host to NSO
-      include_role:
-        name: ciscops.mdd.nso
-        tasks_from: add_host
+      - name: Add Host to NSO
+        include_role:
+          name: ciscops.mdd.nso
+          tasks_from: add_host
 
-    - name: Sync Hosst
-      include_role:
-        name: ciscops.mdd.nso
-        tasks_from: sync_host
+      - name: Sync Host
+        include_role:
+          name: ciscops.mdd.nso
+          tasks_from: action
+        vars:
+          nso_action: 'sync-from'
+      when: ansible_host | ansible.netcommon.ipaddr

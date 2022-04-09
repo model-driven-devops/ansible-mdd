@@ -11,3 +11,12 @@
       include_role:
         name: ciscops.mdd.nso
         tasks_from: update_yaml_router
+      tags:
+        - routing
+
+    - name: Update Interfaces
+      include_role:
+        name: ciscops.mdd.nso
+        tasks_from: update_yaml_interfaces
+      tags:
+        - interfaces

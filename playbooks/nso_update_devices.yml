@@ -14,5 +14,7 @@
       - name: Sync Host
         include_role:
           name: ciscops.mdd.nso
-          tasks_from: sync_from
+          tasks_from: action
+        vars:
+          nso_action: 'sync-from'
       when: ansible_host is defined
