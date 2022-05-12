@@ -177,7 +177,7 @@ def flatten(mylist, levels=None, skip_nulls=True):
     return ret
 
 
-def oc_combine(*terms, **kwargs):
+def mdd_combine(*terms, **kwargs):
     recursive = kwargs.pop('recursive', False)
     list_merge = kwargs.pop('list_merge', 'replace')
     if kwargs:
@@ -214,5 +214,6 @@ class FilterModule(object):
 
     def filters(self):
         return {
-            'oc_combine': oc_combine
+            'oc_combine': mdd_combine,
+            'mdd_combine': mdd_combine
         }

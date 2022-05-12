@@ -3,7 +3,7 @@
   connection: local
   gather_facts: no
   roles:
-    - ciscops.mdd.oc
+    - ciscops.mdd.data
   vars:
     dry_run: true
     ansible_network_os: ansible.netcommon.restconf

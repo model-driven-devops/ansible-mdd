@@ -7,7 +7,7 @@
     - role: ciscops.mdd.netbox
       vars:
         netbox_required: no
-    - ciscops.mdd.oc
+    - ciscops.mdd.data
   vars:
     dry_run: true
   tasks:

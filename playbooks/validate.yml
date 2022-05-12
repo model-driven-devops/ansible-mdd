@@ -3,7 +3,7 @@
   gather_facts: no
   ignore_errors: yes
   roles:
-    - ciscops.mdd.oc               # Loads the OC Data
+    - ciscops.mdd.data      # Loads the MDD Data
     - ciscops.mdd.validate  # Validates the OC Data
     
 - name: Run update_report
