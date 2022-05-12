@@ -13,7 +13,7 @@
 #
 # Merge in the data from the file if the tags match with the host (or are not specified)
 #
-- name: Gather the OC Data
+- name: Gather the MDD Data
   set_fact:
     mdd_data_list: "{{ ( mdd_data_list | default([]) ) + [ mdd_file.mdd_data ] }}"
   loop: "{{ mdd_file_list }}"
@@ -21,8 +21,8 @@
   vars:
     mdd_file: "{{ lookup('template', item ) | from_yaml }}"
 
-- name: Combine the OC Data
+- name: Combine the MDD Data
   set_fact:
-    mdd_data: "{{ mdd_data_list | ciscops.mdd.oc_combine(recursive=True) }}"
+    mdd_data: "{{ mdd_data_list | ciscops.mdd.mdd_combine(recursive=True) }}"
 
 - include_tasks: netbox.yml 

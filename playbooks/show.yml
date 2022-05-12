@@ -2,7 +2,7 @@
   connection: local
   gather_facts: no
   roles:
-    - ciscops.mdd.oc
+    - ciscops.mdd.data
   tasks:
     - debug:
         var: mdd_data
