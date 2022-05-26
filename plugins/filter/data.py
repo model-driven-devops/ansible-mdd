@@ -147,7 +147,7 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
             if key in list_key_map:
                 x[key] = merge_list_by_key(x_value, y_value, list_key_map[key])
             else:
-                x[key] = merge_list(x_value, y_value, 'list_merge')
+                x[key] = merge_list(x_value, y_value, 'replace')
             continue
         # else just override x's element with y's one
         else:
