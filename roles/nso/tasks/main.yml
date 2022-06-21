@@ -16,8 +16,8 @@
     nso_hostname: "{{ groups[nso_host_group] | first }}"
 
 - set_fact:
-    nso_username: "{{ lookup('env', 'NSO_USERNAME') | default ('ubuntu') }}"
-    nso_password: "{{ lookup('env', 'NSO_PASSWORD') | default ('admin') }}"
+    nso_username: "{{ lookup('env', 'NSO_USERNAME') | default ('ubuntu', true) }}"
+    nso_password: "{{ lookup('env', 'NSO_PASSWORD') | default ('admin', true) }}"
   when: nso_username is not defined or not nso_username
 
 - block:
