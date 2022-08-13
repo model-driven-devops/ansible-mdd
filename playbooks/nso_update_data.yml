@@ -15,6 +15,11 @@
         name: ciscops.mdd.nso
         tasks_from: check_sync
 
+    - name: Translate and truncate interface names
+      set_fact:
+        mdd_data: "{{ mdd_data | ciscops.mdd.intf_xform(cml_intf_xlate) }}"
+      when: (cml_group in group_names) and (cml_intf_xlate is defined and cml_intf_xlate)
+
     - name: Update OC Data
       include_role:
         name: ciscops.mdd.nso
