@@ -17,7 +17,7 @@ import re
 list_key_map = {
     "openconfig-network-instance:network-instance": "openconfig-network-instance:name",
     "openconfig-network-instance:vlan": "openconfig-network-instance:vlan-id",
-    "^openconfig-interfaces:interface": "openconfig-interfaces:name",
+    "^openconfig-interfaces:interfaces:openconfig-interfaces:interface": "openconfig-interfaces:name",
     ":openconfig-interfaces:interface$": "openconfig-network-instance:id",
     "openconfig-network-instance:static": "openconfig-network-instance:prefix",
     "openconfig-network-instance:protocol": "openconfig-network-instance:name",
@@ -62,12 +62,12 @@ def merge_list_by_key(x, y, path, key):
         if key in item:
             x_hash[item[key]] = item
         else:
-            raise AnsibleError("Cannot find key {0} in list element".format(key))
+            raise AnsibleError("Cannot find key {0} for path {1}".format(key, path))
     for item in y:
         if key in item:
             y_hash[item[key]] = item
         else:
-            raise AnsibleError("Cannot find key {0} in list element".format(key))
+            raise AnsibleError("Cannot find key {0} for path {1}".format(key, path))
     merged_hash = merge_hash(x_hash, y_hash, path, recursive=True, list_merge='replace')
     for key, value in iteritems(merged_hash):
         merged_list.append(value)
@@ -144,7 +144,10 @@ def merge_hash(x, y, path, recursive=True, list_merge='replace'):
         x_value = x[key]
 
         # Contruct a full path to make a context aware comparison
-        path = ":".join([path, key])
+        if path == '':
+            path = key
+        else:
+            path = ":".join([path, key])
 
         # if both x's element and y's element are dicts
         # recursively "combine" them or override x's with y's element
