@@ -144,7 +144,7 @@ def merge_hash(x, y, path, recursive=True, list_merge='replace'):
         x_value = x[key]
 
         # Contruct a full path to make a context aware comparison
-        path += key
+        path = ":".join([path, key])
 
         # if both x's element and y's element are dicts
         # recursively "combine" them or override x's with y's element
