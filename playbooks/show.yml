@@ -7,7 +7,7 @@
     - name: Translate and truncate interface names
       set_fact:
         mdd_data: "{{ mdd_data | ciscops.mdd.intf_xform(cml_intf_xlate) }}"
-      when: (cml_group in group_names) and (cml_intf_xlate is defined and cml_intf_xlate)
+      when: (cml_group is defined and cml_group in group_names) and (cml_intf_xlate is defined and cml_intf_xlate)
         
     - debug:
         var: mdd_data

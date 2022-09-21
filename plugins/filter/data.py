@@ -8,15 +8,24 @@ from ansible.template import recursive_check_defined
 from ansible.module_utils.common._collections_compat import MutableMapping, MutableSequence
 from ansible.errors import AnsibleError, AnsibleFilterError
 from json import dumps
+import re
 
+# This is a mapping of regex, keys that is used to fing the key used to merge
+# list.  If the regex patches the full path, then that key is used to convert
+# the list to a hash, then merge the hash.  If there is not match, the list
+# is replaced.
 list_key_map = {
-    "openconfig-network-instance:network-instance": "name",
-    "openconfig-interfaces:interface": "name",
-    "interface": "id",
-    "static": "prefix",
-    "protocol": "name"
+    "openconfig-network-instance:network-instance": "openconfig-network-instance:name",
+    "openconfig-network-instance:vlan": "openconfig-network-instance:vlan-id",
+    "^openconfig-interfaces:interface": "openconfig-interfaces:name",
+    ":openconfig-interfaces:interface$": "openconfig-network-instance:id",
+    "openconfig-network-instance:static": "openconfig-network-instance:prefix",
+    "openconfig-network-instance:protocol": "openconfig-network-instance:name",
+    "openconfig-routing-policy:policy-definition": "openconfig-routing-policy:name",
+    "openconfig-network-instance:table-connection": "openconfig-network-instance:src-protocol",
+    "openconfig-system:server": "openconfig-system:address",
+    "openconfig-network-instance:area": "openconfig-network-instance:identifier"
 }
-
 
 def _validate_mutable_mappings(a, b):
     """
@@ -39,8 +48,13 @@ def _validate_mutable_mappings(a, b):
             a.__class__.__name__, b.__class__.__name__, myvars[0], myvars[1])
         )
 
+def get_merge_key(path):
+    for key, value in iteritems(list_key_map):
+        if re.search(key, path):
+            return value
+    return None
 
-def merge_list_by_key(x, y, key):
+def merge_list_by_key(x, y, path, key):
     x_hash = {}
     y_hash = {}
     merged_list = []
@@ -54,13 +68,13 @@ def merge_list_by_key(x, y, key):
             y_hash[item[key]] = item
         else:
             raise AnsibleError("Cannot find key {0} in list element".format(key))
-    merged_hash = merge_hash(x_hash, y_hash, recursive=True, list_merge='replace')
+    merged_hash = merge_hash(x_hash, y_hash, path, recursive=True, list_merge='replace')
     for key, value in iteritems(merged_hash):
         merged_list.append(value)
     return merged_list
 
 
-def merge_list(x, y, list_merge):
+def merge_list(x, y, path, list_merge):
     if list_merge == 'replace':
         # replace x value by y's one as it has higher priority
         x = y
@@ -84,7 +98,7 @@ def merge_list(x, y, list_merge):
     return x
 
 
-def merge_hash(x, y, recursive=True, list_merge='replace'):
+def merge_hash(x, y, path, recursive=True, list_merge='replace'):
     """
     Return a new dictionary result of the merges of y into x,
     so that keys from y take precedence over keys from x.
@@ -129,13 +143,16 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
 
         x_value = x[key]
 
+        # Contruct a full path to make a context aware comparison
+        path += key
+
         # if both x's element and y's element are dicts
         # recursively "combine" them or override x's with y's element
         # depending on the `recursive` argument
         # and move on to the next element of y
         if isinstance(x_value, MutableMapping) and isinstance(y_value, MutableMapping):
             if recursive:
-                x[key] = merge_hash(x_value, y_value, recursive, list_merge)
+                x[key] = merge_hash(x_value, y_value, path, recursive, list_merge)
             else:
                 x[key] = y_value
             continue
@@ -144,10 +161,11 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
         # "merge" them depending on the `list_merge` argument
         # and move on to the next element of y
         elif isinstance(x_value, MutableSequence) and isinstance(y_value, MutableSequence):
-            if key in list_key_map:
-                x[key] = merge_list_by_key(x_value, y_value, list_key_map[key])
+            merge_key = get_merge_key(path)
+            if merge_key:
+                x[key] = merge_list_by_key(x_value, y_value, path, merge_key)
             else:
-                x[key] = merge_list(x_value, y_value, 'replace')
+                x[key] = merge_list(x_value, y_value, path, 'replace')
             continue
         # else just override x's element with y's one
         else:
@@ -205,7 +223,8 @@ def mdd_combine(*terms, **kwargs):
     high_to_low_prio_dict_iterator = reversed(dictionaries)
     result = next(high_to_low_prio_dict_iterator)
     for dictionary in high_to_low_prio_dict_iterator:
-        result = merge_hash(dictionary, result, recursive, list_merge)
+        path = ''
+        result = merge_hash(dictionary, result, path, recursive, list_merge)
 
     return result
 
