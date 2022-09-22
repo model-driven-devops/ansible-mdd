@@ -2,7 +2,6 @@
   connection: local
   gather_facts: no
   roles:
-    - ciscops.mdd.aws_sm
     - ciscops.mdd.nso
   tasks:
     - name: Add NSO Auth Groups
