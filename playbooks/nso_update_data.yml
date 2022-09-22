@@ -4,9 +4,6 @@
   gather_facts: no
   roles:
     - ciscops.mdd.nso
-    - role: ciscops.mdd.netbox
-      vars:
-        netbox_required: no
     - ciscops.mdd.data
   vars:
     dry_run: true
