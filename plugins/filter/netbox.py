@@ -27,7 +27,7 @@ def netbox_intf_to_oc(netbox_interfaces):
                 "name": interface_name[0],
                 "type": "ethernetCsmacd"
             }
-        # This is a Subinterface    
+        # This is a Subinterface
         elif len(interface_name) == 2:
             subinterface = {
                 "config": {
@@ -37,13 +37,14 @@ def netbox_intf_to_oc(netbox_interfaces):
                 },
                 "index": interface_name[1]
             }
-            if  not interface_dict[interface_name[0]].get("subinterfaces"):
+            if not interface_dict[interface_name[0]].get("subinterfaces"):
                 interface_dict[interface_name[0]]["subinterfaces"] = {
                     "subinterface": []
                 }
             interface_dict[interface_name[0]]["subinterfaces"]["subinterface"].append(subinterface)
 
     return interface_dict
+
 
 class FilterModule(object):
     def filters(self):

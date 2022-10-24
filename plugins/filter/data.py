@@ -27,6 +27,7 @@ list_key_map = {
     "openconfig-network-instance:area": "openconfig-network-instance:identifier"
 }
 
+
 def _validate_mutable_mappings(a, b):
     """
     Internal convenience function to ensure arguments are MutableMappings
@@ -48,11 +49,13 @@ def _validate_mutable_mappings(a, b):
             a.__class__.__name__, b.__class__.__name__, myvars[0], myvars[1])
         )
 
+
 def get_merge_key(path):
     for key, value in iteritems(list_key_map):
         if re.search(key, path):
             return value
     return None
+
 
 def merge_list_by_key(x, y, path, key):
     x_hash = {}
