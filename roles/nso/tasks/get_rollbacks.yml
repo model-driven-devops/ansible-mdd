@@ -5,4 +5,4 @@
     password: "{{ nso_password }}"
     id: "{{ rollback_id | default(omit) }}"
   register: nso_rollback_facts
-  delegate_to: localhost
+  # delegate_to: localhost
