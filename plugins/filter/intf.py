@@ -17,12 +17,14 @@ keys_to_replace = [
     "interface"
 ]
 
+
 def multi_replace_regex(string, replacements, ignore_case=False, first_match=True):
     for pattern, repl in replacements.items():
         string, matches = re.subn(pattern, repl, string, flags=re.I if ignore_case else 0)
         if first_match and matches:
             return string
     return string
+
 
 def xlate_value(data, intf_dict):
     """Find all values from a nested dictionary for a given key."""
@@ -38,6 +40,7 @@ def xlate_value(data, intf_dict):
     else:
         return
 
+
 def intf_xlate(data, intf_dict):
     if not data:
         return {}
@@ -46,6 +49,7 @@ def intf_xlate(data, intf_dict):
     xlate_value(data_out, intf_dict)
 
     return data_out
+
 
 def intf_truncate(data, intf_dict):
     if not data:
@@ -61,10 +65,12 @@ def intf_truncate(data, intf_dict):
     data_out["openconfig-interfaces:interfaces"]["openconfig-interfaces:interface"] = temp_interface_list
     return data_out
 
+
 def intf_xform(data, intf_dict):
     data = intf_truncate(data, intf_dict)
     data = intf_xlate(data, intf_dict)
     return data
+
 
 class FilterModule(object):
 

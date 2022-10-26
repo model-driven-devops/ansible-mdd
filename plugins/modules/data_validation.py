@@ -75,6 +75,9 @@ import traceback
 import os
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
+JSONSCHEMA_IMPORT_ERROR = 0
+IPADDRESS_IMPORT_ERROR = 0
+
 try:
     from jsonschema import validate, Draft7Validator, FormatChecker, draft7_format_checker, validators
     from jsonschema.exceptions import ValidationError

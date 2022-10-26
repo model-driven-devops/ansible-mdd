@@ -10,36 +10,10 @@ A lookup function designed to return data from the NetBox application
 """
 
 from __future__ import absolute_import, division, print_function
-
-import os
-import functools
-from pprint import pformat
-
-from ansible.errors import AnsibleError
-from ansible.plugins.lookup import LookupBase
-from ansible.parsing.splitter import parse_kv, split_args
-from ansible.utils.display import Display
-from ansible.module_utils.six import raise_from
-
-try:
-    import pynetbox
-except ImportError as imp_exc:
-    PYNETBOX_LIBRARY_IMPORT_ERROR = imp_exc
-else:
-    PYNETBOX_LIBRARY_IMPORT_ERROR = None
-
-try:
-    import requests
-except ImportError as imp_exc:
-    REQUESTS_LIBRARY_IMPORT_ERROR = imp_exc
-else:
-    REQUESTS_LIBRARY_IMPORT_ERROR = None
-
-
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: nb_lookup
+    name: netbox_oc
     author: Chris Mills (@cpmills1975)
     version_added: "0.1.0"
     short_description: Queries and returns elements from NetBox
@@ -123,6 +97,30 @@ RETURN = """
       - list of composed dictionaries with key and value
     type: list
 """
+
+import os
+import functools
+from pprint import pformat
+
+from ansible.errors import AnsibleError
+from ansible.plugins.lookup import LookupBase
+from ansible.parsing.splitter import parse_kv, split_args
+from ansible.utils.display import Display
+from ansible.module_utils.six import raise_from
+
+try:
+    import pynetbox
+except ImportError as imp_exc:
+    PYNETBOX_LIBRARY_IMPORT_ERROR = imp_exc
+else:
+    PYNETBOX_LIBRARY_IMPORT_ERROR = None
+
+try:
+    import requests
+except ImportError as imp_exc:
+    REQUESTS_LIBRARY_IMPORT_ERROR = imp_exc
+else:
+    REQUESTS_LIBRARY_IMPORT_ERROR = None
 
 
 def get_endpoint(netbox, resource):
@@ -252,15 +250,17 @@ def get_endpoint(netbox, resource):
 
     return netbox_endpoint_map[resource]["endpoint"]
 
+
 def get_interface_type(interface_type):
     interface_type_map = {
-        "virtual":"softwareLoopback",
-        "lag":"ieee8023adLag"
+        "virtual": "softwareLoopback",
+        "lag": "ieee8023adLag"
     }
     if interface_type in interface_type_map:
         return interface_type_map[interface_type]
     else:
         return "ethernetCsmacd"
+
 
 def make_netbox_call(nb_endpoint, filters=None):
     """
@@ -292,6 +292,7 @@ def make_netbox_call(nb_endpoint, filters=None):
 
     return results
 
+
 def interfaces_to_oc(interface_data, ipv4_by_intf):
     interface_dict = {}
     vrf_interfaces = {}
@@ -316,11 +317,11 @@ def interfaces_to_oc(interface_data, ipv4_by_intf):
         # create one
         if interface["description"]:
             interface_description = interface["description"]
-        elif interface["connected_endpoint"] != None:
+        elif interface["connected_endpoint"] is not None:
             if interface["connected_endpoint"].get("device"):
                 connected_device = interface["connected_endpoint"]["device"]["display"]
                 connected_port = interface["connected_endpoint"]["display"]
-                interface_description = f"{connected_device}:{connected_port}"
+                interface_description = "{0}:{1}".format(connected_device, connected_port)
         else:
             interface_description = ''
 
@@ -342,12 +343,12 @@ def interfaces_to_oc(interface_data, ipv4_by_intf):
             interface_dict[interface_name]["config"]["mtu"] = interface["mtu"]
 
         if interface["count_ipaddresses"] > 0 or interface_index > 0:
-            # This is a Layer 3 interface    
+            # This is a Layer 3 interface
             # Create the subinterface strcuture if it does not exist
             if not interface_dict[interface_parent].get("subinterfaces"):
                 interface_dict[interface_parent]["subinterfaces"] = {
                     "subinterface": []
-                }            
+                }
             subinterface = {
                 "config": {
                     "description": interface_description,
@@ -367,7 +368,7 @@ def interfaces_to_oc(interface_data, ipv4_by_intf):
                         "address": []
                     }
                 }
-                for id, value in  ipv4_by_intf[interface["id"]].items():
+                for id, value in ipv4_by_intf[interface["id"]].items():
                     ip_address, ip_prefix = value["address"].split("/")
                     address = {
                         "config": {
@@ -378,7 +379,7 @@ def interfaces_to_oc(interface_data, ipv4_by_intf):
                     }
                     subinterface["openconfig-if-ip:ipv4"]["addresses"]["address"].append(address)
                     # If this IP address is in a VRF, then we need to contruct a list for later
-                    if value["vrf"] != None:
+                    if value["vrf"] is not None:
                         if value["vrf"]["name"] not in vrf_interfaces:
                             vrf_interfaces[value["vrf"]["name"]] = []
                         vrf_interface = {
@@ -388,7 +389,7 @@ def interfaces_to_oc(interface_data, ipv4_by_intf):
                         }
                         vrf_interfaces[value["vrf"]["name"]].append(vrf_interface)
 
-            if interface["untagged_vlan"] != None:
+            if interface["untagged_vlan"] is not None:
                 subinterface["openconfig-vlan:vlan"] = {
                     "config": {
                         "vlan-id": interface["untagged_vlan"]["vid"]
@@ -407,13 +408,13 @@ def interfaces_to_oc(interface_data, ipv4_by_intf):
             # This is a Layer 2 interface
             if interface["mode"]["value"] == "access":
                 switched_vlan["config"]["interface-mode"] = "ACCESS"
-                if interface["untagged_vlan"] != None:
+                if interface["untagged_vlan"] is not None:
                     switched_vlan["config"]["access-vlan"] = interface["untagged_vlan"]["vid"]
             if interface["mode"]["value"] == "tagged":
                 switched_vlan["config"]["interface-mode"] = "TRUNK"
-                if interface["untagged_vlan"] != None:
+                if interface["untagged_vlan"] is not None:
                     switched_vlan["config"]["native-vlan"] = interface["untagged_vlan"]["vid"]
-                if interface["tagged_vlans"] != None:
+                if interface["tagged_vlans"] is not None:
                     allowed_vlans = []
                     for vlan in interface["tagged_vlans"]:
                         allowed_vlans.append(str(vlan["vid"]))
@@ -446,17 +447,18 @@ def interfaces_to_oc(interface_data, ipv4_by_intf):
                 vrf_instance_interfaces = {
                     "id": interface["id"],
                     "config": interface
-                }  
+                }
                 vrf_instance["interfaces"]["interface"].append(vrf_instance_interfaces)
             oc_interfaces_data["openconfig-network-instance:network-instances"]["openconfig-network-instance:network-instance"].append(vrf_instance)
     return oc_interfaces_data
+
 
 class LookupModule(LookupBase):
     """
     LookupModule(LookupBase) is defined by Ansible
     """
 
-    def run(self, device, variables=None, **kwargs):
+    def run(self, terms, variables=None, **kwargs):
         if PYNETBOX_LIBRARY_IMPORT_ERROR:
             raise_from(
                 AnsibleError("pynetbox must be installed to use this plugin"),
@@ -483,7 +485,7 @@ class LookupModule(LookupBase):
         netbox_private_key = kwargs.get("private_key")
         netbox_private_key_file = kwargs.get("key_file")
         netbox_api_filter = kwargs.get("api_filter")
-        netbox_device = device.pop()
+        netbox_device = terms.pop()
         resources = ['interfaces']
 
         if not isinstance(resources, list):
@@ -535,7 +537,7 @@ class LookupModule(LookupBase):
             if resource == "interfaces":
                 # If we are getting interfaces, we also need to get ip-addresses
                 ipv4_by_intf = {}
-                ipv4_by_intf = {}
+                ipv6_by_intf = {}
                 ipaddresses_by_id = {}
                 endpoint = get_endpoint(netbox, "ip-addresses")
                 ipaddresses = make_netbox_call(endpoint, filters=filter)
@@ -551,7 +553,7 @@ class LookupModule(LookupBase):
                         if ipaddress["family"] == 6:
                             if interface_id not in ipv6_by_intf:
                                 ipv6_by_intf[interface_id] = {}
-                            ipv6_by_intf[interface_id][ip_id] = ipaddress_copy                            
+                            ipv6_by_intf[interface_id][ip_id] = ipaddress_copy
                         else:
                             if interface_id not in ipv4_by_intf:
                                 ipv4_by_intf[interface_id] = {}
