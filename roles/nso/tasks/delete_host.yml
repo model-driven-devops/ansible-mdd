@@ -1,0 +1,10 @@
+- name: Delete Host From NSO
+  cisco.nso.nso_config:
+    url: "{{ nso_url }}"
+    username: "{{ nso_username }}"
+    password: "{{ nso_password }}"
+    data:
+      tailf-ncs:devices:
+        device:
+        - name: "{{ device_name | default(inventory_hostname) }}"
+          __state: absent

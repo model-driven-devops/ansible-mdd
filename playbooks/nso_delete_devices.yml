@@ -1,0 +1,12 @@
+- name: Delete Hosts from NSO
+  hosts: network
+  connection: local
+  gather_facts: no
+  roles:
+    - ciscops.mdd.nso
+  tasks:
+    - block:
+      - name: Delete Host From NSO
+        include_role:
+          name: ciscops.mdd.nso
+          tasks_from: delete_host
