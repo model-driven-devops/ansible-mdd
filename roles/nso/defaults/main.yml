@@ -1,8 +1,7 @@
 ---
 nso_host_group: 'nso'
 nso_port: "{{ lookup('env', 'NSO_PORT') | default('8080', true) }}"
-nso_unsecure: "{{ lookup('env', 'NSO_UNSECURE') | default(true, true) }}"
-nso_protocol: "{{ 'http' if nso_unsecure==true else 'https' }}"
+nso_protocol: "{{ lookup('env', 'NSO_PROTOCOL') | default('true', true) }}"
 nso_url: "{{ nso_protocol }}://{{ nso_host }}:{{ nso_port }}/jsonrpc"
 nso_rest_url: "{{ nso_protocol }}://{{ nso_host }}:{{ nso_port }}"
 nso_package_src: "{{ lookup('env', 'PWD') }}/packages"
