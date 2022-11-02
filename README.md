@@ -15,11 +15,9 @@ If using NetBox:
 - `NETBOX_TOKEN`
 
 To use an external NSO (ie. not deployed in CML):
-- `NSO_HOST` FQDN or IP address of NSO
-- `NSO_PORT` Port to use for NSO (default 8080)
+- `NSO_URL` Protocol, FQDN or IP address and port (ex. `http://192.168.1.100:8080`)
 - `NSO_USERNAME`
 - `NSO_PASSWORD`
-- `NSO_PROTOCOL` http or https (default http)
 
 ## Playbooks
 

@@ -1,9 +1,6 @@
 ---
 nso_host_group: 'nso'
-nso_port: "{{ lookup('env', 'NSO_PORT') | default('8080', true) }}"
-nso_protocol: "{{ lookup('env', 'NSO_PROTOCOL') | default('http', true) }}"
-nso_url: "{{ nso_protocol }}://{{ nso_host }}:{{ nso_port }}/jsonrpc"
-nso_rest_url: "{{ nso_protocol }}://{{ nso_host }}:{{ nso_port }}"
+nso_url: "{{ nso_rest_url }}/jsonrpc"
 nso_package_src: "{{ lookup('env', 'PWD') }}/packages"
 nso_installer_name: "nso-5.5.3.linux.x86_64.signed.bin"
 nso_install_dir: /opt/ncs/current

@@ -1,17 +1,17 @@
 #
-# If nso_host was not set in inventory, see if it is an environment variable.
+# If nso_rest_url was not set in inventory, see if it is an environment variable.
 #
 - set_fact:
-    nso_host: "{{ lookup('env', 'NSO_HOST') | default('') }}"
-  when: nso_host is not defined or not nso_host
+    nso_rest_url: "{{ lookup('env', 'NSO_URL') | default('') }}"
+  when: nso_rest_url is not defined or not nso_rest_url
 
 #
 # If not set as an environment variable, then see if we can figure it out from
 # the inventory
 #
 - set_fact:
-    nso_host: "{{ hostvars[nso_hostname].ansible_host }}"
-  when: "not nso_host and nso_host_group in groups"
+    nso_rest_url: "http://{{ hostvars[nso_hostname].ansible_host }}:8080"
+  when: "not nso_rest_url and nso_host_group in groups"
   vars:
     nso_hostname: "{{ groups[nso_host_group] | first }}"
 
@@ -24,10 +24,10 @@
   - name: Make sure that we have an NSO host to talk to
     assert:
       that:
-        - nso_host is defined
-        - nso_host
+        - nso_url is defined
+        - nso_url
       fail_msg: "Cannot find an NSO host to use"
-      success_msg: "Using NSO host: {{ nso_host }}"
+      success_msg: "Using NSO host: {{ nso_rest_url }}"
 
   - set_fact:
       nso_available: yes
