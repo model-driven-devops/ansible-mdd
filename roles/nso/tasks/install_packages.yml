@@ -12,6 +12,7 @@
     - name: Clone model-driven-devops nso-oc-services repo
       ansible.builtin.git:
         repo: "{{ item.repo }}"
+        version: "{{ item.version | default(omit) }}"
         dest: "/tmp/{{ item.name }}"
       loop: "{{ nso_package_repos }}"
 
