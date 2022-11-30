@@ -1,0 +1,8 @@
+venv*/
+ansible_collections/
+*.pyc
+*.retry
+*.signed.bin
+.cache/
+collections/
+envvars

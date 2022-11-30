@@ -1,5 +1,15 @@
 #jinja2: lstrip_blocks: True
 {% set vrf_interfaces = dict() %}
+{% set device_type = 'router' %}
+{% set default_interface_type = 'ethernetCsmacd' %}
+{# Figure out if this is a switch or a router from the role it was assigned #}
+{# then set the default interface type for that device                      #}
+{% for group in group_names %}
+   {% if group | regex_search('switch') %}
+      {% set device_type = 'switch' %}     
+      {% set default_interface_type = 'l2vlan' %} 
+   {% endif %}
+{% endfor %}
 {% if interfaces %}
 {#                                                                            #}
 {# Create a dictionary of interface parents as keys each with a list of       #}
@@ -37,7 +47,7 @@ openconfig-interfaces:interfaces:
    {% if interface.mtu is defined and interface.mtu %} 
          mtu: {{ interface.mtu }}
    {% endif %}{# if interface.mtu is defined and interface.mtu #}
-   {% set interface_type = {"virtual": "softwareLoopback", "lag": "ieee8023adLag"}[interface.type.value] | default('ethernetCsmacd') %}               
+   {% set interface_type = {"virtual": "softwareLoopback", "lag": "ieee8023adLag"}[interface.type.value] | default(default_interface_type) %}               
          type: {{ interface_type }}
          enabled: {{ 'true' if interface.enabled | bool else 'false' }}
    {% if interface_type == 'ethernetCsmacd' %}
@@ -51,10 +61,12 @@ openconfig-interfaces:interfaces:
                'interface-mode': ACCESS
          {% elif interface.mode.value == "tagged" %}
                'interface-mode': TRUNK
-               'native-vlan': {{ interface.untagged_vlan.id }}
+               {% if interface.untagged_vlan and interface.untagged_vlan.vid %}
+               'native-vlan': {{ interface.untagged_vlan.vid }}
+               {% endif %}
             {% set tagged_vlans = [] %}
             {% for vlan in interface.tagged_vlans %}
-               {% set _ = tagged_vlans.append(vlan.id) %}
+               {% set _ = tagged_vlans.append(vlan.vid) %}
             {% endfor %}{# for vlan in interface.tagged_vlans #}
                'trunk-vlans': [ {{ tagged_vlans|join(',') }} ]
          {% endif %}{# if interface.mode.value #}

@@ -1,9 +1,9 @@
 ---
 # Example showing how to end the play for specific targets
-- name: End the play for hosts that do not have schemas defined
-  meta: end_host
-  when:
-  - mdd_schema_list is not defined
+# - name: End the play for hosts that do not have schemas defined
+#   meta: end_host
+#   when:
+#   - mdd_schema_list is not defined
 
 - name: Search for schema data files
   include_role:

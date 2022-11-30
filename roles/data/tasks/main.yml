@@ -26,3 +26,4 @@
     mdd_data: "{{ mdd_data_list | ciscops.mdd.mdd_combine(recursive=True) }}"
 
 - include_tasks: netbox.yml 
+  when: netbox_api is defined or lookup('env', 'NETBOX_API', default=false)
