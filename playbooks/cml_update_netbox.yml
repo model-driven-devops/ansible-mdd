@@ -4,8 +4,12 @@
     - ciscops.mdd.netbox
   tasks:
     - cisco.cml.cml_lab_facts:
-        tags:
-          - network
+        host: "{{ cml_host }}"
+        user: "{{ cml_username }}"
+        password: "{{ cml_password }}"
+        lab: "{{ cml_lab }}"
+        # tags:
+        #   - network
       register: cml_lab_results
 
     - include_role:

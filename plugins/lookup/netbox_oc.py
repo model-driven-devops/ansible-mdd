@@ -101,6 +101,7 @@ RETURN = """
 import os
 import functools
 from pprint import pformat
+from re import search, findall, IGNORECASE
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
@@ -251,13 +252,33 @@ def get_endpoint(netbox, resource):
     return netbox_endpoint_map[resource]["endpoint"]
 
 
-def get_interface_type(interface_type):
-    interface_type_map = {
-        "virtual": "softwareLoopback",
-        "lag": "ieee8023adLag"
-    }
-    if interface_type in interface_type_map:
-        return interface_type_map[interface_type]
+def get_interface_type(interface):
+    # interface_type_map = {
+    #     "virtual":"softwareLoopback",
+    #     "lag":"ieee8023adLag"
+    # }
+    # if interface_type in interface_type_map:
+    #     return interface_type_map[interface_type]
+    # else:
+    #     return "ethernetCsmacd"
+
+    interface_type = interface["type"]["value"]
+
+    if interface_type == "virtual":
+        if search("vlan", interface["name"], IGNORECASE):
+            return "l3ipvlan"
+        elif search("loopback", interface["name"], IGNORECASE):
+            return "softwareLoopback"
+    # If this is a 'dot' subinterface
+    elif search(r"\.", interface["name"]):
+        return "ethernetCsmacd"
+    elif interface_type == "lag":
+        return "l2vlan"
+    elif interface["mode"] is not None:
+        if interface["mode"]["value"] == "tagged":
+            return "l2vlan"
+        if interface["mode"]["value"] == "access":
+            return "l2vlan"
     else:
         return "ethernetCsmacd"
 
@@ -293,7 +314,7 @@ def make_netbox_call(nb_endpoint, filters=None):
     return results
 
 
-def interfaces_to_oc(interface_data, ipv4_by_intf):
+def interfaces_to_oc(interface_data, ipv4_by_intf, fhrp_by_intf):
     interface_dict = {}
     vrf_interfaces = {}
 
@@ -311,7 +332,7 @@ def interfaces_to_oc(interface_data, ipv4_by_intf):
             interface_index = int(interface_name_parts.pop(0))
         else:
             interface_index = 0
-        interface_type = get_interface_type(interface["type"]["value"])
+        interface_type = get_interface_type(interface)
 
         # Use the description if it exists, otherwise, try to
         # create one
@@ -328,98 +349,178 @@ def interfaces_to_oc(interface_data, ipv4_by_intf):
         # Create the interface list if it is not there
         if interface_parent not in interface_dict:
             interface_dict[interface_parent] = {
-                "config": {},
-                "name": interface_parent
+                "openconfig-interfaces:name": interface_parent,
+                "openconfig-interfaces:config": {}
             }
         # If this is the parent, fill in the parent config
         if interface_index == 0:
-            interface_dict[interface_name]["config"] = {
-                "description": interface_description,
-                "enabled": interface["enabled"],
-                "name": interface_name,
-                "type": interface_type
+            interface_dict[interface_name]["openconfig-interfaces:config"] = {
+                "openconfig-interfaces:description": interface_description,
+                "openconfig-interfaces:enabled": interface["enabled"],
+                "openconfig-interfaces:name": interface_name,
+                "openconfig-interfaces:type": interface_type
             }
         if interface["mtu"]:
-            interface_dict[interface_name]["config"]["mtu"] = interface["mtu"]
+            interface_dict[interface_name]["openconfig-interfaces:config"]["openconfig-interfaces:mtu"] = interface["mtu"]
 
-        if interface["count_ipaddresses"] > 0 or interface_index > 0:
+        if interface_type in ["ethernetCsmacd", "softwareLoopback"] and (interface["count_ipaddresses"] > 0 or interface_index > 0):
             # This is a Layer 3 interface
-            # Create the subinterface strcuture if it does not exist
-            if not interface_dict[interface_parent].get("subinterfaces"):
-                interface_dict[interface_parent]["subinterfaces"] = {
-                    "subinterface": []
+            # Create the subinterface structure if it does not exist
+            if not interface_dict[interface_parent].get("openconfig-interfaces:subinterfaces"):
+                interface_dict[interface_parent]["openconfig-interfaces:subinterfaces"] = {
+                    "openconfig-interfaces:subinterface": []
                 }
             subinterface = {
-                "config": {
-                    "description": interface_description,
-                    "enabled": interface["enabled"],
-                    "index": interface_index,
-                },
-                "index": interface_index
+                "openconfig-interfaces:index": interface_index,
+                "openconfig-interfaces:config": {
+                    "openconfig-interfaces:description": interface_description,
+                    "openconfig-interfaces:enabled": interface["enabled"],
+                    "openconfig-interfaces:index": interface_index,
+                }
             }
-            # Check to see if an IP address(s) exists for this interface
+        # Check to see if an IP address(s) exists for this interface
             if interface["id"] in ipv4_by_intf:
                 subinterface["openconfig-if-ip:ipv4"] = {
-                    "config": {
-                        "dhcp-client": False,
-                        "enabled": True
-                    },
-                    "addresses": {
-                        "address": []
+                    "openconfig-if-ip:config": {
+                        "openconfig-if-ip:dhcp-client": False,
+                        "openconfig-if-ip:enabled": True
                     }
                 }
                 for id, value in ipv4_by_intf[interface["id"]].items():
-                    ip_address, ip_prefix = value["address"].split("/")
-                    address = {
-                        "config": {
-                            "ip": ip_address,
-                            "prefix-length": ip_prefix
-                        },
-                        "ip": ip_address
-                    }
-                    subinterface["openconfig-if-ip:ipv4"]["addresses"]["address"].append(address)
+                    # If this interface is configured for DHCP, set dhcp-client to True and skip IP address section
+                    if value["status"]["value"] == "dhcp":
+                        subinterface["openconfig-if-ip:ipv4"]["openconfig-if-ip:config"]["openconfig-if-ip:dhcp-client"] = True
+                    else:
+                        subinterface["openconfig-if-ip:ipv4"]["openconfig-if-ip:addresses"] = {
+                            "openconfig-if-ip:address": []
+                        }
+                        ip_address, ip_prefix = value["address"].split("/")
+                        address = {
+                            "openconfig-if-ip:ip": ip_address,
+                            "openconfig-if-ip:config": {
+                                "openconfig-if-ip:ip": ip_address,
+                                "openconfig-if-ip:prefix-length": ip_prefix
+                            }
+
+                        }
+                        if interface["id"] in fhrp_by_intf:
+                            vrrp = {
+                                "openconfig-if-ip:vrrp": {
+                                    "openconfig-if-ip:vrrp-group": []
+                                }
+                            }
+                            for group_id, group in fhrp_by_intf[interface["id"]].items():
+                                vip, vip_mask = group["ip_addresses"][0]["address"].split("/")
+                                vrrp_group = {
+                                    "openconfig-if-ip:virtual-router-id": group["group_id"],
+                                    "openconfig-if-ip:config": {
+                                        "openconfig-if-ip:priority": group["priority"],
+                                        "openconfig-if-ip:virtual-address": [
+                                            vip
+                                        ],
+                                        "openconfig-if-ip:virtual-router-id": group["group_id"]
+                                    }
+                                }
+                                vrrp["openconfig-if-ip:vrrp"]["openconfig-if-ip:vrrp-group"].append(vrrp_group)
+                            address.update(vrrp)
+                            Display().vvvvv(pformat(address))
+                        subinterface["openconfig-if-ip:ipv4"]["openconfig-if-ip:addresses"]["openconfig-if-ip:address"].append(address)
                     # If this IP address is in a VRF, then we need to contruct a list for later
                     if value["vrf"] is not None:
                         if value["vrf"]["name"] not in vrf_interfaces:
                             vrf_interfaces[value["vrf"]["name"]] = []
                         vrf_interface = {
-                            "id": interface_name,
-                            "interface": interface_parent,
-                            "subinterface": interface_index
+                            "openconfig-network-instance:id": interface_name,
+                            "openconfig-network-instance:interface": interface_parent,
+                            "openconfig-network-instance:subinterface": interface_index
                         }
                         vrf_interfaces[value["vrf"]["name"]].append(vrf_interface)
 
+                    if value["status"]["value"] == "dhcp":
+                        subinterface["openconfig-if-ip:ipv4"]["openconfig-if-ip:config"]["openconfig-if-ip:dhcp-client"] = True
+
             if interface["untagged_vlan"] is not None:
                 subinterface["openconfig-vlan:vlan"] = {
-                    "config": {
-                        "vlan-id": interface["untagged_vlan"]["vid"]
+                    "openconfig-vlan:config": {
+                        "openconfig-vlan:vlan-id": interface["untagged_vlan"]["vid"]
                     }
                 }
-            interface_dict[interface_parent]["subinterfaces"]["subinterface"].append(subinterface)
-        elif interface["mode"]:
-            interface_dict[interface_parent]["config"]["type"] = "l2vlan"
+            interface_dict[interface_parent]["openconfig-interfaces:subinterfaces"]["openconfig-interfaces:subinterface"].append(subinterface)
+        elif interface_type == "l2vlan":
+            interface_dict[interface_parent]["openconfig-interfaces:config"]["openconfig-interfaces:type"] = "l2vlan"
             interface_dict[interface_parent]["openconfig-if-ethernet:ethernet"] = {
-                "config": {},
+                # "openconfig-vlan:config": {},
                 "openconfig-vlan:switched-vlan": {}
             }
             switched_vlan = {
-                "config": {}
+                "openconfig-vlan:config": {}
             }
             # This is a Layer 2 interface
             if interface["mode"]["value"] == "access":
-                switched_vlan["config"]["interface-mode"] = "ACCESS"
+                switched_vlan["openconfig-vlan:config"]["openconfig-vlan:interface-mode"] = "ACCESS"
                 if interface["untagged_vlan"] is not None:
-                    switched_vlan["config"]["access-vlan"] = interface["untagged_vlan"]["vid"]
+                    switched_vlan["openconfig-vlan:config"]["openconfig-vlan:access-vlan"] = interface["untagged_vlan"]["vid"]
             if interface["mode"]["value"] == "tagged":
-                switched_vlan["config"]["interface-mode"] = "TRUNK"
+                switched_vlan["openconfig-vlan:config"]["openconfig-vlan:interface-mode"] = "TRUNK"
                 if interface["untagged_vlan"] is not None:
-                    switched_vlan["config"]["native-vlan"] = interface["untagged_vlan"]["vid"]
+                    switched_vlan["openconfig-vlan:config"]["openconfig-vlan:native-vlan"] = interface["untagged_vlan"]["vid"]
                 if interface["tagged_vlans"] is not None:
                     allowed_vlans = []
                     for vlan in interface["tagged_vlans"]:
                         allowed_vlans.append(str(vlan["vid"]))
-                    switched_vlan["config"]["trunk-vlans"] = allowed_vlans
+                    switched_vlan["openconfig-vlan:config"]["openconfig-vlan:trunk-vlans"] = allowed_vlans
             interface_dict[interface_parent]["openconfig-if-ethernet:ethernet"]["openconfig-vlan:switched-vlan"] = switched_vlan
+        elif interface_type == "l3ipvlan":
+            interface_dict[interface_parent]["openconfig-interfaces:config"]["openconfig-interfaces:type"] = "l3ipvlan"
+            # interface_dict[interface_parent]["openconfig-if-ethernet:ethernet"] = {
+            #     # "openconfig-vlan:config": {},
+            #     "openconfig-vlan:routed-vlan": {}
+            # }
+            routed_vlan = {
+                "openconfig-vlan:config": {},
+                "openconfig-if-ip:ipv4": {}
+            }
+            if interface["untagged_vlan"] is not None:
+                routed_vlan["openconfig-vlan:config"] = {
+                    "vlan": interface["untagged_vlan"]["vid"]
+                }
+            else:
+                vid = findall(r'\d+', interface["name"])
+                if vid != "":
+                    routed_vlan["openconfig-vlan:config"] = {
+                        "vlan": vid[0]
+                    }
+            if interface["id"] in ipv4_by_intf:
+                routed_vlan["openconfig-if-ip:ipv4"] = {
+                    "openconfig-if-ip:config": {
+                        "openconfig-if-ip:dhcp-client": False,
+                        "openconfig-if-ip:enabled": True
+                    },
+                    "openconfig-if-ip:addresses": {
+                        "openconfig-if-ip:address": []
+                    }
+                }
+                for id, value in ipv4_by_intf[interface["id"]].items():
+                    ip_address, ip_prefix = value["address"].split("/")
+                    address = {
+                        "openconfig-if-ip:ip": ip_address,
+                        "openconfig-if-ip:config": {
+                            "openconfig-if-ip:ip": ip_address,
+                            "openconfig-if-ip:prefix-length": ip_prefix
+                        }
+                    }
+                    routed_vlan["openconfig-if-ip:ipv4"]["openconfig-if-ip:addresses"]["openconfig-if-ip:address"].append(address)
+                    # If this IP address is in a VRF, then we need to contruct a list for later
+                    if value["vrf"] is not None:
+                        if value["vrf"]["name"] not in vrf_interfaces:
+                            vrf_interfaces[value["vrf"]["name"]] = []
+                        vrf_interface = {
+                            "openconfig-network-instance:id": interface_name,
+                            "openconfig-network-instance:interface": interface_parent,
+                            "openconfig-network-instance:subinterface": interface_index
+                        }
+                        vrf_interfaces[value["vrf"]["name"]].append(vrf_interface)
+            interface_dict[interface_parent]["openconfig-vlan:routed-vlan"] = routed_vlan
     # Need to take the dict and make it into a list
     for key, value in interface_dict.items():
         oc_interfaces_data["openconfig-interfaces:interfaces"]["openconfig-interfaces:interface"].append(value)
@@ -430,25 +531,26 @@ def interfaces_to_oc(interface_data, ipv4_by_intf):
         }
         for vrf, interfaces in vrf_interfaces.items():
             vrf_instance = {
-                "name": vrf,
-                "config": {
-                    "name": vrf,
-                    "type": 'L3VRF',
-                    "enabled": True,
-                    "enabled-address-families": [
-                        "IPV4"
+                "openconfig-network-instance:name": vrf,
+                "openconfig-network-instance:config": {
+                    "openconfig-network-instance:name": vrf,
+                    "openconfig-network-instance:type": 'L3VRF',
+                    "openconfig-network-instance:enabled": True,
+                    "openconfig-network-instance:enabled-address-families": [
+                        "IPV4",
+                        "IPV6"
                     ]
                 },
-                "interfaces": {
-                    "interface": []
+                "openconfig-network-instance:interfaces": {
+                    "openconfig-network-instance:interface": []
                 }
             }
             for interface in interfaces:
                 vrf_instance_interfaces = {
-                    "id": interface["id"],
-                    "config": interface
+                    "openconfig-network-instance:id": interface["openconfig-network-instance:id"],
+                    "openconfig-network-instance:config": interface
                 }
-                vrf_instance["interfaces"]["interface"].append(vrf_instance_interfaces)
+                vrf_instance["openconfig-network-instance:interfaces"]["openconfig-network-instance:interface"].append(vrf_instance_interfaces)
             oc_interfaces_data["openconfig-network-instance:network-instances"]["openconfig-network-instance:network-instance"].append(vrf_instance)
     return oc_interfaces_data
 
@@ -535,7 +637,7 @@ class LookupModule(LookupBase):
                 results.append(data)
 
             if resource == "interfaces":
-                # If we are getting interfaces, we also need to get ip-addresses
+                # If we are getting interfaces, we also need to get ip-addresses and fhrp-groups
                 ipv4_by_intf = {}
                 ipv6_by_intf = {}
                 ipaddresses_by_id = {}
@@ -543,9 +645,14 @@ class LookupModule(LookupBase):
                 ipaddresses = make_netbox_call(endpoint, filters=filter)
                 for ipaddress in ipaddresses:
                     ipaddress = dict(ipaddress)
+                    interface_id = None
                     Display().vvvvv(pformat(ipaddress))
                     if ipaddress.get("assigned_object_id"):
                         interface_id = ipaddress["assigned_object_id"]
+                        ip_id = ipaddress["id"]
+                    elif ipaddress.get("interface"):
+                        interface_id = ipaddress["interface"]["id"]
+                    if interface_id is not None:
                         ip_id = ipaddress["id"]
                         # We need to copy the ipaddress entry to preserve the original in case caching is used.
                         ipaddress_copy = ipaddress.copy()
@@ -558,6 +665,28 @@ class LookupModule(LookupBase):
                             if interface_id not in ipv4_by_intf:
                                 ipv4_by_intf[interface_id] = {}
                             ipv4_by_intf[interface_id][ip_id] = ipaddress_copy
-                oc_data.update(interfaces_to_oc(results, ipv4_by_intf))
 
+                fhrp_by_intf = {}
+                endpoint = get_endpoint(netbox, "fhrp-group-assignments")
+                group_assignments = make_netbox_call(endpoint, filters=filter)
+                for group_assignment in group_assignments:
+                    group_assignment = dict(group_assignment)
+                    if group_assignment.get("interface_id"):
+                        interface_id = group_assignment["interface_id"]
+                    if interface_id is not None:
+                        group_id = group_assignment["group"]["group_id"]
+                        if interface_id not in fhrp_by_intf:
+                            fhrp_by_intf[interface_id] = {}
+                        fhrp_by_intf[interface_id].update({group_id: {"priority": group_assignment["priority"]}})
+                endpoint = get_endpoint(netbox, "fhrp-groups")
+                fhrp_groups = make_netbox_call(endpoint, filters=filter)
+                for fhrp_group in fhrp_groups:
+                    fhrp_group = dict(fhrp_group)
+                    if fhrp_group.get("group_id"):
+                        for id in fhrp_by_intf.keys():
+                            for group_id in fhrp_by_intf[id].keys():
+                                if fhrp_group["group_id"] == group_id:
+                                    fhrp_group_copy = fhrp_group.copy()
+                                    fhrp_by_intf[id][group_id].update(fhrp_group_copy)
+                oc_data.update(interfaces_to_oc(results, ipv4_by_intf, fhrp_by_intf))
         return oc_data

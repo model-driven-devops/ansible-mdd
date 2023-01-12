@@ -46,6 +46,20 @@
         vid: "{{ interface_data['encapsulation']['dot1Q']['vlan-id'] }}"
         site: "{{ netbox_site }}"
 
+  - name: Get VLAN
+    uri:
+      url: "{{ netbox_api }}/api/ipam/vlans/?vid={{ interface_data['encapsulation']['dot1Q']['vlan-id'] }}" 
+      headers:
+        Authorization: "Token {{ netbox_token }}"
+      force_basic_auth: yes
+      validate_certs: no
+      status_code: [200]
+      method: GET
+    register: results
+  
+  - set_fact:
+      vlan_count: "{{ results.json.count }}"
+
   - name: Create VLAN
     netbox.netbox.netbox_vlan:
       netbox_url: "{{ netbox_api }}"
@@ -59,6 +73,7 @@
         site: "{{ netbox_site }}"
       state: present
       validate_certs: "{{ netbox_validate_certs }}"
+    when: vlan_count == "0"
   when: interface_data.encapsulation is defined
 
 - name: Set Interface Type
@@ -90,7 +105,7 @@
       tagged_vlans: "{{ interface_tagged_vlans if interface_tagged_vlans else omit }}"
       untagged_vlan: "{{ interface_untagged_vlan if interface_untagged_vlan else omit }}"
       lag: "{{ interface_channel_group if 'channel-group' in interface_data else omit }}"
-      # mtu: "{{ item.value.mtu | default(omit) }}"
+      mtu: "{{ interface_data.mtu | default(omit) }}"
     state: present
     validate_certs: "{{ netbox_validate_certs }}"
   register: netbox_interface_results
@@ -122,9 +137,9 @@
       netbox_token: "{{ netbox_token }}"
       data:
         address: "{{ ip_address }}"
-        # vrf: Test
         description: "{{ interface_data.description | default(omit) }}"
-        vrf: "{{ interface_data.vrf.forwarding | default(omit) }}"
+        # Skip VRF assignment now; uncomment when it is working
+        # vrf: "{{ interface_data.vrf.forwarding | default(omit) }}"
         assigned_object:
           device: "{{ inventory_hostname }}"
           name: "{{ interface_name }}"
@@ -135,3 +150,92 @@
     tags:
     - interface
   when: interface_data.ip is defined
+
+  # The NetBox collection does not currently support FHRP, so use URI module instead
+- block:
+  - name: Get FHRP Groups
+    uri:
+      url: "{{ netbox_api }}/api/ipam/fhrp-groups/?group_id={{ interface_data.vrrp[0].id }}" 
+      headers:
+        Authorization: "Token {{ netbox_token }}"
+      force_basic_auth: yes
+      validate_certs: no
+      status_code: [200]
+      method: GET
+    register: results
+
+  - set_fact:
+      group_count: "{{ results.json.count }}"
+  
+  - set_fact:
+      group_id: "{{ results.json.results[0].id }}"
+    when: results.json.results[0].id is defined
+
+  - name: Create FHRP Group
+    uri:
+      url: "{{ netbox_api }}/api/ipam/fhrp-groups/" 
+      headers:
+        Authorization: "Token {{ netbox_token }}"
+      force_basic_auth: yes
+      validate_certs: no
+      status_code: [201]
+      method: POST
+      body_format: json
+      body:
+        group_id: "{{ interface_data.vrrp[0].id }}"
+        protocol: "vrrp2"
+    when: group_count == "0"
+    register: results
+
+  - set_fact:
+      group_id: "{{ results.json.id }}"
+    when: group_count == "0"
+
+  - name: Create FHRP IP Address
+    uri:
+      url: "{{ netbox_api }}/api/ipam/ip-addresses/" 
+      headers:
+        Authorization: "Token {{ netbox_token }}"
+      force_basic_auth: yes
+      validate_certs: no
+      status_code: [201]
+      method: POST
+      body_format: json
+      body:
+        address: "{{ interface_data.vrrp[0].ip.address }}/{{ interface_data.ip.address.primary.mask }}"
+        assigned_object_type: "ipam.fhrpgroup"
+        assigned_object_id: "{{ results.json.id }}"
+    when: group_count == "0"
+
+  - name: Get FHRP Group Assignments
+    uri:
+      url: "{{ netbox_api }}/api/ipam/fhrp-group-assignments/?interface_id={{ netbox_interface_results.interface.id }}" 
+      headers:
+        Authorization: "Token {{ netbox_token }}"
+      force_basic_auth: yes
+      validate_certs: no
+      status_code: [200]
+      method: GET
+    register: results
+  
+  - set_fact:
+      assignments_count: "{{ results.json.count }}"
+
+  - name: Assign FHRP Group to Interface
+    uri:
+      url: "{{ netbox_api }}/api/ipam/fhrp-group-assignments/" 
+      headers:
+        Authorization: "Token {{ netbox_token }}"
+      force_basic_auth: yes
+      validate_certs: no
+      status_code: [201]
+      method: POST
+      body_format: json
+      body:
+        group: "{{ group_id }}"
+        interface_type: "dcim.interface"
+        interface_id: "{{ netbox_interface_results.interface.id }}"
+        priority: "{{ interface_data.vrrp[0].priority | default(100) }}"
+    when: assignments_count == "0"
+
+  when: interface_data.vrrp is defined and interface_data.ip is defined
