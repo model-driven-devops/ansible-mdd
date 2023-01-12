@@ -94,11 +94,11 @@ Example:
 ansible-playbook nso_init
 ```
 
-### `ciscops.mdd.nso_update_device`
+### `ciscops.mdd.nso_update_devices`
 
 - Update NSO devices from inventory source
 
 Example:
 ```
-ansible-playbook nso_update_netbox
+ansible-playbook nso_update_devices
 ```
