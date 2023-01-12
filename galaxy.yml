@@ -61,4 +61,14 @@ issues: https://github.com/model-driven-devops/ansible-mdd/issue/tracker
 # artifact. A pattern is matched from the relative path of the file or directory of the collection directory. This
 # uses 'fnmatch' to match the files or directories. Some directories and files like 'galaxy.yml', '*.pyc', '*.retry',
 # and '.git' are always filtered
-build_ignore: []
+build_ignore:
+- '*tar.gz'
+- '*.DS_Store'
+- '*.json'
+- 'venv*'
+- '.vscode'
+- '.gitignore'
+- '.env'
+- '.github'
+- 'tests/output/'
+- 'ansible_collections/'
