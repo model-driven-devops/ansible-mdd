@@ -6,3 +6,4 @@ ansible_collections/
 .cache/
 collections/
 envvars
+*.gz
