@@ -17,17 +17,17 @@
         name: ciscops.mdd.nso
         tasks_from: get_config
 
-    - name: Combine Device Data with OC Data
-      set_fact:
-        nso_device_config: "{{ nso_device_config | ansible.builtin.combine( { 'mdd:openconfig': mdd_data['mdd:openconfig'] } ) }}"
-      when: mdd_data['mdd:openconfig'] is defined
+    # - name: Combine Device Data with OC Data
+    #   set_fact:
+    #     nso_device_config: "{{ nso_device_config | ansible.builtin.combine( { 'mdd:openconfig': mdd_data['mdd:openconfig'] } ) }}"
+    #   when: mdd_data['mdd:openconfig'] is defined
 
     - name: Combine Device Data with MDD Data
       set_fact:
         nso_device_config: "{{ nso_device_config | ansible.builtin.combine( { 'config': mdd_data['config'] }, recursive=true) }}"
       when: mdd_data['config'] is defined and mdd_data['mdd:openconfig'] is defined
 
-    - name: Combine Device Data with MDD Data
+    - name: Replace Device Data with MDD Data
       set_fact:
         nso_device_config: "{{ nso_device_config | ansible.builtin.combine( { 'config': mdd_data['config'] }) }}"
       when: mdd_data['config'] is defined and not mdd_data['mdd:openconfig'] is defined
