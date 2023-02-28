@@ -1,12 +1,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
-from ansible.module_utils.six import raise_from
 import traceback
-import argparse
-import json
 
 try:
-    from jsonschema import validate, Draft7Validator, FormatChecker, draft7_format_checker, validators
+    from jsonschema import Draft7Validator, validators
     from jsonschema.exceptions import ValidationError
 except ImportError:
     HAS_JSONSCHEMA = False

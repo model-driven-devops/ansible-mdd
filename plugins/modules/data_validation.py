@@ -69,7 +69,6 @@ EXAMPLES = r"""
       register: validation_output
 """
 
-import argparse
 import json
 import traceback
 import os
@@ -79,7 +78,7 @@ JSONSCHEMA_IMPORT_ERROR = 0
 IPADDRESS_IMPORT_ERROR = 0
 
 try:
-    from jsonschema import validate, Draft7Validator, FormatChecker, draft7_format_checker, validators
+    from jsonschema import Draft7Validator, validators
     from jsonschema.exceptions import ValidationError
 except ImportError:
     HAS_JSONSCHEMA = False

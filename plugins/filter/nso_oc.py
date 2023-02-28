@@ -12,6 +12,7 @@ except ImportError as imp_exc:
 else:
     NSO_OC_IMPORT_ERROR = None
 
+
 def nso_oc(config_data):
 
     if NSO_OC_IMPORT_ERROR:
@@ -22,7 +23,7 @@ def nso_oc(config_data):
     }
     oc_dict = {
         "mdd:openconfig": {}
-        }
+    }
     native_dict = copy.deepcopy(config_data)
     translation_notes = []
     try:
@@ -30,12 +31,12 @@ def nso_oc(config_data):
     except Exception as e:
         raise AnsibleFilterError("Unable to translate data: {0}".format(e))
 
-
     mdd_dict['mdd_data'] = {
         "mdd:openconfig": oc_dict['mdd:openconfig'],
         "config": native_dict
     }
     return mdd_dict
+
 
 class FilterModule(object):
 

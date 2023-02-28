@@ -1,12 +1,12 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.six import PY3, string_types, raise_from
+from ansible.module_utils.six import PY3, raise_from
 from ansible.errors import AnsibleError, AnsibleFilterError
 
 
 try:
-    from genie.conf.base import Device, Testbed
+    from genie.conf.base import Device
     from genie.libs.parser.utils import get_parser
 except ImportError as imp_exc:
     GENIE_IMPORT_ERROR = imp_exc
