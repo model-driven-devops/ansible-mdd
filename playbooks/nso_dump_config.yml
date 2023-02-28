@@ -1,7 +1,9 @@
 - name: Dump NSO Config Data
-  hosts: all
+  hosts: network
   connection: local
   gather_facts: no
+  roles:
+    - ciscops.mdd.nso
   vars:
     current_dir: "{{ lookup('env','PWD') }}"
   tasks:
@@ -9,6 +11,14 @@
         name: ciscops.mdd.nso
         tasks_from: get_config
 
+    - name: Create the device_config_data directory
+      ansible.builtin.file:
+        path: "{{ lookup('env', 'PWD') }}/device_config_data"
+        state: directory
+
+    - set_fact:
+        nso_device_config: "{ 'mdd_data': { 'config': {{ nso_device_config['config'] }} } }"
+
     - copy:
-        content: "{{ nso_device_config | to_nice_json }}"
-        dest: "{{ current_dir }}/device_config_data/{{ inventory_hostname }}.json"
+        content: "{{ nso_device_config | to_nice_yaml(indent=2,sort_keys=False) }}"
+        dest: "{{ current_dir }}/device_config_data/{{ inventory_hostname }}.yml"
