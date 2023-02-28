@@ -3,9 +3,9 @@
     url: "{{ nso_url }}"
     username: "{{ nso_username }}"
     password: "{{ nso_password }}"
-    path: '/ncs:devices/device{"{{ device_name | default(inventory_hostname) }}"}/config'
+    path: '/ncs:devices/device{"{{ device_name | default(inventory_hostname) }}"}'
     operational: no
   register: show_result
 
 - set_fact:
-    nso_device_config: "{{ show_result.output.data['tailf-ncs:devices'].device[0].config }}"
+    nso_device_config: "{{ show_result.output.data['tailf-ncs:devices'].device[0] }}"

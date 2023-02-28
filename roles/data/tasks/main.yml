@@ -1,14 +1,14 @@
 ---
 #
 # Create a heirarchical directory derived from the groups/regions this device
-# is a part of.  This can be set via the oc_dir_items variable with a default
+# is a part of.  This can be set via the mdd_dir_items variable with a default
 # in the role.
 #
 - include_role:
     name: ciscops.mdd.common
     tasks_from: files_in_path
   vars:
-    mdd_file_patterns: "{{ mdd_oc_patterns }}"
+    mdd_file_patterns: "{{ mdd_data_patterns }}"
 
 #
 # Merge in the data from the file if the tags match with the host (or are not specified)
