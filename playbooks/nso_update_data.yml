@@ -25,7 +25,12 @@
     - name: Combine Device Data with MDD Data
       set_fact:
         nso_device_config: "{{ nso_device_config | ansible.builtin.combine( { 'config': mdd_data['config'] }, recursive=true) }}"
-      when: mdd_data['config'] is defined
+      when: mdd_data['config'] is defined and mdd_data['mdd:openconfig'] is defined
+
+    - name: Combine Device Data with MDD Data
+      set_fact:
+        nso_device_config: "{{ nso_device_config | ansible.builtin.combine( { 'config': mdd_data['config'] }, recursive=true) }}"
+      when: mdd_data['config'] is defined and mdd_data['mdd:openconfig'] not defined
 
     - name: Update MDD Data
       include_role:
