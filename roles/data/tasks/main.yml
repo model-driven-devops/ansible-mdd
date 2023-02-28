@@ -24,6 +24,7 @@
 - name: Combine the MDD Data
   set_fact:
     mdd_data: "{{ mdd_data_list | ciscops.mdd.mdd_combine(recursive=True) }}"
+  when: mdd_data_list is defined
 
 - include_tasks: netbox.yml 
   when: netbox_api is defined or lookup('env', 'NETBOX_API', default=false)
