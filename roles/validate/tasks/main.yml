@@ -34,7 +34,7 @@
 #
 - name: Validate data
   ciscops.mdd.data_validation:
-    data: "{{ mdd_data }}"
+    data: "{{ mdd_data[mdd_schema_item.key] if mdd_schema_item.key is defined else mdd_data['mdd:openconfig'] }}"
     schema_file: "{{ mdd_schema_root }}/{{ mdd_schema_item.file }}"
   register: validation_output
   loop: "{{ mdd_schema_list }}"
