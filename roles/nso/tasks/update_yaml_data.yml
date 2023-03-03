@@ -2,12 +2,32 @@
     name: ciscops.mdd.nso
     tasks_from: get_config
 
-- name: Create Device Directory
-  ansible.builtin.file:
-    path: "{{ mdd_device_dir }}"
-    state: directory
-  
-- name: Write Data to Device Directory
+- name: Write Config Data to Device Directory
   copy:
-    content: "---\nmdd_data:\n  config:\n{{ nso_device_config['config'] | to_nice_yaml(indent=2,sort_keys=False) | indent(4, True) }}"
-    dest: "{{ mdd_device_dir }}/config-{{ inventory_hostname }}.yml"
+    content: "{{ data | to_nice_yaml(indent=2,sort_keys=False) }}"
+    dest: "{{ mdd_device_dir }}/config-data.yml"
+  vars:
+    data: "{{ { 'mdd_data': { 'config': nso_device_config['config'] } } }}"
+  when:  ('config' in mdd_data_types) and not('oc' in mdd_data_types)
+
+- block:
+  - name: Transform Native Config to OC
+    set_fact:
+      oc_data: "{{ nso_device_config['config'] | ciscops.mdd.nso_oc }}"
+
+  - name: Write OC Data to Device Directory
+    copy:
+      content: "{{ data | to_nice_yaml(indent=2,sort_keys=False) }}"
+      dest: "{{ mdd_device_dir }}/oc-{{ (item.key | ansible.builtin.split(':'))[1] }}.yml"
+    with_dict: "{{ oc_data['mdd_data']['mdd:openconfig'] }}"
+    vars:
+      data: "{{ { 'mdd_data': { 'mdd:openconfig' : { item.key: item.value } } } }}"
+    
+  - name: Write Native Data to Device Directory
+    copy:
+      content: "{{ data | to_nice_yaml(indent=2,sort_keys=False) }}"
+      dest: "{{ mdd_device_dir }}/config-remaining.yml"
+    vars:
+      data: "{{ { 'mdd_data': { 'config': oc_data['mdd_data']['config'] } } }}"
+    when: ('config' in mdd_data_types)
+  when: ('oc' in mdd_data_types)
