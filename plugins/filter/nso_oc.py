@@ -26,10 +26,7 @@ def nso_oc(config_data):
     }
     native_dict = copy.deepcopy(config_data)
     translation_notes = []
-    try:
-        main_xe.build_xe_to_oc(config_data, native_dict, oc_dict, translation_notes)
-    except Exception as e:
-        raise AnsibleFilterError("Unable to translate data: {0}".format(e))
+    main_xe.build_xe_to_oc(config_data, native_dict, oc_dict, translation_notes)
 
     mdd_dict['mdd_data'] = {
         "mdd:openconfig": oc_dict['mdd:openconfig'],

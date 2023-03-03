@@ -8,7 +8,7 @@
     dest: "{{ mdd_device_dir }}/config-data.yml"
   vars:
     data: "{{ { 'mdd_data': { 'config': nso_device_config['config'] } } }}"
-  when:  ('config' in mdd_data_types) and not('oc' in mdd_data_types)
+  when:  ('config' in mdd_data_types) and not ('oc' in mdd_data_types)
 
 - block:
   - name: Transform Native Config to OC

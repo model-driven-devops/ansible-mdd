@@ -1,4 +1,4 @@
-- name: Update Native Config Data in NSO
+- name: Update Data in NSO
   hosts: network
   connection: local
   gather_facts: no
@@ -16,12 +16,11 @@
       include_role:
         name: ciscops.mdd.nso
         tasks_from: get_config
-      when: mdd_data['config'] is defined and not mdd_data['mdd:openconfig'] is defined
 
     - name: Combine Device Data with OC Data
       set_fact:
         nso_device_config: "{{ nso_device_config | default({}) | ansible.builtin.combine( { 'mdd:openconfig': mdd_data['mdd:openconfig'] } ) }}"
-      when: mdd_data['mdd:openconfig'] is defined
+      when: ('oc' in mdd_data_types)
 
     # - name: Combine Device Data with MDD Data
     #   set_fact:
@@ -31,7 +30,7 @@
     - name: Combine Device Data with MDD Data
       set_fact:
         nso_device_config: "{{ nso_device_config | ansible.builtin.combine( { 'config': mdd_data['config'] }) }}"
-      when: mdd_data['config'] is defined and not mdd_data['mdd:openconfig'] is defined
+      when: ('config' in mdd_data_types) and not ('oc' in mdd_data_types)
 
     - name: Update MDD Data
       include_role:
