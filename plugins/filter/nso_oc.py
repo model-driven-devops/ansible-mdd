@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 from ansible.module_utils.six import raise_from
-from ansible.errors import AnsibleError, AnsibleFilterError
+from ansible.errors import AnsibleError
 import copy
 
 try:
