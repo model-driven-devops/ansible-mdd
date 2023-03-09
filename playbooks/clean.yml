@@ -1,0 +1,20 @@
+- name: Clean MDD Data
+  hosts: network
+  connection: local
+  gather_facts: false
+  roles:
+    - ciscops.mdd.data
+  tasks:
+
+    - include_role:
+        name: ciscops.mdd.common
+        tasks_from: files_in_path
+      vars:
+        mdd_file_patterns: "{{ mdd_data_patterns }}"
+
+    - name: Delete MDD Data Files
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop: "{{ mdd_file_list }}"
+      # when: ('all' in mdd_file.mdd_tags | default(['all'])) or (mdd_file.mdd_tags | intersect(tags | default([])))
