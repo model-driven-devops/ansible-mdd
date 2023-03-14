@@ -14,6 +14,7 @@
 
     - name: Update OC Data
       when: ('oc' in mdd_data_types)
+      throttle: 1
       block:
         # - name: Combine Device Data with OC Data
         #   ansible.builtin.set_fact:
@@ -35,6 +36,7 @@
 
     - name: Update Config Data
       when: ('config' in mdd_data_types) and not ('oc' in mdd_data_types)
+      throttle: 1
       block:
         - name: Get Device Data
           ansible.builtin.include_role:
