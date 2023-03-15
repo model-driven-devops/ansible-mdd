@@ -11,49 +11,52 @@
         state: absent
       loop: "{{ nso_package_repos }}"
 
-    - name: Clone model-driven-devops nso-oc-services repo
-      ansible.builtin.git:
-        repo: "{{ item.repo }}"
-        version: "{{ item.version | default(omit) }}"
-        dest: "/tmp/{{ item.name }}"
-      loop: "{{ nso_package_repos }}"
+    - block:
+        - name: Clone model-driven-devops nso-oc-services repo
+          ansible.builtin.git:
+            repo: "{{ item.repo }}"
+            version: "{{ item.version | default(omit) }}"
+            dest: "/tmp/{{ item.name }}"
+          loop: "{{ nso_package_repos }}"
+
+        - name: Copy models to packages directory
+          copy:
+            src: "/tmp/{{ item.0.name }}/{{ item.1 }}"
+            dest: "{{ nso_run_dir }}/packages"
+            remote_src: "{{ remote_src }}"
+          register: copy_results
+          with_subelements:
+            - "{{ nso_package_repos }}"
+            - service_list
       when: remote_src | bool
 
-    - name: Clone model-driven-devops nso-oc-services repo locally
-      ansible.builtin.git:
-        repo: "{{ item.repo }}"
-        version: "{{ item.version | default(omit) }}"
-        dest: "/tmp/{{ item.name }}"
-      loop: "{{ nso_package_repos }}"
-      connection: local
+    - block:
+        - name: Clone model-driven-devops nso-oc-services repo locally
+          ansible.builtin.git:
+            repo: "{{ item.repo }}"
+            version: "{{ item.version | default(omit) }}"
+            dest: "/tmp/{{ item.name }}"
+          loop: "{{ nso_package_repos }}"
+          connection: local
+
+        - name: Synchronize models to packages directory
+          ansible.posix.synchronize:
+            src: "/tmp/{{ item.0.name }}/{{ item.1 }}"
+            dest: "{{ nso_run_dir }}/packages"
+          register: copy_results
+          with_subelements:
+            - "{{ nso_package_repos }}"
+            - service_list
       when: not remote_src | bool
 
-    - name: Copy models to packages directory
-      copy:
-        src: "/tmp/{{ item.0.name }}/{{ item.1 }}"
-        dest: "{{ nso_run_dir }}/packages"
-        remote_src: "{{ remote_src }}"
-      register: copy_results
-      with_subelements:
-        - "{{ nso_package_repos }}"
-        - service_list
-      when: remote_src | bool
-
-    - name: Synchronize models to packages directory
-      ansible.posix.synchronize:
-        src: "/tmp/{{ item.0.name }}/{{ item.1 }}"
-        dest: "{{ nso_run_dir }}/packages"
-      register: copy_results
-      with_subelements:
-        - "{{ nso_package_repos }}"
-        - service_list
-      when: not remote_src | bool
+    - set_fact:
+        results: "{{ copy_results if copy_results is defined else sychronize_results }}"
 
     - name: Make packages
       command:
         chdir: '{{ nso_run_dir }}/packages/{{ item.item.0.name }}/src/'
         cmd: '/bin/bash -c "source {{ nso_install_dir }}/ncsrc; make"'
-      loop: "{{ copy_results.results }}"
+      loop: "{{ results.results }}"
       when: item.changed
 
     - name: Remove repo
@@ -69,5 +72,5 @@
         password: "{{ nso_password }}"
         path: /ncs:packages/reload
         input: {}
-      when: copy_results.changed
+      when: results.changed
   when: nso_package_repos is defined
