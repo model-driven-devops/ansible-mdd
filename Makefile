@@ -1,5 +1,5 @@
 # Makefile
-PYTHON_EXE = python3
+PYTHON_EXE = python3.10
 COLLECTION_NAME="ciscops.mdd"
 COLLECTION_VERSION := $(shell awk '/^version:/{print $$NF}' galaxy.yml)
 TARBALL_NAME=ciscops-mdd-${COLLECTION_VERSION}.tar.gz
