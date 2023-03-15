@@ -43,14 +43,14 @@
           ansible.posix.synchronize:
             src: "/tmp/{{ item.0.name }}/{{ item.1 }}"
             dest: "{{ nso_run_dir }}/packages"
-          register: copy_results
+          register: synchronize_results
           with_subelements:
             - "{{ nso_package_repos }}"
             - service_list
       when: not remote_src | bool
 
     - set_fact:
-        results: "{{ copy_results if copy_results is defined else sychronize_results }}"
+        results: "{{ copy_results if copy_results is defined else synchronize_results }}"
 
     - name: Make packages
       command:
