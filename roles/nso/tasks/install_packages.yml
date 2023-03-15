@@ -7,7 +7,7 @@
   block:
     - name: Remove old package directory
       file:
-        path: "{{ nso_run_dir }}/packages/{{ item.repo }}"
+        path: "{{ nso_run_dir }}/packages/{{ item.name }}"
         state: absent
       loop: "{{ nso_package_repos }}"
 
