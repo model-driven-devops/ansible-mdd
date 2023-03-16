@@ -7,6 +7,7 @@
     - ciscops.mdd.data
   vars:
     dry_run: true
+    throttle: 10
   tasks:
     - include_role:
         name: ciscops.mdd.nso
@@ -14,7 +15,7 @@
 
     - name: Update OC Data
       when: ('oc' in mdd_data_types)
-      throttle: 1
+      throttle: "{{ throttle }}"
       block:
         # - name: Combine Device Data with OC Data
         #   ansible.builtin.set_fact:
@@ -36,7 +37,7 @@
 
     - name: Update Config Data
       when: ('config' in mdd_data_types) and not ('oc' in mdd_data_types)
-      throttle: 1
+      throttle: "{{ throttle }}"
       block:
         - name: Get Device Data
           ansible.builtin.include_role:
