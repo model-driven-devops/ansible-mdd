@@ -1,7 +1,9 @@
 - name: Start NSO
   hosts: nso
   gather_facts: no
-  become: yes
+  become: "{{ sudo_required }}"
+  vars:
+    sudo_required: yes
   roles:
     - ciscops.mdd.nso
   tasks:

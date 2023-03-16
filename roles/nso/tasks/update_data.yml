@@ -1,18 +1,18 @@
-- name: Update OC Service
+- name: Update Device Data
   cisco.nso.nso_config:
     url: "{{ nso_url }}"
     username: "{{ nso_username }}"
     password: "{{ nso_password }}"
     commit_flags: "{{ 'dry-run=native' if dry_run | bool else [] }}"
     load: yes
-    load_mode: replace
-    load_path: '/ncs:devices/device{{ "{" }}{{ inventory_hostname }}{{ "}" }}/mdd:openconfig'
-    data:
-      "{{ mdd_data }}"
+    load_mode: "{{ mode }}"
+    load_path: "{{ path}}"
+    data: "{{ data }}"
   register: nso_config_result
-
-# - debug:
-#     var: nso_config_result
+  vars:
+    mode: merge
+    path: '/ncs:devices/device{{ "{" }}{{ inventory_hostname }}{{ "}" }}'
+    data: "{{ mdd_data }}"
 
 - set_fact:
     rollback_id: "{{ nso_config_result | json_query(query) }}"

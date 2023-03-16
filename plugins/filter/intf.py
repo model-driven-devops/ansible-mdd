@@ -1,13 +1,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.six import iteritems, string_types, PY3
-from ansible.module_utils.common.collections import is_sequence
-from ansible.module_utils._text import to_native
-from ansible.template import recursive_check_defined
-from ansible.module_utils.common._collections_compat import MutableMapping, MutableSequence
-from ansible.errors import AnsibleError, AnsibleFilterError
-from json import dumps
 import re
 
 # The list of keys that will be searched to see is replacement is needed

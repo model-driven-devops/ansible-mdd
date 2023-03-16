@@ -1,7 +1,9 @@
-- name: Add Hosts to NSO
-  hosts: all
+- name: Show Version
+  hosts: network
   connection: local
   gather_facts: no
+  roles:
+    - ciscops.mdd.nso
   tasks:
     - include_role:
         name: ciscops.mdd.nso
@@ -10,3 +12,6 @@
     - include_role:
         name: ciscops.mdd.nso
         tasks_from: get_version
+
+    - debug:
+        msg: "{{ version_data }}"

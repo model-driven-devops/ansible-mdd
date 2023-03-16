@@ -68,13 +68,13 @@ target: The group of nso hosts
 - The inventory should include the devices in a `network` group
 - `--limit` can be used to limit operation to specific devices
 
-#### `ciscops.mdd.nso_update_oc`
+#### `ciscops.mdd.update`
 
     - Push OC data to the host through NSO
 
 Example:
 ```
-ansible-playbook ciscops.mdd.nso_update_oc
+ansible-playbook ciscops.mdd.update
 ```
 
 Extra Vars:

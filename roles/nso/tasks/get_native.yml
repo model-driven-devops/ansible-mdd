@@ -1,0 +1,16 @@
+- name: Get NSO to generate native config
+  cisco.nso.nso_config:
+    url: "{{ nso_url }}"
+    username: "{{ nso_username }}"
+    password: "{{ nso_password }}"
+    load: yes
+    load_mode: replace
+    load_path: '/ncs:devices/device{{ "{" }}{{ inventory_hostname }}{{ "}"}}'
+    commit_flags:
+      - 'dry-run=native'
+      - 'dry-run-reverse'
+    data: "{{ data }}"
+  register: nso_config_results
+
+- set_fact:
+    nso_device_native_config: "{{ nso_config_results['commit_result'][0]['dry_run_result']['native']['device'][0]['data'] }}"

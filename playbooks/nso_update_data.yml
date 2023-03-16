@@ -1,4 +1,4 @@
-- name: Push OC Interfaces to NSO
+- name: Update Data in NSO
   hosts: network
   connection: local
   gather_facts: no
@@ -7,20 +7,54 @@
     - ciscops.mdd.data
   vars:
     dry_run: true
+    throttle: 10
   tasks:
     - include_role:
         name: ciscops.mdd.nso
         tasks_from: check_sync
 
-    - name: Translate and truncate interface names
-      set_fact:
-        mdd_data: "{{ mdd_data | ciscops.mdd.intf_xform(cml_intf_xlate) }}"
-      when: (cml_group in group_names) and (cml_intf_xlate is defined and cml_intf_xlate)
-
     - name: Update OC Data
-      include_role:
-        name: ciscops.mdd.nso
-        tasks_from: update_oc
+      when: ('oc' in mdd_data_types)
+      throttle: "{{ throttle }}"
+      block:
+        # - name: Combine Device Data with OC Data
+        #   ansible.builtin.set_fact:
+        #     nso_device_config: "{{ nso_device_config | default({}) | ansible.builtin.combine({'mdd:openconfig': mdd_data['mdd:openconfig']}) }}"
+
+        # - name: Combine Device Data with MDD Data
+        #   set_fact:
+        #     nso_device_config: "{{ nso_device_config | ansible.builtin.combine( { 'config': mdd_data['config'] }, recursive=true) }}"
+        #   when: mdd_data['config'] is defined and mdd_data['mdd:openconfig'] is defined
+
+        - name: Update MDD Data
+          ansible.builtin.include_role:
+            name: ciscops.mdd.nso
+            tasks_from: update_data
+          vars:
+            mode: replace
+            path: '/ncs:devices/device{{ "{" }}{{ inventory_hostname }}{{ "}" }}/mdd:openconfig'
+            data: "{{ mdd_data['mdd:openconfig'] }}"
+
+    - name: Update Config Data
+      when: ('config' in mdd_data_types) and not ('oc' in mdd_data_types)
+      throttle: "{{ throttle }}"
+      block:
+        - name: Get Device Data
+          ansible.builtin.include_role:
+            name: ciscops.mdd.nso
+            tasks_from: get_config
+
+        - name: Combine Device Data with MDD Data
+          ansible.builtin.set_fact:
+            nso_device_config: "{{ nso_device_config | ansible.builtin.combine({'config': mdd_data['config']}) }}"
+
+        - name: Update MDD Data
+          ansible.builtin.include_role:
+            name: ciscops.mdd.nso
+            tasks_from: update_data
+          vars:
+            mode: replace
+            data: "{{ nso_device_config }}"
 
     - include_role:
         name: ciscops.mdd.netbox
@@ -28,7 +62,7 @@
       when: rollback_id is defined and rollback_id and netbox_available | default(false)
 
 - name: Run update_report
-  hosts: all
+  hosts: network
   connection: local
   gather_facts: no
   vars:

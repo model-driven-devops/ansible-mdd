@@ -25,6 +25,12 @@
     search_dir_list: "{{ search_dir_list + [ [ search_dir_list | last | default ('') , item ] | join('/') ] }}"
   loop: "{{ mdd_dir_items }}"
 
+- name: Create Device Directory
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop: "{{ search_dir_list }}"
+
 #
 # Find MDD data file in the path to the device from generic to specific.
 #

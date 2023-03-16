@@ -1,7 +1,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.six import iteritems, string_types, PY3
+from ansible.module_utils.six import iteritems
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils._text import to_native
 from ansible.template import recursive_check_defined

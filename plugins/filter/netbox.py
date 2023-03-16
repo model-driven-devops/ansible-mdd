@@ -1,10 +1,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.six import PY3, string_types, raise_from
-from ansible.errors import AnsibleError, AnsibleFilterError
-import re
-
 
 def netbox_intf_to_oc(netbox_interfaces):
     interface_dict = {}
