@@ -30,6 +30,7 @@
     path: "{{ item }}"
     state: directory
   loop: "{{ search_dir_list }}"
+  when: create_dirs | bool
 
 #
 # Find MDD data file in the path to the device from generic to specific.
