@@ -5,6 +5,8 @@
   roles:
     - ciscops.mdd.data
     - ciscops.mdd.nso
+  vars:
+    create_dirs: yes
   tasks:
 
     - name: Harvest Data
