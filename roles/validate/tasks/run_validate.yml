@@ -1,0 +1,15 @@
+# - block:
+- name: Validate {{ validate_item.name }}
+  ciscops.mdd.data_validation:
+    data: "{{ mdd_data[validate_item.key] if validate_item.key is defined else mdd_data['mdd:openconfig'] }}"
+    schema: "{{ lookup('template', schema) | from_yaml }}"
+  register: validation_output
+  vars:
+    validate_vars: "{{ validate_item.validate_vars }}"
+    schema: "{{ mdd_schema_root }}/{{ validate_item.file }}"
+  ignore_errors: yes
+
+- set_fact:
+    validation_failures: '{{ (validation_failures | default([])) + [validation_output.failed_schema] }}'
+  when: validation_output.failed
+  

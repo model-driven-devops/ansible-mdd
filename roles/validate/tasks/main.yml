@@ -31,24 +31,15 @@
 #
 # Iterate over each of the schema files ignoring the output and collecting
 # failures for use a a report.
-#
 - name: Validate data
-  ciscops.mdd.data_validation:
-    data: "{{ mdd_data[mdd_schema_item.key] if mdd_schema_item.key is defined else mdd_data['mdd:openconfig'] }}"
-    schema_file: "{{ mdd_schema_root }}/{{ mdd_schema_item.file }}"
-  register: validation_output
-  loop: "{{ mdd_schema_list }}"
+  include_role:
+    name: ciscops.mdd.validate
+    tasks_from: run_validate
+  with_items: "{{ mdd_schema_list | default ([]) }}"
   loop_control:
-    loop_var: mdd_schema_item
-  ignore_errors: yes
-  vars:
-    schema_name: "{{ mdd_schema_item.name }}"    
-
-- set_fact:
-    validation_failures: '{{ validation_output.results | selectattr("failed_schema", "defined") | map(attribute="failed_schema") | list | default([]) }}'
+    loop_var: 'validate_item'
 
 - debug:
     msg: "Failed schemas: {{ validation_failures | join(',') }}"
-  failed_when: validation_failures | length
-  when: validation_failures | length
-    
+  failed_when: validation_failures is defined and validation_failures
+  when: validation_failures is defined and validation_failures
