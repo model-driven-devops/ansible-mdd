@@ -6,7 +6,7 @@
 {% for host in play_hosts | sort %}
   {% set found = {'value': false} %}
   {% set result = hostvars[host]['validation_failures'] | default({'data':'unchanged'}) %}
-  {% if result %}
+  {% if result  != {'data':'unchanged'} %}
 {#  {{ host }}: "{{ result.data }}"#}
     {% for entry in consolidated_report %}
       {% if entry.data == result %}
