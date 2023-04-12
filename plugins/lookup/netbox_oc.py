@@ -206,8 +206,8 @@ def get_endpoint(netbox, resource):
         "rirs": {"endpoint": netbox.ipam.rirs},
         "roles": {"endpoint": netbox.ipam.roles},
         "route-targets": {"endpoint": netbox.ipam.route_targets},
-        "secret-roles": {"endpoint": netbox.secrets.secret_roles},
-        "secrets": {"endpoint": netbox.secrets.secrets},
+        # "secret-roles": {"endpoint": netbox.secrets.secret_roles},
+        # "secrets": {"endpoint": netbox.secrets.secrets},
         "services": {"endpoint": netbox.ipam.services},
         "site-groups": {"endpoint": netbox.dcim.site_groups},
         "sites": {"endpoint": netbox.dcim.sites},
@@ -336,11 +336,11 @@ def interfaces_to_oc(interface_data, ipv4_by_intf, fhrp_by_intf):
         # create one
         if interface["description"]:
             interface_description = interface["description"]
-        elif interface["connected_endpoint"] is not None:
-            if interface["connected_endpoint"].get("device"):
-                connected_device = interface["connected_endpoint"]["device"]["display"]
-                connected_port = interface["connected_endpoint"]["display"]
-                interface_description = "{0}:{1}".format(connected_device, connected_port)
+        # elif interface["connected_endpoint"] is not None:
+        #     if interface["connected_endpoint"].get("device"):
+        #         connected_device = interface["connected_endpoint"]["device"]["display"]
+        #         connected_port = interface["connected_endpoint"]["display"]
+        #         interface_description = "{0}:{1}".format(connected_device, connected_port)
         else:
             interface_description = ''
 
@@ -582,8 +582,8 @@ class LookupModule(LookupBase):
             or os.getenv("NETBOX_URL")
         )
         netbox_ssl_verify = kwargs.get("validate_certs", True)
-        netbox_private_key = kwargs.get("private_key")
-        netbox_private_key_file = kwargs.get("key_file")
+        # netbox_private_key = kwargs.get("private_key")
+        # netbox_private_key_file = kwargs.get("key_file")
         netbox_api_filter = kwargs.get("api_filter")
         netbox_device = terms.pop()
         resources = ['interfaces']
@@ -598,14 +598,13 @@ class LookupModule(LookupBase):
             netbox = pynetbox.api(
                 netbox_api_endpoint,
                 token=netbox_api_token if netbox_api_token else None,
-                private_key=netbox_private_key,
-                private_key_file=netbox_private_key_file,
+                # private_key=netbox_private_key,
+                # private_key_file=netbox_private_key_file,
             )
             netbox.http_session = session
         except FileNotFoundError:
             raise AnsibleError(
-                "%s cannot be found. Please make sure file exists."
-                % netbox_private_key_file
+                "File not found. Please make sure file exists."
             )
 
         oc_data = {}
@@ -687,4 +686,4 @@ class LookupModule(LookupBase):
                                     fhrp_group_copy = fhrp_group.copy()
                                     fhrp_by_intf[id][group_id].update(fhrp_group_copy)
                 oc_data.update(interfaces_to_oc(results, ipv4_by_intf, fhrp_by_intf))
-        return oc_data
+        return {"mdd:openconfig": oc_data}
