@@ -1,0 +1,35 @@
+- hosts: localhost
+  gather_facts: no
+  roles:
+    - ciscops.mdd.netbox
+  tasks:
+    - include_role:
+        name: ciscops.mdd.netbox
+        tasks_from: netbox_inventory
+
+    - name: Add new device
+      include_role:
+        name: ciscops.mdd.netbox
+        tasks_from: add_device
+      when: inventory_hostname not in netbox_host_list
+      with_items: "{{ groups['network'] }}"
+      vars:
+        netbox_device_name: "{{ hostvars[item].inventory_hostname }}"
+        netbox_device_interface_name: "{{ hostvars[item].mgmt_interface }}"
+        netbox_device_ipv4_address: "{{ hostvars[item].ansible_host }}"
+        netbox_device_type: unknown
+        netbox_device_role: unknown
+
+    - include_role:
+        name: ciscops.mdd.netbox
+        tasks_from: netbox_inventory
+
+    - include_role:
+        name: ciscops.mdd.netbox
+        tasks_from: netbox_mgmt
+      when: hostvars[item].mgmt_interface is defined and hostvars[item].inventory_hostname in netbox_host_list
+      with_items: "{{ groups['network'] }}"
+      vars:
+        netbox_device_name: "{{ hostvars[item].inventory_hostname }}"
+        netbox_device_interface_name: "{{ hostvars[item].mgmt_interface }}"
+        netbox_device_ipv4_address: "{{ hostvars[item].ansible_host }}"
