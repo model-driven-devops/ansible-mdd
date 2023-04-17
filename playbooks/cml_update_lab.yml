@@ -9,6 +9,7 @@
     start_from: 2
     layout: kamada_kawai
     inventory_dir: inventory
+    scale: 500
   tasks:
 
     - name: Get CDP data
@@ -35,7 +36,7 @@
 
     - name: "Layout graph using the {{ layout }} layout"
       set_fact:
-        topology: "{{ results.topology | ciscops.mdd.graph(layout=layout) }}"
+        topology: "{{ results.topology | ciscops.mdd.graph(layout=layout,scale=500) }}"
       run_once: yes
       when: not layout == 'none'
 
