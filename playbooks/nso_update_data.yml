@@ -26,6 +26,11 @@
         #     nso_device_config: "{{ nso_device_config | ansible.builtin.combine( { 'config': mdd_data['config'] }, recursive=true) }}"
         #   when: mdd_data['config'] is defined and mdd_data['mdd:openconfig'] is defined
 
+        - name: Translate and truncate interface names
+          set_fact:
+            mdd_data: "{{ mdd_data | ciscops.mdd.intf_xform(cml_intf_xlate) }}"
+          when: (cml_group is defined and cml_group in group_names) and (cml_intf_xlate is defined and cml_intf_xlate)
+
         - name: Update MDD Data
           ansible.builtin.include_role:
             name: ciscops.mdd.nso
