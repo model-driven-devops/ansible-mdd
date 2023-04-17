@@ -1,0 +1,52 @@
+---
+- name: Get CDP Data for Devices
+  hosts: network
+  connection: local
+  gather_facts: no
+  roles:
+    - ciscops.mdd.nso
+  vars:
+    start_from: 2
+    layout: kamada_kawai
+  tasks:
+
+    - name: Get CDP data
+      include_role:
+        name: ciscops.mdd.nso
+        tasks_from: exec_command
+      vars:
+        nso_exec_command: show cdp neighbors    
+
+    - set_fact:
+        cdp_data: "{{ {'hostname': inventory_hostname, 'tags': tags if tags is defined else {}, 'cdp': nso_command_output} }}"
+
+    - name: Create device list with CDP data
+      set_fact:
+        devices: "{{ groups['network'] | map('extract', hostvars, 'cdp_data') | list }}"
+      run_once: yes
+
+    - name: Generate topology
+      ciscops.mdd.cml_lab:
+        devices: "{{ devices }}"
+        start_from: "{{ start_from }}"
+      register: results
+      run_once: yes
+
+    - name: "Layout graph using the {{ layout }} layout"
+      set_fact:
+        topology: "{{ results.topology | ciscops.mdd.graph(layout=layout) }}"
+      run_once: yes
+      when: not layout == 'none'
+
+    - name: Create topology file
+      copy:
+        content: "{{ topology | to_nice_yaml(indent=2,sort_keys=False) }}"
+        dest: "{{ lookup('env', 'PWD') }}/files/cml_lab.yaml"
+      run_once: yes
+      no_log: yes
+
+    - name: Create mapping file
+      copy:
+        content: "{{ {'all': {'hosts': results.mappings}} | to_nice_yaml(indent=2,sort_keys=False) }}"
+        dest: "{{ lookup('env', 'PWD') }}/inventory/cml_intf_map.yml"
+      run_once: yes
