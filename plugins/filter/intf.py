@@ -5,9 +5,11 @@ import re
 
 # The list of keys that will be searched to see is replacement is needed
 keys_to_replace = [
-    "name",
-    "id",
-    "interface"
+    "openconfig-interfaces:name",
+    "openconfig-network-instance:id",
+    "openconfig-network-instance:interface",
+    "openconfig-spanning-tree:name",
+    "openconfig-system-ext:global-interface-name"
 ]
 
 
@@ -50,12 +52,26 @@ def intf_truncate(data, intf_dict):
 
     regex_list = intf_dict.keys()
     temp_interface_list = []
+    temp_stp_interface_list = []
     data_out = data.copy()
-    if "openconfig-interfaces:interfaces" in data and "openconfig-interfaces:interface" in data["openconfig-interfaces:interfaces"]:
-        for interface in data["openconfig-interfaces:interfaces"]["openconfig-interfaces:interface"]:
-            if any(re.match(regex, interface["name"]) for regex in regex_list):
-                temp_interface_list.append(interface)
-    data_out["openconfig-interfaces:interfaces"]["openconfig-interfaces:interface"] = temp_interface_list
+
+    if "mdd:openconfig" in data:
+        oc_data = data["mdd:openconfig"]
+        # Truncate interfaces
+
+        if "openconfig-interfaces:interfaces" in oc_data and "openconfig-interfaces:interface" in oc_data["openconfig-interfaces:interfaces"]:
+            for interface in oc_data["openconfig-interfaces:interfaces"]["openconfig-interfaces:interface"]:
+                if any(re.match(regex, interface["openconfig-interfaces:name"]) for regex in regex_list):
+                    temp_interface_list.append(interface)
+            data_out["mdd:openconfig"]["openconfig-interfaces:interfaces"]["openconfig-interfaces:interface"] = temp_interface_list
+        # Truncate STP interfaces
+        if "openconfig-spanning-tree:stp" in oc_data and "openconfig-spanning-tree:interfaces" in oc_data["openconfig-spanning-tree:stp"]:
+            for interface in oc_data["openconfig-spanning-tree:stp"]["openconfig-spanning-tree:interfaces"]["openconfig-spanning-tree:interface"]:
+                if any(re.match(regex, interface["openconfig-spanning-tree:name"]) for regex in regex_list):
+                    temp_stp_interface_list.append(interface)
+            data_out["mdd:openconfig"]["openconfig-spanning-tree:stp"]["openconfig-spanning-tree:interfaces"]["openconfig-spanning-tree:interface"] = \
+                temp_stp_interface_list
+
     return data_out
 
 
