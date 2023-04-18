@@ -217,13 +217,15 @@ def map_physical_interfaces_to_logical_interfaces(topo_node, physical_interfaces
     """
     mapping = {}
 
-    # Find mgmt interface and make sure we map that as well
-    for interface in topo_node["interfaces"]:
-        if interface["id"] == "i1":
-            mapping[interface["label"]] = {"if-name": interface["label"], "id": interface["id"]}
+    # If start_from > 1, find mgmt interface and make sure we map that as well, otherwise it will be truncated
+    if start_from > 1:
+        for interface in topo_node["interfaces"]:
+            if interface["id"] == "i1":
+                mapping[interface["label"]] = {"if-name": interface["label"], "id": interface["id"]}
+        start_from = start_from - 1
     for i in range(len(physical_interfaces)):
-        mapping[physical_interfaces[i]] = {"if-name": topo_node["interfaces"][start_from + i]["label"],
-                                           "id": topo_node["interfaces"][start_from + i]["id"]}
+        mapping[physical_interfaces[i]] = {"if-name": topo_node["interfaces"][start_from + i + 1]["label"],
+                                           "id": topo_node["interfaces"][start_from + i + 1]["id"]}
     return mapping
 
 
