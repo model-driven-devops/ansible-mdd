@@ -36,7 +36,7 @@
 
     - name: "Layout graph using the {{ layout }} layout"
       set_fact:
-        topology: "{{ results.topology | ciscops.mdd.graph(layout=layout,scale=500) }}"
+        topology: "{{ results.topology | ciscops.mdd.graph(layout=layout,scale=scale) }}"
       run_once: yes
       when: not layout == 'none'
 
