@@ -10,8 +10,6 @@ except ImportError as imp_exc:
 else:
     NETWORKX_IMPORT_ERROR = None
 
-# display = Display()
-
 
 def graph(topology_data, layout='kamada_kawai', scale=500):
     if NETWORKX_IMPORT_ERROR:
@@ -24,15 +22,13 @@ def graph(topology_data, layout='kamada_kawai', scale=500):
         g.add_edge(link['n1'], link['n2'])
 
     if layout == 'spring':
-        pos = nx.layout.spring_layout(g, scale=scale)
+        pos = nx.layout.spring_layout(g, scale=int(scale))
     elif layout == 'planar':
-        pos = nx.layout.planar_layout(g, scale=scale)
+        pos = nx.layout.planar_layout(g, scale=int(scale))
     elif layout == 'spectral':
-        pos = nx.layout.spectral_layout(g, scale=scale)
+        pos = nx.layout.spectral_layout(g, scale=int(scale))
     elif layout == 'kamada_kawai':
-        pos = nx.layout.kamada_kawai_layout(g, scale=scale)
-
-    # display.vvvvv(f"{pos}")
+        pos = nx.layout.kamada_kawai_layout(g, scale=int(scale))
 
     for key, value in pos.items():
         for node in topology_data['nodes']:
