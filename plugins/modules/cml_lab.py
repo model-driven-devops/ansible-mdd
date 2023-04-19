@@ -42,6 +42,14 @@ options:
         required: true
         type: list
         elements: dict
+    device_template:
+        description: CML node info for each device type
+        required: true
+        type: dict
+    default_mappings:
+        description: Default interface mappings to apply to all devices
+        required: true
+        type: dict
     ext_conn:
         description: Whether to add external connectors to lab
         required: false
@@ -52,6 +60,11 @@ options:
         required: false
         type: int
         default: 2
+    use_cat9kv:
+        description: Whether or not to use the cat9kv as the l3switch in CML
+        required: no
+        type: bool
+        default: false
 """
 
 EXAMPLES = r"""
@@ -69,42 +82,6 @@ import copy
 from ansible.module_utils.basic import AnsibleModule
 
 interface_types_list = ["Fas", "Ten", "Gig"]
-device_template = {
-    "switch": {
-        "node_definition": "iosvl2",
-        "ram": 768,
-        "tags": ["switch"],
-        "y": 0,
-        "type": "switch"
-    },
-    "router": {
-        "node_definition": "csr1000v",
-        "ram": 3072,
-        "tags": ["router"],
-        "y": 0,
-        "type": "router"
-    },
-    "l3switch": {
-        "node_definition": "Cat9000v",
-        "image_definition": "Cat9k",
-        "ram": 18432,
-        "cpus": 4,
-        "tags": ["l3switch"],
-        "y": 0,
-        "type": "l3switch"
-    },
-    "ext_conn": {
-        "node_definition": "external_connector",
-        "ram": 0,
-        "tags": [],
-        "y": 0
-    },
-}
-
-default_mappings = {
-    "Loopback(\\d+)": "Loopback\\1",
-    "Vlan(\\d+)": "Vlan\\1"
-}
 
 
 def create_node(node_input):
@@ -153,13 +130,13 @@ def switch_generate_interface(c, m, s):
     return c, m, s
 
 
-def add_interfaces_to_topology(topo_node, device_info, physical_interfaces):
+def add_interfaces_to_topology(topo_node, device_info, physical_interfaces, use_cat9kv=False):
     """
     Adds interfaces to the devices in the CML topology
     """
     number_of_interfaces = len(physical_interfaces) + 3  # initial + 2 spares
     number_of_interfaces += 4 - (number_of_interfaces % 4)  # interfaces come in sets of 4
-    if device_info["type"] == "l3switch":
+    if device_info["type"] == "l3switch" and use_cat9kv is True:
         topo_node["interfaces"].append({
             "id": "i1",
             "label": "GigabitEthernet0/0",
@@ -175,7 +152,7 @@ def add_interfaces_to_topology(topo_node, device_info, physical_interfaces):
                 "type": "physical"
             })
             counter += 1
-    elif device_info["type"] == "switch":
+    elif device_info["type"] == "switch" or (device_info["type"] == "l3switch" and use_cat9kv is not True):
         slot = 0
         mod = 0
         counter = 0
@@ -229,7 +206,7 @@ def map_physical_interfaces_to_logical_interfaces(topo_node, physical_interfaces
     return mapping
 
 
-def cml_topology_create_initial(devices_with_interface_dict, remote_device_info_full, start_from):
+def cml_topology_create_initial(devices_with_interface_dict, remote_device_info_full, start_from, device_template, use_cat9kv=False):
     """
     Creates CML topology file and adds nodes
     :param devices_with_interface_dict:
@@ -395,7 +372,7 @@ end
         node_counter += 1
         x_position += 150
         topo_node = create_node(device_info)
-        add_interfaces_to_topology(topo_node, device_info, devices_with_interface_dict[device])
+        add_interfaces_to_topology(topo_node, device_info, devices_with_interface_dict[device], use_cat9kv)
         physical_virtual_map = map_physical_interfaces_to_logical_interfaces(topo_node,
                                                                              devices_with_interface_dict[device],
                                                                              start_from)
@@ -423,9 +400,7 @@ def find_capabilities(device, cdp_line):
             if r == "R" or r == "S":
                 capabilities.append(r)
     if "R" in capabilities and "S" in capabilities:
-        # For now, set this to switch.  Once cat9kv is available, set to l3switch
-        # device_type = "l3switch"
-        device_type = "switch"
+        device_type = "l3switch"
     elif "R" in capabilities:
         device_type = "router"
     elif "S" in capabilities:
@@ -570,7 +545,7 @@ def extend_naming(short_name):
     return short_name
 
 
-def create_interface_mapping_dict(mappings):
+def create_interface_mapping_dict(mappings, default_mappings):
     """
     Write interface physical to virtual mappings to YAML file
     Write interface virtual to physical mappings to YAML file
@@ -601,7 +576,7 @@ def node_id_start(virtual_topology):
     return nodes[-1] + 1
 
 
-def ext_conn_nodes_create(virtual_topology, draft_topo, node_start):
+def ext_conn_nodes_create(virtual_topology, draft_topo, node_start, device_template):
     y = -1000
     for n in draft_topo["nodes"]:
         device_info = copy.deepcopy(device_template.get("ext_conn"))
@@ -638,7 +613,7 @@ def ext_conn_links_create(virtual_topology, draft_topo, link_node_start, link_st
         link_node_start += 1
 
 
-def cml_topology_add_external_connectors_and_links(topo):
+def cml_topology_add_external_connectors_and_links(topo, device_template):
     """
     Add an external connected or link to each node management interface
     """
@@ -647,15 +622,18 @@ def cml_topology_add_external_connectors_and_links(topo):
     link_node_start = node_start
     new_topo = copy.deepcopy(topo)
 
-    ext_conn_nodes_create(topo, new_topo, node_start)
+    ext_conn_nodes_create(topo, new_topo, node_start, device_template)
     ext_conn_links_create(topo, new_topo, link_node_start, link_start)
 
 
 def main():
     arguments = dict(
         devices=dict(required=True, type='list', elements='dict'),
+        device_template=dict(required=True, type='dict'),
+        default_mappings=dict(required=True, type='dict'),
         ext_conn=dict(required=False, type='bool', default=True),
-        start_from=dict(required=False, type='int', default=2)
+        start_from=dict(required=False, type='int', default=2),
+        use_cat9kv=dict(required=False, type='bool', default=False)
     )
 
     module = AnsibleModule(argument_spec=arguments, supports_check_mode=False)
@@ -664,7 +642,10 @@ def main():
     remote_device_info_full = {}
 
     devices = module.params['devices']
+    device_template = module.params['device_template']
+    default_mappings = module.params['default_mappings']
     start_from = module.params['start_from']
+    use_cat9kv = module.params['use_cat9kv']
 
     for device in devices:
         temp_device_links, remote_device_info = parse_cdp_output(device['cdp'], device, devices)
@@ -674,11 +655,11 @@ def main():
                 device_links.append(link)  # now saved newly discovered links
     devices_with_interface_dict = check_for_and_remove_error_links(device_links)
     sort_device_interfaces(devices_with_interface_dict)
-    topology_cml, mappings_cml = cml_topology_create_initial(devices_with_interface_dict, remote_device_info_full, start_from)
+    topology_cml, mappings_cml = cml_topology_create_initial(devices_with_interface_dict, remote_device_info_full, start_from, device_template, use_cat9kv)
     cml_topology_add_links(topology_cml, mappings_cml, device_links)
     if module.params['ext_conn']:
-        cml_topology_add_external_connectors_and_links(topology_cml)
-    mappings = create_interface_mapping_dict(mappings_cml)
+        cml_topology_add_external_connectors_and_links(topology_cml, device_template)
+    mappings = create_interface_mapping_dict(mappings_cml, default_mappings)
 
     module.exit_json(changed=True, topology=topology_cml, mappings=mappings)
 
