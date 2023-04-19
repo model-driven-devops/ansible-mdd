@@ -11,7 +11,7 @@
     inventory_dir: inventory
     scale: 500
     use_cat9kv: False
-    cml_device_template:
+    default_cml_device_template:
       switch:
         node_definition: iosvl2
         ram: 768
@@ -43,7 +43,7 @@
         ram: 0
         tags: []
     # Default interface mapping for CML
-    cml_default_mappings:
+    default_cml_default_mappings:
       Loopback(\\d+): Loopback\\1
       Vlan(\\d+): Vlan\\1
   tasks:
@@ -62,6 +62,14 @@
       set_fact:
         devices: "{{ groups['network'] | map('extract', hostvars, 'cdp_data') | list }}"
       run_once: yes
+
+    - set_fact:
+        cml_device_template: "{{ default_cml_device_template }}"
+      when: cml_device_template is not defined
+
+    - set_fact:
+        cml_default_mappings: "{{ default_cml_default_mappings }}"
+      when: cml_default_mappings is not defined
 
     - name: Generate topology
       ciscops.mdd.cml_lab:

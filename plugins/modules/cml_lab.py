@@ -144,7 +144,7 @@ def add_interfaces_to_topology(topo_node, device_info, physical_interfaces, use_
             "type": "physical"
         })
         counter = 1
-        for i in range(24):
+        for i in range(number_of_interfaces):
             topo_node["interfaces"].append({
                 "id": "i{0}".format(counter + 1),
                 "label": "GigabitEthernet1/0/{0}".format(counter),
