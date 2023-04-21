@@ -29,3 +29,25 @@ nso_package_repos:
     repo: https://github.com/model-driven-devops/nso-oc-services.git
     service_list:
       - mdd
+nso_global_settings:
+  ssh-algorithms:
+    public-key:
+      - ssh-ed25519
+      - ecdsa-sha2-nistp256
+      - ecdsa-sha2-nistp384
+      - ecdsa-sha2-nistp521
+      - rsa-sha2-512
+      - rsa-sha2-256
+      - ssh-rsa
+      - ssh-dss
+    cipher:
+      - aes128-gcm@openssh.com
+      - AEAD_AES_128_GCM
+      - chacha20-poly1305@openssh.com
+      - aes256-gcm@openssh.com
+      - AEAD_AES_256_GCM
+      - aes128-ctr
+      - aes192-ctr
+      - aes256-ctr
+      - aes128-cbc
+      - 3des-cbc
