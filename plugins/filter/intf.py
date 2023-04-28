@@ -1,6 +1,8 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import re
+
 # The list of keys that will be searched to see if replacement is needed
 keys_to_replace = [
     "openconfig-interfaces:name",
@@ -14,16 +16,20 @@ keys_to_replace = [
     "openconfig-network-instance:interface-id",
     "openconfig-network-instance:index",
     "openconfig-network-instance:local-address"
-
 ]
 
+def found_full_match(string, intf_dict):
+    for pattern in intf_dict:
+        if bool(re.fullmatch(pattern, string)): return pattern
+
+    return None
 
 def interface_name_replace(original_str, intf_dict):
-    original_str_split = original_str.split(".")
+    pattern = found_full_match(original_str.split(".")[0], intf_dict)
 
-    if original_str_split[0] in intf_dict:
-        return intf_dict[original_str_split[0]] + (f".{original_str_split[1]}" if len(original_str_split) > 1 else "")
-
+    if pattern:
+        return re.sub(pattern, intf_dict[pattern], original_str)
+    
     return original_str
 
 
@@ -67,14 +73,14 @@ def intf_truncate(data, intf_dict):
         # Truncate interfaces
         if "openconfig-interfaces:interfaces" in oc_data and "openconfig-interfaces:interface" in oc_data["openconfig-interfaces:interfaces"]:
             for interface in oc_data["openconfig-interfaces:interfaces"]["openconfig-interfaces:interface"]:
-                if interface["openconfig-interfaces:name"].split(".")[0] in intf_dict:
+                if found_full_match(interface["openconfig-interfaces:name"].split(".")[0], intf_dict):
                     temp_interface_list.append(interface)
             data_out["mdd:openconfig"]["openconfig-interfaces:interfaces"]["openconfig-interfaces:interface"] = temp_interface_list
 
         # Truncate STP interfaces
         if "openconfig-spanning-tree:stp" in oc_data and "openconfig-spanning-tree:interfaces" in oc_data["openconfig-spanning-tree:stp"]:
             for interface in oc_data["openconfig-spanning-tree:stp"]["openconfig-spanning-tree:interfaces"]["openconfig-spanning-tree:interface"]:
-                if interface["openconfig-spanning-tree:name"].split(".")[0] in intf_dict:
+                if found_full_match(interface["openconfig-spanning-tree:name"].split(".")[0], intf_dict):
                     temp_stp_interface_list.append(interface)
             (data_out["mdd:openconfig"]["openconfig-spanning-tree:stp"]["openconfig-spanning-tree:interfaces"]
              ["openconfig-spanning-tree:interface"]) = temp_stp_interface_list
@@ -93,7 +99,7 @@ def intf_truncate(data, intf_dict):
                                                                 ["openconfig-network-instance:area"]):
                                 if "openconfig-network-instance:interfaces" in area:
                                     for interface in area["openconfig-network-instance:interfaces"]["openconfig-network-instance:interface"]:
-                                        if interface["openconfig-network-instance:id"].split(".")[0] in intf_dict:
+                                        if found_full_match(interface["openconfig-network-instance:id"].split(".")[0], intf_dict):
                                             temp_ospf_interface_list.append(interface)
                                     (data_out["mdd:openconfig"]["openconfig-network-instance:network-instances"]
                                      ["openconfig-network-instance:network-instance"][instance_index]["openconfig-network-instance:protocols"]
@@ -110,7 +116,7 @@ def intf_truncate(data, intf_dict):
                     temp_instance_interface_list = []
 
                     for interface in instance["openconfig-network-instance:interfaces"]["openconfig-network-instance:interface"]:
-                        if interface["openconfig-network-instance:id"].split(".")[0] in intf_dict:
+                        if found_full_match(interface["openconfig-network-instance:id"].split(".")[0], intf_dict):
                             temp_instance_interface_list.append(interface)
 
                     (data_out["mdd:openconfig"]["openconfig-network-instance:network-instances"]["openconfig-network-instance:network-instance"]
@@ -129,7 +135,7 @@ def intf_truncate(data, intf_dict):
 
                     for interface in (instance["openconfig-network-instance:mpls"]["openconfig-network-instance:global"]
                                       ["openconfig-network-instance:interface-attributes"]["openconfig-network-instance:interface"]):
-                        if interface["openconfig-network-instance:interface-id"].split(".")[0] in intf_dict:
+                        if found_full_match(interface["openconfig-network-instance:interface-id"].split(".")[0], intf_dict):
                             temp_mpls_interface_list.append(interface)
 
                     (data_out["mdd:openconfig"]["openconfig-network-instance:network-instances"]["openconfig-network-instance:network-instance"]
