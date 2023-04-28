@@ -22,5 +22,5 @@
 consolidated_report:
 {% for entry in consolidated_report %}
   - hosts: "{{ entry.hosts }}"
-    data: "{{ entry.data }}"
+    data: '{{ entry.data }}'
 {% endfor %}
