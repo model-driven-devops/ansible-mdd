@@ -78,21 +78,12 @@ JSONSCHEMA_IMPORT_ERROR = 0
 IPADDRESS_IMPORT_ERROR = 0
 
 try:
-    from jsonschema import Draft7Validator, validators
-    from jsonschema.exceptions import ValidationError
+    from jsonschema import Draft202012Validator
 except ImportError:
     HAS_JSONSCHEMA = False
     JSONSCHEMA_IMPORT_ERROR = traceback.format_exc()
 else:
     HAS_JSONSCHEMA = True
-
-try:
-    import ipaddress
-except ImportError:
-    HAS_IPADDRESS = False
-    IPADDRESS_IMPORT_ERROR = traceback.format_exc()
-else:
-    HAS_IPADDRESS = True
 
 try:
     import yaml
@@ -103,26 +94,8 @@ else:
     HAS_YAML = True
 
 
-def in_subnet(validator, value, instance, schema):
-    if not ipaddress.ip_address(instance) in ipaddress.ip_network(value):
-        yield ValidationError("{0} not in subnet {1}".format(instance, value))
-
-
-def is_ip_address(checker, instance):
-    try:
-        ipaddress.ip_address(instance)
-    except ValueError:
-        return False
-    return True
-
-
 def validate_schema(data, schema):
-    Draft7Validator.META_SCHEMA['definitions']['simpleTypes']['enum'].append('ipaddress')
-    all_validators = dict(Draft7Validator.VALIDATORS)
-    all_validators['in_subnet'] = in_subnet
-    type_checker = Draft7Validator.TYPE_CHECKER.redefine_many({"ipaddress": is_ip_address})
-    MDDValidator = validators.extend(Draft7Validator, type_checker=type_checker, validators=all_validators)
-    mdd_validator = MDDValidator(schema=schema)
+    mdd_validator = Draft202012Validator(schema=schema)
     errors = mdd_validator.iter_errors(data)
     error_list = []
     for error in errors:
@@ -143,10 +116,6 @@ def main():
     if not HAS_JSONSCHEMA:
         # Needs: from ansible.module_utils.basic import missing_required_lib
         module.fail_json(msg=missing_required_lib('jsonschema'), exception=JSONSCHEMA_IMPORT_ERROR)
-
-    if not HAS_IPADDRESS:
-        # Needs: from ansible.module_utils.basic import missing_required_lib
-        module.fail_json(msg=missing_required_lib('ipaddress'), exception=IPADDRESS_IMPORT_ERROR)
 
     if not HAS_YAML:
         # Needs: from ansible.module_utils.basic import missing_required_lib
