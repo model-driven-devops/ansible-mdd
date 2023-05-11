@@ -18,18 +18,21 @@ keys_to_replace = [
     "openconfig-network-instance:local-address"
 ]
 
+
 def found_full_match(string, intf_dict):
     for pattern in intf_dict:
-        if bool(re.fullmatch(pattern, string)): return pattern
+        if bool(re.fullmatch(pattern, string)):
+            return pattern
 
     return None
+
 
 def interface_name_replace(original_str, intf_dict):
     pattern = found_full_match(original_str.split(".")[0], intf_dict)
 
     if pattern:
         return re.sub(pattern, intf_dict[pattern], original_str)
-    
+
     return original_str
 
 
