@@ -1,7 +1,11 @@
-- hosts: localhost
+- hosts: nso
+  connection: local
   gather_facts: no
   roles:
     - ciscops.mdd.nso
+  vars:
+    ansible_python_interpreter: "{{ hostvars['localhost'].ansible_python_interpreter}}"
+
   tasks:
     - name: Add NSO Auth Groups
       include_role:
