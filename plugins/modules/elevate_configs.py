@@ -19,7 +19,7 @@
 # along with Ansible.  If not, see http://www.gnu.org/licenses/.
 #
 
-#TODO: Write test cases
+# TODO: Write test cases
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -68,11 +68,12 @@ debug = []              # global variable for debugging
 FILES_CREATED = False   # global variable for determining if anything was actually elevated
 files_created = []
 
+
 class Elevate:
     def __init__(self, mdd_data_dir, mdd_data_patterns, file_level, is_test_run):
         self.mdd_data_dir = mdd_data_dir
         self.mdd_data_patterns = mdd_data_patterns
-        self.file_level = file_level # we need to add one so that level 1 in playbook will correspond with with keys under mdd_data
+        self.file_level = file_level  # we need to add one so that level 1 in playbook will correspond with with keys under mdd_data
         self.is_test_run = is_test_run
         self.file_pattern = ''
         self.device_tag = ''
@@ -81,12 +82,12 @@ class Elevate:
         self.at_bottom_dir = False
         self.elevate()
 
-    def clean_dictionary(self, dictionary : dict) -> None:
+    def clean_dictionary(self, dictionary: dict) -> None:
         """gets rid of unnecessary keys"""
         parent_keys = []
         self.clean_dictionary_helper(parent_keys, dictionary, dictionary)
 
-    def clean_dictionary_helper(self, parent_keys : list, parent_dictionary : dict, child_dictionary : dict) -> None:
+    def clean_dictionary_helper(self, parent_keys: list, parent_dictionary: dict, child_dictionary: dict) -> None:
         """Recursive helper function for clean_dictionary()"""
 
         for key, value in list(child_dictionary.items()):
@@ -104,8 +105,7 @@ class Elevate:
                 self.clean_dictionary_helper(parent_keys, child_dictionary, value)
                 parent_keys.pop()
 
-
-    def unflatten_dict(self, flattened_dictionary : dict) -> dict:
+    def unflatten_dict(self, flattened_dictionary: dict) -> dict:
         """Takes a flattened dictionary and converts it back to a nested dictionary based on the levels indicated in the keys"""
 
         if not bool(flattened_dictionary):
@@ -125,8 +125,7 @@ class Elevate:
 
         return result
 
-
-    def flatten_dict(self, dictionary : dict, prefix : str = '') -> dict:
+    def flatten_dict(self, dictionary: dict, prefix: str = '') -> dict:
         """Takes a nested dictionary and convertes it to a single-depth dictionary with keys indicating the levels"""
 
         flattened = {}
@@ -137,8 +136,7 @@ class Elevate:
                 flattened[prefix + key] = value
         return flattened
 
-
-    def find_common_key_value_pairs(self, dicts : list) -> dict:
+    def find_common_key_value_pairs(self, dicts: list) -> dict:
         """Find common keys between a list of dictionaries"""
 
         if not bool(dicts):
@@ -152,8 +150,7 @@ class Elevate:
 
         return common_pairs
 
-
-    def intersect_dicts(self, dict1 : dict, dict2 : dict) -> dict:
+    def intersect_dicts(self, dict1: dict, dict2: dict) -> dict:
         """Finds the intersection between two dictionaries"""
 
         intersection = {}
@@ -162,14 +159,12 @@ class Elevate:
                 intersection[key] = dict1[key]
         return intersection
 
-
     def find_common_configs(self, configs: list) -> dict:
         """Returns the common configs"""
 
         return self.unflatten_dict(self.find_common_key_value_pairs(configs))
 
-
-    def extract_keys_recursive(self, dictionary : dict, level : int, current_level : int = 0, parent_keys : str = "") -> list:
+    def extract_keys_recursive(self, dictionary: dict, level: int, current_level: int = 0, parent_keys: str = "") -> list:
         """Returns a list of dictionaries with the keys being a string combination of the parent keys
             and the value being the level's value.
             If the level depth is larger than the nested dictionary's depth, it stops at the lowest level"""
@@ -191,19 +186,19 @@ class Elevate:
 
         return keys
 
-    def elevate_level(self, rel_path : str) -> None:
+    def elevate_level(self, rel_path: str) -> None:
         """Finds common configs in a directory's child directories and elevates them to the current directory"""
 
-        ## How this function operates
+        # How this function operates
         # for each dir (given by dictionary? or can just get all dirs - will there be extra?) in path:
-            # get all yml files
-            # put into one yml file in path (Put all hq in one file, or just all hq-rt1 in one?)
+        # get all yml files
+        # put into one yml file in path (Put all hq in one file, or just all hq-rt1 in one?)
         # compare files
         # delete similar configs
         # make elevated config files
         global FILES_CREATED
 
-        if rel_path == "": # don't iterate through top level directory
+        if rel_path == "":  # don't iterate through top level directory
             return
 
         configs = []
@@ -213,7 +208,7 @@ class Elevate:
 
         # iterate through each child dir
         for file in os.scandir(path):
-            if not file.is_dir(): # only want directories #TODO: need to check if dir in network?
+            if not file.is_dir():  # only want directories #TODO: need to check if dir in network?
                 continue
 
             # if not fnmatch(file.name, "*-" + self.device_tag + "*"): # For switches
@@ -234,13 +229,14 @@ class Elevate:
                     config.update(data)
                     config = self.unflatten_dict(config)
 
-                    changed_files[child_file.path] = { 'data': data, 'filename': child_file.name }
+                    changed_files[child_file.path] = {'data': data, 'filename': child_file.name}
 
             if bool(config):
                 configs.append(config)
 
             if not contains_yml_files:
-                ignored_msgs.append(f"   Ignoring {file.name} Reason: Does not contain any files matching the patterns: {self.mdd_data_patterns}") # if directory contains no oc files
+                ignored_msgs.append(f"   Ignoring {file.name} Reason: Does not contain any files matching the patterns: {self.mdd_data_patterns}")
+                # if directory contains no oc files
 
         # get common configs
         result = self.find_common_configs(configs)
@@ -263,7 +259,7 @@ class Elevate:
 
                 # delete common configs
                 for key in flattened_result:
-                    if key in config_data: # remove any elevated configs
+                    if key in config_data:  # remove any elevated configs
                         has_changed = True
                         del config_data[key]
 
@@ -286,7 +282,7 @@ class Elevate:
 
                 if file_path_cleaned not in used_paths:
                     used_paths.append(file_path_cleaned)
-                    final_message.update({ f"{file_path_cleaned}": f"Configs for {directory_cleaned} level" })
+                    final_message.update({f"{file_path_cleaned}": f"Configs for {directory_cleaned} level"})
 
                 if device_name not in used_devices:
                     used_devices.append(device_name)
@@ -295,7 +291,7 @@ class Elevate:
                         message_value += f", {device_name}"
                         final_message[directory_cleaned] = message_value
                     else:
-                        final_message.update({ f"{directory_cleaned}" : f"   Configs elevated to ({directory_cleaned}) level from: {device_name}" })
+                        final_message.update({f"{directory_cleaned}": f"   Configs elevated to ({directory_cleaned}) level from: {device_name}"})
 
                 if config['filename'] not in used_configs:
                     elevate_type = "Elevated parts of file "
@@ -303,7 +299,7 @@ class Elevate:
                         elevate_type = "Elevated entire file "
 
                     used_configs.append(config['filename'])
-                    final_message.update({ f"{directory_cleaned}_{config['filename']}" : f"       {elevate_type}{config['filename']}" })
+                    final_message.update({f"{directory_cleaned}_{config['filename']}": f"       {elevate_type}{config['filename']}"})
                 else:
                     append_msg = final_message[directory_cleaned]
                     append_msg += f", {device_name}"
@@ -311,7 +307,6 @@ class Elevate:
 
         for key, message in final_message.items():
             debug.append(message)
-
 
         # make into separate config files
         if bool(result):
@@ -354,8 +349,7 @@ class Elevate:
                 debug.append(message)
             debug.append("")
 
-
-    def get_parent_path(self, parent_keys : list) -> None:
+    def get_parent_path(self, parent_keys: list) -> None:
         """Returns absolute path for file based on the list"""
 
         path = ""
@@ -363,16 +357,14 @@ class Elevate:
             path += "/" + key
         return path[1:]
 
-
-    def iterate_directory(self, child_dict : dict) -> None:
+    def iterate_directory(self, child_dict: dict) -> None:
         """Iterates through the network's directory from bottom up"""
 
         parent_keys = []
         hit_bottom_dir = False
         self.iterate_directory_helper(child_dict, parent_keys, hit_bottom_dir)
 
-
-    def iterate_directory_helper(self, child_dict : dict, parent_keys : list, hit_bottom_dir : bool) -> None:
+    def iterate_directory_helper(self, child_dict: dict, parent_keys: list, hit_bottom_dir: bool) -> None:
         """Recursive function helper for iterate_directory()"""
 
         for key, value in child_dict.items():
@@ -383,14 +375,13 @@ class Elevate:
             elif not hit_bottom_dir:
                 # continue till hit bottom dir
                 parent_keys.append(key)
-                self.iterate_directory_helper(value, parent_keys, hit_bottom_dir) # iterate through child dictionaries
+                self.iterate_directory_helper(value, parent_keys, hit_bottom_dir)  # iterate through child dictionaries
                 parent_keys.pop()
         hit_bottom_dir = False
         self.elevate_level(self.get_parent_path(parent_keys))
         self.at_bottom_dir = False
 
-
-    def generate_directory_structure(self, path : str) -> dict:
+    def generate_directory_structure(self, path: str) -> dict:
         """Generates a dirctory structure in the form of a dictionary from a given path"""
         result = {}
         if os.path.isdir(path):
@@ -401,8 +392,7 @@ class Elevate:
                     result[file] = self.generate_directory_structure(sub_path)
         return result
 
-
-    def create_nested_dict(self, keys : list, value : any) -> dict:
+    def create_nested_dict(self, keys: list, value: any) -> dict:
         """Creates a nested dictionary from the list and assigns value to the inermost key"""
         nested_dict = {}
         current_dict = nested_dict
@@ -415,14 +405,12 @@ class Elevate:
 
         return nested_dict
 
-
     def remove_duplicates(self, lst: list) -> None:
         """Iterates through a list of lists and deletes items that are the same in the same order"""
 
         while len(lst[0]) > 1 and all(sublist[0] == lst[0][0] for sublist in lst): # > 1 so file will always have a name, else could get rid of all entries
             for sublist in lst:
                 sublist.pop(0)
-
 
     def elevate(self) -> None:
         """Starts the elevations process"""
@@ -434,7 +422,7 @@ class Elevate:
         for file_pattern in self.mdd_data_patterns:
             self.file_pattern = file_pattern
 
-            for tag in ["sw"]: # This is temporary as the tags feature is being implemented
+            for tag in ["sw"]:  # This is temporary as the tags feature is being implemented
                 self.device_tag = tag
                 self.iterate_directory(yaml_network_data)
 
@@ -445,10 +433,8 @@ class Elevate:
             global files_created
             for file in self.files_created:
                 if os.path.exists(file):
-                    #os.remove(file)
+                    # os.remove(file)
                     files_created.append(file)
-
-
 
 def main():
     """Runs the elevation process"""
@@ -464,7 +450,7 @@ def main():
     if module.params['file_level'] < 0:
         module.fail_json(msg="File level needs to be 0 and above")
 
-    Elevate( module.params['mdd_data_dir'], module.params['mdd_data_patterns'], module.params['file_level'], module.params['is_test_run'])
+    Elevate(module.params['mdd_data_dir'], module.params['mdd_data_patterns'], module.params['file_level'], module.params['is_test_run'])
     module.exit_json(changed=True, failed=False, debug=debug, files_created=files_created)
 
 
