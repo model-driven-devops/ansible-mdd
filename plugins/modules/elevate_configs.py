@@ -173,7 +173,7 @@ class Elevate:
         if current_level == level:
             for key in dictionary:
                 new_key = parent_keys + self.separator + key if parent_keys else key
-                keys.append({'key': new_key, 'depth': current_level, 'value' : dictionary[key]})
+                keys.append({'key': new_key, 'depth': current_level, 'value': dictionary[key]})
             return keys
 
         for key, value in dictionary.items():
@@ -182,7 +182,7 @@ class Elevate:
                 keys.extend(self.extract_keys_recursive(value, level, current_level + 1, new_parent_keys))
             elif current_level < level:
                 new_key = parent_keys + self.separator + key if parent_keys else key
-                keys.append({'key': new_key, 'depth': current_level, 'value' : dictionary[key]})
+                keys.append({'key': new_key, 'depth': current_level, 'value': dictionary[key]})
 
         return keys
 
@@ -408,7 +408,7 @@ class Elevate:
     def remove_duplicates(self, lst: list) -> None:
         """Iterates through a list of lists and deletes items that are the same in the same order"""
 
-        while len(lst[0]) > 1 and all(sublist[0] == lst[0][0] for sublist in lst): # > 1 so file will always have a name, else could get rid of all entries
+        while len(lst[0]) > 1 and all(sublist[0] == lst[0][0] for sublist in lst):  # > 1 so file will always have a name, else could get rid of all entries
             for sublist in lst:
                 sublist.pop(0)
 
@@ -435,6 +435,7 @@ class Elevate:
                 if os.path.exists(file):
                     # os.remove(file)
                     files_created.append(file)
+
 
 def main():
     """Runs the elevation process"""

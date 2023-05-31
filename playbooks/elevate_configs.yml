@@ -6,17 +6,17 @@
     - ciscops.mdd.data
   vars_prompt:
     - name: file_level_input
-      prompt: What file level would you like to elevate at?
+      prompt: "What file level would you like to elevate at?"
       private: false
 
-    - name: is_test_run_input
-      prompt: Would you like to see the results before committing? (yes/no)?
+    - name: test_run_bool
+      prompt: "Would you like to see the results before committing? (yes/no)?"
       private: false
 
   tasks:
     - name: Convert is_test_run to boolean
       set_fact:
-        is_test_run: "{{ is_test_run_input | bool }}"
+        is_test_run: "{{ test_run_bool | bool }}"
     - name: Convert file_level to boolean
       set_fact:
         file_level: "{{ file_level_input | int }}"
