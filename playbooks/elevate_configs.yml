@@ -4,29 +4,20 @@
   gather_facts: false
   roles:
     - ciscops.mdd.data
-  vars_prompt:
-    - name: file_level_input
-      prompt: "What file level would you like to elevate at?"
-      private: false
 
-    - name: test_run_bool
-      prompt: "Would you like to see the results before committing? (yes/no)?"
-      private: false
+  vars:
+    temp_dir: "{{ mdd_data_parent }}/temp_dir"
+    file_level: "{{ level | default(-1) }}"
+    is_test_run: "{{ test | default(false) }}"
 
   tasks:
-    - name: Convert is_test_run to boolean
-      set_fact:
-        is_test_run: "{{ test_run_bool | bool }}"
-    - name: Convert file_level to boolean
-      set_fact:
-        file_level: "{{ file_level_input | int }}"
-
     - name: elevate
       elevate_configs:
         mdd_data_dir: "{{ mdd_data_root }}"
         mdd_data_patterns: "{{ mdd_data_patterns }}"
         file_level: "{{ file_level }}"
         is_test_run: "{{ is_test_run }}"
+        temp_dir: "{{ temp_dir }}"
       register: elevate_result
 
     - debug:
@@ -36,24 +27,31 @@
         prompt: "Is this result okay? (yes/no)"
         echo: yes
       register: result
+      until: result.user_input.lower() in ['yes', 'no', 'y', 'n']
+      retries: 5
+      delay: 1
       when: is_test_run == true
+
     - set_fact:
         is_ok_continue: false
     - set_fact:
-        is_ok_continue: "{{ result.user_input | bool }}"
-      when: is_test_run == true
+        is_ok_continue: true
+      when: is_test_run == true and result.user_input.lower() in ['yes', 'y']
 
-    - name: Delete created files
+    - name: Delete temp directory if present
       file:
-        path: "{{ item }}"
+        path: "{{ temp_dir }}/"
         state: absent
-      with_items: "{{ elevate_result.files_created }}"
+      when: is_ok_continue == false
 
-    - name: elevate
+    - name: CP file
       elevate_configs:
         mdd_data_dir: "{{ mdd_data_root }}"
         mdd_data_patterns: "{{ mdd_data_patterns }}"
         file_level: "{{ file_level }}"
         is_test_run: false
+        temp_dir: "{{ temp_dir }}"
       register: result
       when: is_ok_continue == true
+
+

@@ -62,25 +62,36 @@ EXAMPLES = r"""
 import os
 from fnmatch import fnmatch
 import yaml
+import shutil
 from ansible.module_utils.basic import AnsibleModule
 
 debug = []              # global variable for debugging
 FILES_CREATED = False   # global variable for determining if anything was actually elevated
-files_created = []
 
 
 class Elevate:
-    def __init__(self, mdd_data_dir, mdd_data_patterns, file_level, is_test_run):
+    def __init__(self, mdd_data_dir, mdd_data_patterns, temp_dir, file_level: int = None, is_test_run: bool = False):
         self.mdd_data_dir = mdd_data_dir
         self.mdd_data_patterns = mdd_data_patterns
         self.file_level = file_level  # we need to add one so that level 1 in playbook will correspond with with keys under mdd_data
         self.is_test_run = is_test_run
+        self.temp_dir = temp_dir
         self.file_pattern = ''
         self.device_tag = ''
         self.separator = '__*__'
-        self.files_created = []
+        self.file_parts = ''
         self.at_bottom_dir = False
+        self.first = True
+
         self.elevate()
+
+    def get_parent_path(self, parent_keys: list) -> None:
+        """Returns absolute path for file based on the list"""
+
+        path = ""
+        for key in parent_keys:
+            path += "/" + key
+        return path[1:]
 
     def clean_dictionary(self, dictionary: dict) -> None:
         """gets rid of unnecessary keys"""
@@ -186,176 +197,155 @@ class Elevate:
 
         return keys
 
+    def remove_and_create_temp_dir(self) -> None:
+        """Removes the temp directory. If it is a test run, copies mdd-data into the tmp dir"""
+
+        if os.path.exists(self.temp_dir):
+            shutil.rmtree(self.temp_dir)
+
+        if self.is_test_run:
+            # copy directory into temp directory
+            shutil.copytree(self.mdd_data_dir, self.temp_dir)
+            self.mdd_data_dir = self.temp_dir
+
+    def find_file_level(self, config, files, level=0):
+        if not isinstance(config, dict):
+            return -1
+
+        for key in config:
+            if key.split(':')[-1] in files:
+                return level
+
+        for value in config.values():
+            result = self.find_file_level(value, files, level + 1)
+            if result != -1:
+                return result
+
+        return -1
+
+    def get_meta_tag(self, tags):
+        return self.separator.join(tags)
+
+    def get_tags(self, meta_tag):
+        return meta_tag.split(self.separator)
+
     def elevate_level(self, rel_path: str) -> None:
         """Finds common configs in a directory's child directories and elevates them to the current directory"""
 
         # How this function operates
-        # for each dir (given by dictionary? or can just get all dirs - will there be extra?) in path:
-        # get all yml files
-        # put into one yml file in path (Put all hq in one file, or just all hq-rt1 in one?)
-        # compare files
-        # delete similar configs
-        # make elevated config files
+        # Get the first dir and use the files in there as base files
+        # for each base file:
+        #   for each dir in path
+        #       if base file name in here, grab config
+        #   elevate config (single file) if applicable
         global FILES_CREATED
 
         if rel_path == "":  # don't iterate through top level directory
             return
 
-        configs = []
-        changed_files = {}
-        ignored_msgs = []
         path = os.path.join(self.mdd_data_dir, rel_path)
 
-        # iterate through each child dir
-        for file in os.scandir(path):
-            if not file.is_dir():  # only want directories #TODO: need to check if dir in network?
-                continue
+        dir_files = [file for file in os.scandir(path) if file.is_dir()]
+        tags = {}
+        for dir in dir_files:  # obtain a base - where would do tags
+            # get tags
+            for file in os.scandir(dir.path):
+                if file.is_file() and fnmatch(file.name, '*.yml'):
+                    with open(file.path, 'r', encoding='utf-8') as data_file:
+                        data_dicts = yaml.safe_load_all(data_file)
+                        for data in data_dicts:
+                            if 'mdd_tags' in data:
+                                tags.setdefault(self.get_meta_tag(data['mdd_tags']), []).append(dir)
+                    break
 
-            # if not fnmatch(file.name, "*-" + self.device_tag + "*"): # For switches
-            #     continue
+        for meta_tag, directories in tags.items():
+            # get anchor
+            anchor_files = []
+            for file in os.scandir(directories[-1]):
+                if file.is_file() and fnmatch(file.name, '*.yml'):
+                    anchor_files.append(file)
 
-            # get all yml config files and put into one dictionary
-            config = {}
-            contains_yml_files = False
-            for child_file in os.scandir(file.path):
+            for anchor_file in anchor_files:  # files in anchor directory
+                configs = []
+                changed_files = {}
+                file_in_all_dirs = True
 
-                if not fnmatch(child_file.name, self.file_pattern):
+                for dir in directories:  # iterate through original directory
+
+                    file_in_here = False
+                    for yml_file in os.scandir(dir.path):  # just here to get all files - like could do a anchor_file.name in dir
+                        if not yml_file.is_file():
+                            continue
+
+                        if anchor_file.name in yml_file.name and fnmatch(yml_file.name, '*.yml'):  # TODO: add matches pattern?
+                            with open(yml_file.path, 'r', encoding='utf-8') as data_file:
+                                data_dicts = yaml.safe_load_all(data_file)
+                                for data in data_dicts:
+                                    if 'mdd_tags' in data and self.get_meta_tag(data['mdd_tags']) == meta_tag:
+                                        configs.append(data)
+                                changed_files[yml_file.path] = {'data': data, 'filename': yml_file.name}
+                                file_in_here = True
+                            break
+
+                    if not file_in_here:  # make sure the file was in all directories # TODO: Modify for tags
+                        file_in_all_dirs = False
+                        break
+
+                if not file_in_all_dirs:
                     continue
 
-                contains_yml_files = True
-                with open(child_file.path, 'r', encoding='utf-8') as file:
-                    data = self.flatten_dict(yaml.safe_load(file))
-                    config = self.flatten_dict(config)
-                    config.update(data)
-                    config = self.unflatten_dict(config)
+                # get common configs
+                result = self.find_common_configs(configs)
 
-                    changed_files[child_file.path] = {'data': data, 'filename': child_file.name}
+                # Delete common configs from lower config files
+                flattened_result = self.flatten_dict(result)
 
-            if bool(config):
-                configs.append(config)
+                for file_path, config in changed_files.items():
+                    config_data = self.flatten_dict(config['data'])
 
-            if not contains_yml_files:
-                ignored_msgs.append(f"   Ignoring {file.name} Reason: Does not contain any files matching the patterns: {self.mdd_data_patterns}")
-                # if directory contains no oc files
+                    # delete common configs
+                    for key in flattened_result:
+                        if key in config_data:  # remove any elevated configs
+                            del config_data[key]
 
-        # get common configs
-        result = self.find_common_configs(configs)
-
-        # Delete common configs from lower config files
-        flattened_result = self.flatten_dict(result)
-
-        used_paths = []
-        used_devices = []
-        final_message = {}
-        for file_path, config in changed_files.items():
-            has_changed = False
-            used_configs = []
-            config_data = self.flatten_dict(config['data'])
-
-            if not self.is_test_run or (self.is_test_run and not self.at_bottom_dir):
-                # only delete configs if not a test run or not at the bottom directory during a test run
-                # checking for bottom directory because if user does not like the update, can just delete the elevated configs files
-                # but don't want to have to go back and re-input what we took out from the original config files
-
-                # delete common configs
-                for key in flattened_result:
-                    if key in config_data:  # remove any elevated configs
-                        has_changed = True
-                        del config_data[key]
-
-                # empty - delete file
-                if not bool(config_data):
-                    os.remove(file_path)
-                else:
-                    # just overwrite old files with updated data
-                    with open(file_path, 'w') as file:
-                        file.write("---\n")
-                        yaml.safe_dump(self.unflatten_dict(config_data), file, sort_keys=False)
-
-            file_path_cleaned = file_path.replace(config['filename'], "")
-            device_name = file_path_cleaned.split('/')[-2]
-
-            # if changed, make a printout explaining elevation changes
-            if has_changed:
-                file_path_cleaned = '/'.join(file_path_cleaned.split('/')[:-2] + [''])
-                directory_cleaned = file_path_cleaned.split('/')[-2]
-
-                if file_path_cleaned not in used_paths:
-                    used_paths.append(file_path_cleaned)
-                    final_message.update({f"{file_path_cleaned}": f"Configs for {directory_cleaned} level"})
-
-                if device_name not in used_devices:
-                    used_devices.append(device_name)
-                    if directory_cleaned in final_message.keys():
-                        message_value = final_message[directory_cleaned]
-                        message_value += f", {device_name}"
-                        final_message[directory_cleaned] = message_value
+                    # empty - delete file
+                    if not bool(config_data):  # since we combine files, if a config is empty, remove if from the file
+                        if os.path.exists(file_path):
+                            with open(file_path, 'r') as file:
+                                data_dicts = yaml.safe_load_all(file)
+                                results_to_write = []
+                                for data in data_dicts:
+                                    if 'mdd_tags' in data and self.get_meta_tag(data['mdd_tags']) != meta_tag:
+                                        results_to_write.append(data)
+                                if results_to_write:
+                                    with open(file_path, 'w') as file:
+                                        for result_data in results_to_write:
+                                            file.write("---\n")
+                                            yaml.safe_dump(result_data, file, sort_keys=False)
+                                elif "mdd_data" in result:  # add a flag here
+                                    debug.append(file_path + str(result))
+                                    os.remove(file_path)
                     else:
-                        final_message.update({f"{directory_cleaned}": f"   Configs elevated to ({directory_cleaned}) level from: {device_name}"})
+                        # just overwrite old files with updated data
+                        open_type = 'w'
+                        if os.path.exists(file_path):
+                            open_type = 'a'
+                        # if os.path.exists(file_path):
+                        with open(file_path, 'w') as file:
+                            non_elevated_data = self.unflatten_dict(config_data)
+                            non_elevated_data['mdd_tags'] = self.get_tags(meta_tag)
+                            file.write("---\n")
+                            yaml.safe_dump(non_elevated_data, file, sort_keys=False)
 
-                if config['filename'] not in used_configs:
-                    elevate_type = "Elevated parts of file "
-                    if not bool(config_data):
-                        elevate_type = "Elevated entire file "
-
-                    used_configs.append(config['filename'])
-                    final_message.update({f"{directory_cleaned}_{config['filename']}": f"       {elevate_type}{config['filename']}"})
-                else:
-                    append_msg = final_message[directory_cleaned]
-                    append_msg += f", {device_name}"
-                    final_message[directory_cleaned] = append_msg
-
-        for key, message in final_message.items():
-            debug.append(message)
-
-        # make into separate config files
-        if bool(result):
-            debug.append(f"file level: {self.file_level}")
-
-            list_of_keys = self.extract_keys_recursive(result, self.file_level)
-            sorted_keys = sorted(list_of_keys, key=lambda x: x['depth'])
-
-            # debug.append("")
-            # for key in sorted_keys:
-            #     debug.append(key['key'] + " " + str(key['depth']))
-            # debug.append("")
-
-            # Remove duplicate top level keys so file names are shortened
-            keys_hierarchies_simplified = [key_dict['key'].split(self.separator) for key_dict in sorted_keys]
-            self.remove_duplicates(keys_hierarchies_simplified)
-
-            # create separate files
-            count = 0
-            for key_dict, keys_hierarchy in zip(sorted_keys, keys_hierarchies_simplified):
-                FILES_CREATED = True
-                keys_hierarchy_dict = key_dict['key'].split(self.separator)
-                data = self.create_nested_dict(keys_hierarchy_dict, key_dict['value'])
-
-                filename = "-".join(key.rsplit(':', 1)[-1] for key in keys_hierarchy)
-
-                file_parts = self.file_pattern.split('*')
-                file_path = f"{path}/{file_parts[0]}{filename}{file_parts[1]}"
-
-                debug.append(f"creating file {filename}")
-                self.files_created.append(file_path)
-                with open(file_path, 'w') as file:
-                    file.write("---\n")
-                    yaml.safe_dump(data, file, sort_keys=False)
-
-                count += 1
-
-        if FILES_CREATED:
-            for message in ignored_msgs:
-                debug.append(message)
-            debug.append("")
-
-    def get_parent_path(self, parent_keys: list) -> None:
-        """Returns absolute path for file based on the list"""
-
-        path = ""
-        for key in parent_keys:
-            path += "/" + key
-        return path[1:]
+                if bool(result):
+                    file_path = f"{path}/{anchor_file.name}"
+                    open_type = 'w'
+                    if os.path.exists(file_path):
+                        open_type = 'a'
+                    with open(file_path, open_type) as file:
+                        result['mdd_tags'] = self.get_tags(meta_tag)
+                        file.write("---\n")
+                        yaml.safe_dump(result, file, sort_keys=False)
 
     def iterate_directory(self, child_dict: dict) -> None:
         """Iterates through the network's directory from bottom up"""
@@ -392,49 +382,13 @@ class Elevate:
                     result[file] = self.generate_directory_structure(sub_path)
         return result
 
-    def create_nested_dict(self, keys: list, value: any) -> dict:
-        """Creates a nested dictionary from the list and assigns value to the inermost key"""
-        nested_dict = {}
-        current_dict = nested_dict
-
-        for key in keys[:-1]:
-            current_dict.setdefault(key, {})
-            current_dict = current_dict[key]
-
-        current_dict[keys[-1]] = value
-
-        return nested_dict
-
-    def remove_duplicates(self, lst: list) -> None:
-        """Iterates through a list of lists and deletes items that are the same in the same order"""
-
-        while len(lst[0]) > 1 and all(sublist[0] == lst[0][0] for sublist in lst):  # > 1 so file will always have a name, else could get rid of all entries
-            for sublist in lst:
-                sublist.pop(0)
-
     def elevate(self) -> None:
         """Starts the elevations process"""
+        self.remove_and_create_temp_dir()
 
         # Find all the common configs
         yaml_network_data = self.generate_directory_structure(self.mdd_data_dir)
-        debug.append(yaml_network_data)
-
-        for file_pattern in self.mdd_data_patterns:
-            self.file_pattern = file_pattern
-
-            for tag in ["sw"]:  # This is temporary as the tags feature is being implemented
-                self.device_tag = tag
-                self.iterate_directory(yaml_network_data)
-
-        if not FILES_CREATED:
-            debug.append("Configs already elevated to highest level")
-
-        if self.is_test_run:
-            global files_created
-            for file in self.files_created:
-                if os.path.exists(file):
-                    # os.remove(file)
-                    files_created.append(file)
+        self.iterate_directory(yaml_network_data)
 
 
 def main():
@@ -442,17 +396,19 @@ def main():
     arguments = dict(
         mdd_data_dir=dict(required=True, type='str'),
         mdd_data_patterns=dict(required=True, type='list'),
-        file_level=dict(required=True, type='int'),
-        is_test_run=dict(required=True, type='bool')
+        file_level=dict(required=True, type='int', default=None),
+        is_test_run=dict(required=True, type='bool'),
+        temp_dir=dict(required=True, type='str')
     )
 
     module = AnsibleModule(argument_spec=arguments, supports_check_mode=False)
 
-    if module.params['file_level'] < 0:
-        module.fail_json(msg="File level needs to be 0 and above")
+    # if module.params['file_level'] is not None and module.params['file_level'] < 0:
+    #     module.fail_json(msg="File level needs to be 0 and above")
 
-    Elevate(module.params['mdd_data_dir'], module.params['mdd_data_patterns'], module.params['file_level'], module.params['is_test_run'])
-    module.exit_json(changed=True, failed=False, debug=debug, files_created=files_created)
+    Elevate(module.params['mdd_data_dir'], module.params['mdd_data_patterns'],
+            module.params['temp_dir'], module.params['file_level'], module.params['is_test_run'])
+    module.exit_json(changed=True, failed=False, debug=debug)
 
 
 if __name__ == '__main__':
