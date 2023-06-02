@@ -1,4 +1,5 @@
 ---
+# You can specify a test run by adding -e "test=true"
 - name: elevate configs
   hosts: localhost
   gather_facts: false
@@ -7,15 +8,13 @@
 
   vars:
     temp_dir: "{{ mdd_data_parent }}/temp_dir"
-    file_level: "{{ level | default(-1) }}"
     is_test_run: "{{ test | default(false) }}"
 
   tasks:
+
     - name: elevate
       elevate_configs:
         mdd_data_dir: "{{ mdd_data_root }}"
-        mdd_data_patterns: "{{ mdd_data_patterns }}"
-        file_level: "{{ file_level }}"
         is_test_run: "{{ is_test_run }}"
         temp_dir: "{{ temp_dir }}"
       register: elevate_result
@@ -30,28 +29,24 @@
       until: result.user_input.lower() in ['yes', 'no', 'y', 'n']
       retries: 5
       delay: 1
-      when: is_test_run == true
+      when: is_test_run
 
     - set_fact:
         is_ok_continue: false
     - set_fact:
         is_ok_continue: true
-      when: is_test_run == true and result.user_input.lower() in ['yes', 'y']
+      when: is_test_run and result.user_input.lower() in ['yes', 'y']
 
     - name: Delete temp directory if present
       file:
         path: "{{ temp_dir }}/"
         state: absent
-      when: is_ok_continue == false
+      when: not is_ok_continue
 
-    - name: CP file
-      elevate_configs:
-        mdd_data_dir: "{{ mdd_data_root }}"
-        mdd_data_patterns: "{{ mdd_data_patterns }}"
-        file_level: "{{ file_level }}"
-        is_test_run: false
-        temp_dir: "{{ temp_dir }}"
-      register: result
-      when: is_ok_continue == true
-
-
+    - name: CP Good Files to mdd_data
+      command: "{{ item }}"
+      with_items:
+        - "rm -r {{ mdd_data_root }}/"
+        - "cp -r {{ temp_dir }}/ {{ mdd_data_root }}/"
+        - "rm -r {{ temp_dir }}/"
+      when: is_ok_continue

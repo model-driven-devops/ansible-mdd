@@ -19,8 +19,6 @@
 # along with Ansible.  If not, see http://www.gnu.org/licenses/.
 #
 
-# TODO: Write test cases
-
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -38,8 +36,19 @@ author:
 options:
     mdd_data_dir:
         description: The directory of the mdd data
-        - When using this, always set the input to "{{ mdd_data_root }}" in the playbook
-        - Like this mdd_data_dir: "{{ mdd_data_root }}"
+        - When using this, always set the input to "{{mdd_data_root}}" in the playbook
+        - Like this mdd_data_dir: "{{mdd_data_root}}"
+        required: true
+        type: str
+    is_test_run:
+        description: Determines if the elevation process will happen in the temp_dir
+        - Allows user to see the results and approve/disaprove before commiting to mdd_data directory
+        - Default is False
+        - You can specify True by adding -e "test=true" when running the ansible playbook
+        required: true
+        type: bool
+    temp_dir
+        description: The directory where the elevate process will happen if is_test_run == True
         required: true
         type: str
 """
@@ -54,34 +63,30 @@ EXAMPLES = r"""
     - name: elevate
       elevate_configs:
         mdd_data_dir: "{{ mdd_data_root }}"
-      register: result
+        is_test_run: "{{ is_test_run }}"
+        temp_dir: "{{ temp_dir }}"
+      register: elevate_result
     - debug:
         var: result.debug
 """
 
 import os
+import time
 from fnmatch import fnmatch
 import yaml
 import shutil
 from ansible.module_utils.basic import AnsibleModule
 
 debug = []              # global variable for debugging
-FILES_CREATED = False   # global variable for determining if anything was actually elevated
 
 
 class Elevate:
-    def __init__(self, mdd_data_dir, mdd_data_patterns, temp_dir, file_level: int = None, is_test_run: bool = False):
+    def __init__(self, mdd_data_dir, temp_dir, is_test_run: bool = False):
+
         self.mdd_data_dir = mdd_data_dir
-        self.mdd_data_patterns = mdd_data_patterns
-        self.file_level = file_level  # we need to add one so that level 1 in playbook will correspond with with keys under mdd_data
         self.is_test_run = is_test_run
         self.temp_dir = temp_dir
-        self.file_pattern = ''
-        self.device_tag = ''
         self.separator = '__*__'
-        self.file_parts = ''
-        self.at_bottom_dir = False
-        self.first = True
 
         self.elevate()
 
@@ -92,29 +97,6 @@ class Elevate:
         for key in parent_keys:
             path += "/" + key
         return path[1:]
-
-    def clean_dictionary(self, dictionary: dict) -> None:
-        """gets rid of unnecessary keys"""
-        parent_keys = []
-        self.clean_dictionary_helper(parent_keys, dictionary, dictionary)
-
-    def clean_dictionary_helper(self, parent_keys: list, parent_dictionary: dict, child_dictionary: dict) -> None:
-        """Recursive helper function for clean_dictionary()"""
-
-        for key, value in list(child_dictionary.items()):
-            if key == "tags":
-                # Remove the tags
-                del child_dictionary[key]
-
-            if key in ('hosts', 'children'):
-                # Move the value one up in the dictionary
-                parent_dictionary[parent_keys[-1]] = value
-
-            if isinstance(value, dict):
-                # Go through and clean the lower dictionarys
-                parent_keys.append(key)
-                self.clean_dictionary_helper(parent_keys, child_dictionary, value)
-                parent_keys.pop()
 
     def unflatten_dict(self, flattened_dictionary: dict) -> dict:
         """Takes a flattened dictionary and converts it back to a nested dictionary based on the levels indicated in the keys"""
@@ -175,28 +157,6 @@ class Elevate:
 
         return self.unflatten_dict(self.find_common_key_value_pairs(configs))
 
-    def extract_keys_recursive(self, dictionary: dict, level: int, current_level: int = 0, parent_keys: str = "") -> list:
-        """Returns a list of dictionaries with the keys being a string combination of the parent keys
-            and the value being the level's value.
-            If the level depth is larger than the nested dictionary's depth, it stops at the lowest level"""
-
-        keys = []
-        if current_level == level:
-            for key in dictionary:
-                new_key = parent_keys + self.separator + key if parent_keys else key
-                keys.append({'key': new_key, 'depth': current_level, 'value': dictionary[key]})
-            return keys
-
-        for key, value in dictionary.items():
-            if isinstance(value, dict) and value != {}:
-                new_parent_keys = parent_keys + self.separator + key if parent_keys else key
-                keys.extend(self.extract_keys_recursive(value, level, current_level + 1, new_parent_keys))
-            elif current_level < level:
-                new_key = parent_keys + self.separator + key if parent_keys else key
-                keys.append({'key': new_key, 'depth': current_level, 'value': dictionary[key]})
-
-        return keys
-
     def remove_and_create_temp_dir(self) -> None:
         """Removes the temp directory. If it is a test run, copies mdd-data into the tmp dir"""
 
@@ -208,25 +168,14 @@ class Elevate:
             shutil.copytree(self.mdd_data_dir, self.temp_dir)
             self.mdd_data_dir = self.temp_dir
 
-    def find_file_level(self, config, files, level=0):
-        if not isinstance(config, dict):
-            return -1
+    def get_meta_tag(self, tags: list) -> str:
+        """Creates a one meta tag from the list joined by a separator"""
 
-        for key in config:
-            if key.split(':')[-1] in files:
-                return level
-
-        for value in config.values():
-            result = self.find_file_level(value, files, level + 1)
-            if result != -1:
-                return result
-
-        return -1
-
-    def get_meta_tag(self, tags):
         return self.separator.join(tags)
 
-    def get_tags(self, meta_tag):
+    def get_tags(self, meta_tag: str) -> list:
+        """Creates a list from the meta tag by splitting it"""
+
         return meta_tag.split(self.separator)
 
     def elevate_level(self, rel_path: str) -> None:
@@ -238,7 +187,6 @@ class Elevate:
         #   for each dir in path
         #       if base file name in here, grab config
         #   elevate config (single file) if applicable
-        global FILES_CREATED
 
         if rel_path == "":  # don't iterate through top level directory
             return
@@ -283,7 +231,8 @@ class Elevate:
                                 for data in data_dicts:
                                     if 'mdd_tags' in data and self.get_meta_tag(data['mdd_tags']) == meta_tag:
                                         configs.append(data)
-                                changed_files[yml_file.path] = {'data': data, 'filename': yml_file.name}
+                                        changed_files[yml_file.path] = {'data': data, 'filename': yml_file.name}
+                                        break
                                 file_in_here = True
                             break
 
@@ -299,8 +248,7 @@ class Elevate:
 
                 # Delete common configs from lower config files
                 flattened_result = self.flatten_dict(result)
-
-                for file_path, config in changed_files.items():
+                for file_path, config in changed_files.items():  # remove from old file
                     config_data = self.flatten_dict(config['data'])
 
                     # delete common configs
@@ -309,35 +257,26 @@ class Elevate:
                             del config_data[key]
 
                     # empty - delete file
-                    if not bool(config_data):  # since we combine files, if a config is empty, remove if from the file
-                        if os.path.exists(file_path):
-                            with open(file_path, 'r') as file:
-                                data_dicts = yaml.safe_load_all(file)
-                                results_to_write = []
-                                for data in data_dicts:
-                                    if 'mdd_tags' in data and self.get_meta_tag(data['mdd_tags']) != meta_tag:
-                                        results_to_write.append(data)
-                                if results_to_write:
-                                    with open(file_path, 'w') as file:
-                                        for result_data in results_to_write:
-                                            file.write("---\n")
-                                            yaml.safe_dump(result_data, file, sort_keys=False)
-                                elif "mdd_data" in result:  # add a flag here
-                                    debug.append(file_path + str(result))
-                                    os.remove(file_path)
-                    else:
-                        # just overwrite old files with updated data
-                        open_type = 'w'
-                        if os.path.exists(file_path):
-                            open_type = 'a'
-                        # if os.path.exists(file_path):
-                        with open(file_path, 'w') as file:
-                            non_elevated_data = self.unflatten_dict(config_data)
-                            non_elevated_data['mdd_tags'] = self.get_tags(meta_tag)
-                            file.write("---\n")
-                            yaml.safe_dump(non_elevated_data, file, sort_keys=False)
+                    write_configs = []
+                    with open(file_path, 'r') as file:
+                        data_configs = yaml.safe_load_all(file)
 
-                if bool(result):
+                        for data in data_configs:
+                            if config['data'] == data:
+                                if bool(config_data):
+                                    config_data = self.unflatten_dict(config_data)
+                                    config_data['mdd_tags'] = self.get_tags(meta_tag)
+                                    write_configs.append(config_data)
+                            else:
+                                write_configs.append(data)
+
+                    if len(write_configs) == 0:
+                        os.remove(file_path)
+                    else:
+                        with open(file_path, 'w') as file:
+                            yaml.safe_dump_all(write_configs, file, sort_keys=False, explicit_start=True)
+
+                if bool(result):  # write to elevated file
                     file_path = f"{path}/{anchor_file.name}"
                     open_type = 'w'
                     if os.path.exists(file_path):
@@ -346,6 +285,31 @@ class Elevate:
                         result['mdd_tags'] = self.get_tags(meta_tag)
                         file.write("---\n")
                         yaml.safe_dump(result, file, sort_keys=False)
+
+                    # # below is if we want to merge tags - would have to change above algorithm when comparing to account for meta_tag being different
+                    # # Would have to do if tags in all_tags
+                    # result['mdd_tags'] = self.get_tags(meta_tag)
+                    # if os.path.exists(file_path):
+                    #     with open(file_path, 'r') as file:
+                    #         data_dicts = yaml.safe_load_all(file)
+
+                    #         results_to_write = []
+                    #         for data in data_dicts:
+                    #             if data['mdd_data'] == result['mdd_data']:
+                    #                 result['mdd_tags'].extend(data['mdd_tags'])
+                    #             else:
+                    #                 results_to_write.append(data)
+                    #         results_to_write.append(result)
+
+                    #     with open(file_path, 'w') as file:
+                    #         for result_data in results_to_write:
+                    #             file.write("---\n")
+                    #             yaml.safe_dump(result_data, file, sort_keys=False)
+
+                    # else:
+                    #     with open(file_path, 'w') as file:
+                    #         file.write("---\n")
+                    #         yaml.safe_dump(result, file, sort_keys=False)
 
     def iterate_directory(self, child_dict: dict) -> None:
         """Iterates through the network's directory from bottom up"""
@@ -361,7 +325,6 @@ class Elevate:
             if isinstance(value, dict) and not bool(value) and not hit_bottom_dir:
                 # means is empty and therefore hit bottom directory
                 hit_bottom_dir = True
-                self.at_bottom_dir = True
             elif not hit_bottom_dir:
                 # continue till hit bottom dir
                 parent_keys.append(key)
@@ -369,10 +332,10 @@ class Elevate:
                 parent_keys.pop()
         hit_bottom_dir = False
         self.elevate_level(self.get_parent_path(parent_keys))
-        self.at_bottom_dir = False
 
     def generate_directory_structure(self, path: str) -> dict:
         """Generates a dirctory structure in the form of a dictionary from a given path"""
+
         result = {}
         if os.path.isdir(path):
             files = os.listdir(path)
@@ -384,30 +347,27 @@ class Elevate:
 
     def elevate(self) -> None:
         """Starts the elevations process"""
+
         self.remove_and_create_temp_dir()
 
         # Find all the common configs
         yaml_network_data = self.generate_directory_structure(self.mdd_data_dir)
+
         self.iterate_directory(yaml_network_data)
 
 
 def main():
     """Runs the elevation process"""
+
     arguments = dict(
         mdd_data_dir=dict(required=True, type='str'),
-        mdd_data_patterns=dict(required=True, type='list'),
-        file_level=dict(required=True, type='int', default=None),
         is_test_run=dict(required=True, type='bool'),
         temp_dir=dict(required=True, type='str')
     )
 
     module = AnsibleModule(argument_spec=arguments, supports_check_mode=False)
 
-    # if module.params['file_level'] is not None and module.params['file_level'] < 0:
-    #     module.fail_json(msg="File level needs to be 0 and above")
-
-    Elevate(module.params['mdd_data_dir'], module.params['mdd_data_patterns'],
-            module.params['temp_dir'], module.params['file_level'], module.params['is_test_run'])
+    Elevate(module.params['mdd_data_dir'], module.params['temp_dir'], module.params['is_test_run'])
     module.exit_json(changed=True, failed=False, debug=debug)
 
 
