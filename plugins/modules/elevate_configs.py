@@ -98,7 +98,7 @@ class Elevate:
 
         self.elevate()
 
-    def get_parent_path(self, parent_keys: list) -> None:
+    def get_parent_path(self, parent_keys) -> None:
         """Returns absolute path for file based on the list"""
 
         path = ""
