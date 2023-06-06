@@ -71,8 +71,8 @@ def main():
     """Runs the gather process"""
 
     arguments = dict(
-        mdd_file_data=dict(required=True, type='list'),
-        tags=dict(required=True, type='list')
+        mdd_file_data=dict(required=True, type='list', elements='dict'),
+        tags=dict(required=True, type='list', elements='str')
     )
 
     module = AnsibleModule(argument_spec=arguments, supports_check_mode=False)

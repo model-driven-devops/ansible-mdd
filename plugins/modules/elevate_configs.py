@@ -165,7 +165,7 @@ class Elevate:
 
         return self.unflatten_dict(self.find_common_key_value_pairs(configs))
 
-    def remove_and_create_temp_dir(self) -> None:
+    def remove_and_create_temp_dir(self):
         """Removes the temp directory. If it is a test run, copies mdd-data into the tmp dir"""
 
         if os.path.exists(self.temp_dir):
