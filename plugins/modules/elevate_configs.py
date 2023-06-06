@@ -285,7 +285,7 @@ class Elevate:
                             yaml.safe_dump_all(write_configs, file, sort_keys=False, explicit_start=True)
 
                 if bool(result):  # write to elevated file
-                    file_path = f"{path}/{anchor_file.name}"
+                    file_path = str(path) + "/" + str(anchor_file.name)
                     open_type = 'w'
                     if os.path.exists(file_path):
                         open_type = 'a'
@@ -376,7 +376,6 @@ def main():
     module = AnsibleModule(argument_spec=arguments, supports_check_mode=False)
 
     if not HAS_YAML:
-        # Needs: from ansible.module_utils.basic import missing_required_lib
         module.fail_json(msg=missing_required_lib('yaml'))
 
     Elevate(module.params['mdd_data_dir'], module.params['temp_dir'], module.params['is_test_run'])
