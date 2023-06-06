@@ -373,11 +373,11 @@ def main():
         temp_dir=dict(required=True, type='str')
     )
 
+    module = AnsibleModule(argument_spec=arguments, supports_check_mode=False)
+
     if not HAS_YAML:
         # Needs: from ansible.module_utils.basic import missing_required_lib
-        module.fail_json(msg=missing_required_lib('yaml'), exception=IPADDRESS_IMPORT_ERROR)
-
-    module = AnsibleModule(argument_spec=arguments, supports_check_mode=False)
+        module.fail_json(msg=missing_required_lib('yaml'))
 
     Elevate(module.params['mdd_data_dir'], module.params['temp_dir'], module.params['is_test_run'])
     module.exit_json(changed=True, failed=False, debug=debug)
