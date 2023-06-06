@@ -74,7 +74,6 @@ EXAMPLES = r"""
 import os
 import traceback
 from fnmatch import fnmatch
-import yaml
 import shutil
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
@@ -374,11 +373,11 @@ def main():
         temp_dir=dict(required=True, type='str')
     )
 
-    module = AnsibleModule(argument_spec=arguments, supports_check_mode=False)
-
     if not HAS_YAML:
         # Needs: from ansible.module_utils.basic import missing_required_lib
-        module.fail_json(msg=missing_required_lib('yaml'))
+        module.fail_json(msg=missing_required_lib('yaml'), exception=IPADDRESS_IMPORT_ERROR)
+
+    module = AnsibleModule(argument_spec=arguments, supports_check_mode=False)
 
     Elevate(module.params['mdd_data_dir'], module.params['temp_dir'], module.params['is_test_run'])
     module.exit_json(changed=True, failed=False, debug=debug)
