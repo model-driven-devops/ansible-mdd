@@ -36,13 +36,17 @@ author:
   - Paul Pajerski (@ppajersk)
 options:
     mdd_file_data:
-        description: The directory of the mdd data
+        description:
+        - The directory of the mdd data
         required: true
         type: list
+        elements: dict
     tags:
-        description: The tags associated with a device
+        description:
+        - The tags associated with a device
         required: true
         type: list
+        elements: str
 """
 
 EXAMPLES = r"""
