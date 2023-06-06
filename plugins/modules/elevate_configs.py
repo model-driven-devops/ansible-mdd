@@ -98,7 +98,7 @@ class Elevate:
 
         self.elevate()
 
-    def get_parent_path(self, parent_keys) -> None:
+    def get_parent_path(self, parent_keys):
         """Returns absolute path for file based on the list"""
 
         path = ""
@@ -106,7 +106,7 @@ class Elevate:
             path += "/" + key
         return path[1:]
 
-    def unflatten_dict(self, flattened_dictionary: dict) -> dict:
+    def unflatten_dict(self, flattened_dictionary):
         """Takes a flattened dictionary and converts it back to a nested dictionary based on the levels indicated in the keys"""
 
         if not bool(flattened_dictionary):
@@ -126,7 +126,7 @@ class Elevate:
 
         return result
 
-    def flatten_dict(self, dictionary: dict, prefix: str = '') -> dict:
+    def flatten_dict(self, dictionary, prefix):
         """Takes a nested dictionary and convertes it to a single-depth dictionary with keys indicating the levels"""
 
         flattened = {}
@@ -137,21 +137,21 @@ class Elevate:
                 flattened[prefix + key] = value
         return flattened
 
-    def find_common_key_value_pairs(self, dicts: list) -> dict:
+    def find_common_key_value_pairs(self, dicts):
         """Find common keys between a list of dictionaries"""
 
         if not bool(dicts):
             return {}
 
-        common_pairs = self.flatten_dict(dicts[0])
+        common_pairs = self.flatten_dict(dicts[0], "")
 
         for dictionary in dicts[1:]:
-            flattened_dict = self.flatten_dict(dictionary)
+            flattened_dict = self.flatten_dict(dictionary, "")
             common_pairs = self.intersect_dicts(common_pairs, flattened_dict)
 
         return common_pairs
 
-    def intersect_dicts(self, dict1: dict, dict2: dict) -> dict:
+    def intersect_dicts(self, dict1, dict2):
         """Finds the intersection between two dictionaries"""
 
         intersection = {}
@@ -160,7 +160,7 @@ class Elevate:
                 intersection[key] = dict1[key]
         return intersection
 
-    def find_common_configs(self, configs: list) -> dict:
+    def find_common_configs(self, configs):
         """Returns the common configs"""
 
         return self.unflatten_dict(self.find_common_key_value_pairs(configs))
@@ -176,17 +176,17 @@ class Elevate:
             shutil.copytree(self.mdd_data_dir, self.temp_dir)
             self.mdd_data_dir = self.temp_dir
 
-    def get_meta_tag(self, tags: list) -> str:
+    def get_meta_tag(self, tags):
         """Creates a one meta tag from the list joined by a separator"""
 
         return self.separator.join(tags)
 
-    def get_tags(self, meta_tag: str) -> list:
+    def get_tags(self, meta_tag):
         """Creates a list from the meta tag by splitting it"""
 
         return meta_tag.split(self.separator)
 
-    def elevate_level(self, rel_path: str) -> None:
+    def elevate_level(self, rel_path):
         """Finds common configs in a directory's child directories and elevates them to the current directory"""
 
         # How this function operates
@@ -255,9 +255,9 @@ class Elevate:
                 result = self.find_common_configs(configs)
 
                 # Delete common configs from lower config files
-                flattened_result = self.flatten_dict(result)
+                flattened_result = self.flatten_dict(result, "")
                 for file_path, config in changed_files.items():  # remove from old file
-                    config_data = self.flatten_dict(config['data'])
+                    config_data = self.flatten_dict(config['data'], "")
 
                     # delete common configs
                     for key in flattened_result:
@@ -319,14 +319,14 @@ class Elevate:
                     #         file.write("---\n")
                     #         yaml.safe_dump(result, file, sort_keys=False)
 
-    def iterate_directory(self, child_dict: dict) -> None:
+    def iterate_directory(self, child_dict):
         """Iterates through the network's directory from bottom up"""
 
         parent_keys = []
         hit_bottom_dir = False
         self.iterate_directory_helper(child_dict, parent_keys, hit_bottom_dir)
 
-    def iterate_directory_helper(self, child_dict: dict, parent_keys: list, hit_bottom_dir: bool) -> None:
+    def iterate_directory_helper(self, child_dict, parent_keys, hit_bottom_dir):
         """Recursive function helper for iterate_directory()"""
 
         for key, value in child_dict.items():
@@ -341,7 +341,7 @@ class Elevate:
         hit_bottom_dir = False
         self.elevate_level(self.get_parent_path(parent_keys))
 
-    def generate_directory_structure(self, path: str) -> dict:
+    def generate_directory_structure(self, path):
         """Generates a dirctory structure in the form of a dictionary from a given path"""
 
         result = {}
@@ -353,7 +353,7 @@ class Elevate:
                     result[file] = self.generate_directory_structure(sub_path)
         return result
 
-    def elevate(self) -> None:
+    def elevate(self):
         """Starts the elevations process"""
 
         self.remove_and_create_temp_dir()
@@ -369,7 +369,7 @@ def main():
 
     arguments = dict(
         mdd_data_dir=dict(required=True, type='str'),
-        is_test_run=dict(required=True, type='bool', default=False),
+        is_test_run=dict(required=True, type='bool'),
         temp_dir=dict(required=True, type='str')
     )
 
