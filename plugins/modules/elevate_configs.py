@@ -89,7 +89,7 @@ else:
 
 
 class Elevate:
-    def __init__(self, mdd_data_dir, temp_dir, is_test_run: bool = False):
+    def __init__(self, mdd_data_dir, temp_dir, is_test_run):
 
         self.mdd_data_dir = mdd_data_dir
         self.is_test_run = is_test_run
@@ -369,7 +369,7 @@ def main():
 
     arguments = dict(
         mdd_data_dir=dict(required=True, type='str'),
-        is_test_run=dict(required=True, type='bool'),
+        is_test_run=dict(required=True, type='bool', default=False),
         temp_dir=dict(required=True, type='str')
     )
 
