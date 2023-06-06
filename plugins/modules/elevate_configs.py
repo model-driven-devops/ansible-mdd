@@ -35,19 +35,20 @@ author:
   - Paul Pajerski (@ppajersk)
 options:
     mdd_data_dir:
-        description: The directory of the mdd data
-        - When using this, always set the input to "{{mdd_data_root}}" in the playbook
-        - Like this mdd_data_dir: "{{mdd_data_root}}"
+        description:
+        - The directory of the mdd data
+        - When using this, always set the input to mdd_data_root in the playbook
         required: true
         type: str
     is_test_run:
-        description: Determines if the elevation process will happen in the temp_dir
+        description:
+        - Determines if the elevation process will happen in the temp_dir
         - Allows user to see the results and approve/disaprove before commiting to mdd_data directory
         - Default is False
         - You can specify True by adding -e "test=true" when running the ansible playbook
         required: true
         type: bool
-    temp_dir
+    temp_dir:
         description: The directory where the elevate process will happen if is_test_run == True
         required: true
         type: str
@@ -71,13 +72,21 @@ EXAMPLES = r"""
 """
 
 import os
-import time
+import traceback
 from fnmatch import fnmatch
 import yaml
 import shutil
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 debug = []              # global variable for debugging
+
+try:
+    import yaml
+except ImportError:
+    HAS_YAML = False
+    YAML_IMPORT_ERROR = traceback.format_exc()
+else:
+    HAS_YAML = True
 
 
 class Elevate:
@@ -366,6 +375,10 @@ def main():
     )
 
     module = AnsibleModule(argument_spec=arguments, supports_check_mode=False)
+
+    if not HAS_YAML:
+        # Needs: from ansible.module_utils.basic import missing_required_lib
+        module.fail_json(msg=missing_required_lib('yaml'))
 
     Elevate(module.params['mdd_data_dir'], module.params['temp_dir'], module.params['is_test_run'])
     module.exit_json(changed=True, failed=False, debug=debug)
