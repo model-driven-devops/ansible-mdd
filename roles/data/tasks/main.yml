@@ -10,21 +10,34 @@
   vars:
     mdd_file_patterns: "{{ mdd_data_patterns }}"
 
-#
-# Merge in the data from the file if the tags match with the host (or are not specified)
-#
-- name: Gather the MDD Data
+- name: Define file_list_dict
   set_fact:
-    mdd_data_list: "{{ ( mdd_data_list | default([]) ) + [ mdd_file.mdd_data ] }}"
+    file_list_dict: []
+
+- name: Add all files to a list
+  set_fact:
+    file_list_dict: "{{ file_list_dict + file }}"
   loop: "{{ mdd_file_list }}"
-  when: ('all' in mdd_file.mdd_tags | default(['all'])) or (mdd_file.mdd_tags | intersect(tags | default([])))
   vars:
-    mdd_file: "{{ lookup('template', item ) | from_yaml }}"
+    file: "{{ lookup('template', item ) | from_yaml_all }}"
+
+# Merge in the data from the file if the tags match with the host (or are not specified)
+# We now have to call a module, because nested loops in ansible are messy
+# and not good for dealing with merged files (oc-*.yml with multiple files in it, each denoted by - - -)
+- name: Gather the MDD Data
+  gather_mdd_data:
+    mdd_file_data: "{{ file_list_dict }}"
+    tags: "{{ tags }}"
+  register: result
+
+- name: Set mdd_data_list
+  set_fact:
+    mdd_data_list: "{{ result.mdd_data }}"
 
 - name: Combine the MDD Data
   set_fact:
     mdd_data: "{{ mdd_data_list | ciscops.mdd.mdd_combine(recursive=True) }}"
   when: mdd_data_list is defined
 
-- include_tasks: netbox.yml 
+- include_tasks: netbox.yml
   when: netbox_api is defined or lookup('env', 'NETBOX_API', default=false)

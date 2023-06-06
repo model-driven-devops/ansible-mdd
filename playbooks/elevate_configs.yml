@@ -3,15 +3,10 @@
 - name: elevate configs
   hosts: localhost
   gather_facts: false
-  roles:
-    - ciscops.mdd.data
-
   vars:
     temp_dir: "{{ mdd_data_parent }}/temp_dir"
     is_test_run: "{{ test | default(false) }}"
-
   tasks:
-
     - name: elevate
       elevate_configs:
         mdd_data_dir: "{{ mdd_data_root }}"
