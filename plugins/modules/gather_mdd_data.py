@@ -59,13 +59,20 @@ EXAMPLES = r"""
 
 from ansible.module_utils.basic import AnsibleModule
 
+debug = []
 
 def gather(file_data, tags):
     """Gathers the data for a given tag"""
     result = []
 
     for file in file_data:
-        if 'all' in file['mdd_tags'] or tags == file['mdd_tags']:
+        all_tags = True
+        for tag in tags:
+          if tag not in file['mdd_tags']:
+            all_tags = False
+            break
+
+        if 'all' in file['mdd_tags'] or all_tags:
             result.append(file['mdd_data'])
 
     return result
@@ -81,7 +88,7 @@ def main():
 
     module = AnsibleModule(argument_spec=arguments, supports_check_mode=False)
     data = gather(module.params['mdd_file_data'], module.params['tags'])
-    module.exit_json(changed=True, failed=False, mdd_data=data)
+    module.exit_json(changed=True, failed=False, mdd_data=data, debug=debug)
 
 
 if __name__ == '__main__':

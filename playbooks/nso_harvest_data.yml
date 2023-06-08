@@ -18,7 +18,7 @@
 
       - name: Retrieve and set the device tags
         set_fact:
-            device_tags: "{{ device_inv_data.tags }}"
+            device_tags: "{{ [[device_inv_data.tags | sort | join(', ')][0]] }}"
 
       - name: Retrieve device tags
         debug:

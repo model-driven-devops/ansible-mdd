@@ -14,9 +14,9 @@
         temp_dir: "{{ temp_dir }}"
       register: elevate_result
 
-    - debug:
-        var: elevate_result.debug
-        # TODO this debug currently does not work
+    # - debug:
+    #     var: elevate_result.debug
+    #     # TODO this debug currently does not work
 
     - pause:
         prompt: "Is this result okay? (yes/no)"
