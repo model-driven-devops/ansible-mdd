@@ -363,7 +363,7 @@ class Elevate:
                 flattened_subsection = self.flatten_dict(config, "")
                 remove_keys = []
                 for key, val in flattened_subsection.items():
-                    if key in result_flattened:  # If we find the key in the config anchor dict
+                    if key in result_flattened and result_flattened[key] == val:  # If we find the key in the config anchor dict
 
                         for check_tag in data_config_tags:
                             if check_tag not in tags:
@@ -383,9 +383,9 @@ class Elevate:
             print_to_file = []
             if tags and result:
                 if sorted(tags) == sorted(self.all_tags):  # If all tags are present, change tags to "all"
-                    tags = "all"
+                    tags = ["all"]
 
-                result[self.tag_key] = [tags]
+                result[self.tag_key] = tags
                 print_to_file.append(result)  # Put the configs commonality at the front of the list
 
             current_configs = []
@@ -403,6 +403,9 @@ class Elevate:
                         if res_item[self.main_key] == mdd_data:
                             for tag in mdd_tags:
                                 res_item[self.tag_key].append(tag)
+
+            # Sort the configs by number of tags
+            print_to_file[1:] = sorted(print_to_file[1:], key=lambda x: len(x[self.tag_key]), reverse=True)
 
             # Write result back to the file
             with open(filepath, 'w', encoding='utf-8') as file:
