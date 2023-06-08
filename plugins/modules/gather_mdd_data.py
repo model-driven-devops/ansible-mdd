@@ -61,19 +61,20 @@ from ansible.module_utils.basic import AnsibleModule
 
 debug = []
 
+
 def gather(file_data, tags):
     """Gathers the data for a given tag"""
     result = []
 
     for file in file_data:
-        all_tags = True
-        for tag in tags:
-          if tag not in file['mdd_tags']:
-            all_tags = False
-            break
+      all_tags = True
+      for tag in tags:
+        if tag not in file['mdd_tags']:
+          all_tags = False
+          break
 
-        if 'all' in file['mdd_tags'] or all_tags:
-            result.append(file['mdd_data'])
+    if 'all' in file['mdd_tags'] or all_tags:
+      result.append(file['mdd_data'])
 
     return result
 

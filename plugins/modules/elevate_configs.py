@@ -363,7 +363,7 @@ class Elevate:
                 data_config_tags = config[self.tag_key]
                 flattened_subsection = self.flatten_dict(config, "")
                 remove_keys = []
-                for key, _ in flattened_subsection.items():
+                for key, val in flattened_subsection.items():
                     if key in result_flattened:  # If we find the key in the config anchor dict
 
                         for check_tag in data_config_tags:
