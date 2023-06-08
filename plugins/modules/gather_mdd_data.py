@@ -67,14 +67,14 @@ def gather(file_data, tags):
     result = []
 
     for file in file_data:
-      all_tags = True
-      for tag in tags:
-        if tag not in file['mdd_tags']:
-          all_tags = False
-          break
+        all_tags = True
+        for tag in tags:
+            if tag not in file['mdd_tags']:
+                all_tags = False
+                break
 
     if 'all' in file['mdd_tags'] or all_tags:
-      result.append(file['mdd_data'])
+        result.append(file['mdd_data'])
 
     return result
 
