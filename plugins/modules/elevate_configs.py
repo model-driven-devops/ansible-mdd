@@ -70,7 +70,6 @@ EXAMPLES = r"""
     - debug:
         var: result.debug
 """
-import time
 import os
 import traceback
 from fnmatch import fnmatch
