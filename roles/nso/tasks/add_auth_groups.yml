@@ -12,16 +12,14 @@
               remote-name: "{{ item.value.remote_name }}"
               remote-password: "{{ item.value.remote_password }}"
   loop: "{{ nso_auth_groups | dict2items }}"
+  no_log: true
 
-- name: Allow Older KEX Devices
+- name: Configure global settings
   cisco.nso.nso_config:
     url: "{{ nso_url }}"
     username: "{{ nso_username }}"
     password: "{{ nso_password }}"
     data:
       tailf-ncs:devices:
-        global-settings:
-          ssh-algorithms:
-            public-key:
-              - 'ssh-rsa'
+        global-settings: "{{ nso_global_settings }}"
   register: nso_config_results

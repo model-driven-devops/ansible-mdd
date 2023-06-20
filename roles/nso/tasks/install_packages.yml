@@ -38,6 +38,8 @@
             dest: "/tmp/{{ item.name }}"
           loop: "{{ nso_package_repos }}"
           connection: local
+          vars:
+            ansible_python_interpreter: "{{ hostvars['localhost'].ansible_python_interpreter}}"
 
         - name: Synchronize models to packages directory
           ansible.posix.synchronize:

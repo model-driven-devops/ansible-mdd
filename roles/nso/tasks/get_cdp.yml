@@ -1,0 +1,9 @@
+- name: Get CDP data
+  include_role:
+    name: ciscops.mdd.nso
+    tasks_from: exec_command
+  vars:
+    nso_exec_command: show cdp neighbors
+
+- set_fact:
+    devices: "{{ (devices | default([])) + [{'hostname': inventory_hostname, 'tags': tags if tags is defined else {}, 'cdp': nso_command_output}] }}"

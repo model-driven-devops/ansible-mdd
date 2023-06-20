@@ -15,9 +15,9 @@ import re
 # the list to a hash, then merge the hash.  If there is not match, the list
 # is replaced.
 list_key_map = {
-    "openconfig-network-instance:network-instance": "openconfig-network-instance:name",
+    "openconfig-network-instance:network-instance$": "openconfig-network-instance:name",
     "openconfig-network-instance:vlan": "openconfig-network-instance:vlan-id",
-    "^openconfig-interfaces:interfaces:openconfig-interfaces:interface": "openconfig-interfaces:name",
+    "^mdd:openconfig:openconfig-interfaces:interfaces:openconfig-interfaces:interface$": "openconfig-interfaces:name",
     ":openconfig-interfaces:interface$": "openconfig-network-instance:id",
     "openconfig-network-instance:static": "openconfig-network-instance:prefix",
     "openconfig-network-instance:protocol": "openconfig-network-instance:name",
@@ -150,7 +150,7 @@ def merge_hash(x, y, path, recursive=True, list_merge='replace'):
         if path == '':
             path = key
         else:
-            path = ":".join([path, key])
+            path = ":".join([str(item) for item in [path, key]])
 
         # if both x's element and y's element are dicts
         # recursively "combine" them or override x's with y's element

@@ -3,6 +3,7 @@
     command: "{{ check_command }}"
     parser:
         name: ansible.netcommon.pyats
+        command: "{{ parser_command | default(omit) }}"
   connection: network_cli
   register: cli_parse_results
 

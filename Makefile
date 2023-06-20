@@ -13,7 +13,7 @@ help: ## Display help
 	printf "\033[36m%-30s\033[0m %s\n", $$1, $$NF \
 	}' $(MAKEFILE_LIST)
 
-all: test build publish ## Setup python-viptela env and run tests
+all: clean build test ## Setup python-viptela env and run tests
 
 $(VENV): $(VENV_BIN)/activate ## Build virtual environment
 
