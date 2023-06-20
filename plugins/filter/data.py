@@ -17,7 +17,7 @@ import re
 list_key_map = {
     "openconfig-network-instance:network-instance$": "openconfig-network-instance:name",
     "openconfig-network-instance:vlan": "openconfig-network-instance:vlan-id",
-    "^mdd:openconfig:openconfig-interfaces:interfaces:openconfig-interfaces:interface": "openconfig-interfaces:name",
+    "^mdd:openconfig:openconfig-interfaces:interfaces:openconfig-interfaces:interface$": "openconfig-interfaces:name",
     ":openconfig-interfaces:interface$": "openconfig-network-instance:id",
     "openconfig-network-instance:static": "openconfig-network-instance:prefix",
     "openconfig-network-instance:protocol": "openconfig-network-instance:name",
