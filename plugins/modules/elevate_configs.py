@@ -661,7 +661,7 @@ def main():
         is_test_run=dict(required=True, type='bool'),
         temp_dir=dict(required=True, type='str'),
         ansible_inventory=dict(required=True, type='dict'),
-        mdd_data_patterns=dict(required=True, type='list')
+        mdd_data_patterns=dict(required=True, type='list', elements='str')
     )
 
     module = AnsibleModule(argument_spec=arguments, supports_check_mode=False)
