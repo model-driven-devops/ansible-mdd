@@ -52,6 +52,16 @@ options:
         description: The directory where the elevate process will happen if is_test_run == True
         required: true
         type: str
+    ansible_inventory:
+        description: Where the ansible inventory is located
+        required: true
+        type: dict
+        elements: str
+    mdd_data_patterns:
+        description: List of data patterns
+        required: true
+        type: list
+        elements: str
 """
 
 EXAMPLES = r"""
@@ -309,7 +319,7 @@ class Elevate:
                                         keys_to_remove.append(key)
 
                         for key in keys_to_remove:
-                            for _, item in enumerate(flattened_fc_dict):
+                            for x, item in enumerate(flattened_fc_dict):
                                 del item['data'][key]
 
                         result = self.unflatten_dict(common_keys)
@@ -451,7 +461,7 @@ class Elevate:
 
                     for meta_key, keys in keys_to_remove.items():
                         for key in keys:
-                            for _, item in enumerate(flattened_fc_dict[meta_key]):
+                            for x, item in enumerate(flattened_fc_dict[meta_key]):
                                 del item['data'][key]
                     for meta_tag, flattened_result in common_keys.items():
                         results[meta_tag] = self.unflatten_dict(flattened_result)
