@@ -7,16 +7,21 @@
     temp_dir: "{{ mdd_data_parent }}/temp_dir"
     is_test_run: "{{ test | default(false) }}"
   tasks:
+    - name: Get ansible inventory
+      command: "ansible-inventory -i {{ mdd_inventory_root }} --list"
+      register: ansible_inventory
+
     - name: elevate
       elevate_configs:
         mdd_data_dir: "{{ mdd_data_root }}"
         is_test_run: "{{ is_test_run }}"
         temp_dir: "{{ temp_dir }}"
+        ansible_inventory: "{{ ansible_inventory.stdout_lines | join('\n') }}"
+        mdd_data_patterns: "{{ mdd_data_patterns }}"
       register: elevate_result
 
-    # - debug:
-    #     var: elevate_result.debug
-    #     # TODO this debug currently does not work
+    - debug:
+        var: elevate_result.debug
 
     - pause:
         prompt: "Is this result okay? (yes/no)"

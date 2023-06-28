@@ -74,6 +74,7 @@ import os
 import traceback
 from fnmatch import fnmatch
 import shutil
+from contextlib import suppress
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 debug = []              # global variable for debugging
@@ -88,17 +89,26 @@ else:
 
 
 class Elevate:
-    def __init__(self, mdd_data_dir, temp_dir, is_test_run):
+    """Elevates the configs for a network"""
+
+    def __init__(self, mdd_data_dir, temp_dir, is_test_run, ansible_inventory, mdd_data_patterns):
 
         self.mdd_data_dir = mdd_data_dir
         self.is_test_run = is_test_run
         self.temp_dir = temp_dir
+        self.mdd_data_patterns = mdd_data_patterns
+        self.ansible_inventory = ansible_inventory['_meta']['hostvars']
         self.separator = '__*__'
         self.at_bottom_dir = False
-        self.created_files = []
+        self.created_files = {}
         self.all_tags = []
+        self.device_list = []
         self.tag_key = 'mdd_tags'
         self.main_key = 'mdd_data'
+        self.yaml_network_data = {}
+        self.forward_associated_tags = {}
+        self.current_level = 0
+        self.unelevated_files = {}
 
         self.elevate()
 
@@ -184,12 +194,34 @@ class Elevate:
         """Creates a one meta tag from the list joined by a separator"""
 
         # return self.separator.join(tags)
-        return tags[-1]  # TODO this is a hack, please fix : )
+        return tags[-1]
 
     def get_tags(self, meta_tag):
         """Creates a list from the meta tag by splitting it"""
 
         return meta_tag.split(self.separator)
+
+    def get_file_key(self, path, file, tag):
+        """Creates a key based on the path to the file and the associated tag"""
+
+        return path + '/' + file + self.separator + tag
+
+    def check_unable_elevate(self, parent_dir, file, tag):
+        """Determines to not elevate a file given a tag if the tag and associated file are in the self.unelevated_files dictionary with a lower level"""
+
+        for file_tag, levels in self.unelevated_files.items():
+            if parent_dir in file_tag and file in file_tag and tag in file_tag:
+                for level in levels:
+                    if level < self.current_level:
+                        return True
+        return False
+
+    def matches_file_pattern(self, filename):
+        """Determines if a file matches the mdd patterns"""
+        for pattern in self.mdd_data_patterns:
+            if fnmatch(filename, pattern):
+                return True
+        return False
 
     def elevate_level(self, rel_path):
         """Finds common configs in a directory's child directories and elevates them to the current directory"""
@@ -201,151 +233,272 @@ class Elevate:
         #       if base file name in here, grab config
         #   elevate config (single file) if applicable
 
+        path = os.path.join(self.mdd_data_dir, rel_path)
         if rel_path == "":  # don't iterate through top level directory
             return
+        if path not in self.forward_associated_tags:
+            return
 
-        path = os.path.join(self.mdd_data_dir, rel_path)
-
-        dir_files = [file for file in os.scandir(path) if file.is_dir()]
         tags = {}
+        parent_dir_name = path.rsplit("/", 1)[1]
+        par_dir = path.rsplit("/", 1)[0]
 
-        # Only do if file in all directories
-        # valid_files = {}
-        # first_time = True
-        # for dir in dir_files:  # obtain a base - where would do tags
-        #     # get tags
-        #     for file in os.scandir(dir.path):
-        #         if file.is_file() and fnmatch(file.name, '*.yml'):
-        #             if first_time:
-        #                 valid_files.setdefault(file.name, []).append(dir.name)
-        #             else:
-        #                 if file.name not in valid_files:
-        #                     continue
-        #                 else:
-        #                     valid_files[file.name].append(dir.name)
-
-        #             with open(file.path, 'r', encoding='utf-8') as data_file:
-        #                 data_dicts = yaml.safe_load_all(data_file)
-        #                 for data in data_dicts:
-        #                     if self.tag_key in data:
-        #                         tags.setdefault(self.get_meta_tag(data[self.tag_key]), []).append(dir)
-
-        #     first_time = False
-
-        # for filename, directories in list(valid_files.items()):
-        #     if len(directories) != len(dir_files):
-        #         del valid_files[filename]
-
-        for dir in dir_files:  # obtain a base - where would do tags
-            # get tags
-            for file in os.scandir(dir.path):
-                if file.is_file() and fnmatch(file.name, '*.yml'):
-                    with open(file.path, 'r', encoding='utf-8') as data_file:
-                        data_dicts = yaml.safe_load_all(data_file)
-                        for data in data_dicts:
-                            if self.tag_key in data:
-                                tags.setdefault(self.get_meta_tag(data[self.tag_key]), []).append(dir)  # TODO this fails when elevate is run sequentially
-                                if self.at_bottom_dir:
-                                    self.all_tags = sorted(list(set(self.all_tags).union(set(data[self.tag_key]))), key=lambda x: x.lower())
-                    break
-
-        # # If not all directories contain that tag, don't do it
-        # if not self.at_bottom_dir:
-        #     for meta_tag, directories in list(tags.items()):
-        #         if len(directories) != len(dir_files):
-        #             del tags[meta_tag]
-
-        for meta_tag, directories in tags.items():
-            # get anchor
-            anchor_files = []
-            for file in os.scandir(directories[-1].path):
-                if file.is_file() and fnmatch(file.name, '*.yml'):  # and file.name in valid_files: # TODO: ADDED
-                    anchor_files.append(file)
-
-            for anchor_file in anchor_files:  # files in anchor directory
-                configs = []
-                changed_files = {}
-                file_in_all_dirs = True
-
-                for dir in directories:  # iterate through original directory
-
-                    file_in_here = False
-                    for yml_file in os.scandir(dir.path):  # just here to get all files - like could do a anchor_file.name in dir
-                        if not yml_file.is_file():
+        if self.at_bottom_dir:
+            for tags, device_list in self.forward_associated_tags[path].items():
+                anchor_device = path + "/" + device_list[0]
+                if len(device_list) == 1:
+                    # if it's the only device with that tag just elevate everything
+                    for file in os.scandir(anchor_device):
+                        if not self.matches_file_pattern(file.name):
                             continue
 
-                        if anchor_file.name in yml_file.name and fnmatch(yml_file.name, '*.yml'):  # TODO: add matches pattern?
-                            with open(yml_file.path, 'r', encoding='utf-8') as data_file:
-                                data_dicts = yaml.safe_load_all(data_file)
-                                for data in data_dicts:
-                                    if self.tag_key in data and self.get_meta_tag(data[self.tag_key]) == meta_tag:
-                                        configs.append(data)
-                                        changed_files[yml_file.path] = {'data': data, 'filename': yml_file.name}
-                                        break
-                                file_in_here = True
-                            break
+                        file_name = str(file.name)
+                        destination_path = path + "/" + file_name
 
-                    if not file_in_here:  # make sure the file was in all directories # TODO: Modify for tags
-                        file_in_all_dirs = False
-                        break
+                        if os.path.exists(destination_path): # append to file
+                            with open(destination_path, 'a', encoding='utf-8') as write_file, open(file.path, 'r', encoding='utf-8') as read_file:
+                                yaml.safe_dump_all(yaml.safe_load_all(read_file), write_file, sort_keys=False, explicit_start=True)
 
-                if not file_in_all_dirs:
-                    continue
+                        else: # copy everything
+                            with open(destination_path, 'a', encoding='utf-8') as write_file, open(file.path, 'r', encoding='utf-8') as read_file:
+                                shutil.copyfileobj(read_file, write_file)
 
-                # get common configs
-                result = self.find_common_configs(configs)
+                        # remove old file
+                        os.remove(file.path)
+                        self.created_files[destination_path] = None
 
-                # Delete common configs from lower config files
-                flattened_result = self.flatten_dict(result, "")
-                for file_path, config in changed_files.items():  # remove from old file
-                    config_data = self.flatten_dict(config['data'], "")
+                        self.forward_associated_tags.setdefault(par_dir, {}).setdefault(path, {}).setdefault(file_name, []).append(tags)
 
-                    # delete common configs
-                    for key in flattened_result:
-                        if key in config_data:  # remove any elevated configs
-                            del config_data[key]
+                else: # not a singular file
+                    for file in os.scandir(anchor_device):
 
-                    # empty - delete file
-                    write_configs = []
-                    with open(file_path, 'r') as file:
-                        data_configs = yaml.safe_load_all(file)
+                        if not self.matches_file_pattern(file.name):
+                            continue
 
-                        for data in data_configs:
-                            if config['data'] == data:
-                                if bool(config_data):
-                                    config_data = self.unflatten_dict(config_data)
-                                    config_data[self.tag_key] = self.get_tags(meta_tag)
-                                    write_configs.append(config_data)
+                        file_name = file.name
+                        file_path = file.path
+                        flattened_fc_dict = []
+
+                        with open(file_path, 'r', encoding='utf-8') as read_file:
+                            file_data = yaml.safe_load(read_file) # know only 1 document in file
+                            flattened_fc_dict.append({ "data" : self.flatten_dict(file_data, ""), "file" : file_path })
+                        del file_data
+
+                        for device in device_list[1:]:
+                            device_path = path + "/" + device + "/" + file_name # we are guessing the file exists somewhere else
+                            if os.path.exists(device_path):
+                                with open(device_path, 'r', encoding='utf-8') as read_file:
+                                    file_data = yaml.safe_load(read_file)
+                                    flattened_fc_dict.append({ "data" : self.flatten_dict(file_data, ""), "file" : device_path })
+                                del file_data
+
+                        common_keys = {}
+                        keys_to_remove = []
+                        for dict_item in flattened_fc_dict[1:]:
+                            for key in dict_item['data'].keys():
+                                if key in flattened_fc_dict[0]['data'] and dict_item['data'][key] == flattened_fc_dict[0]['data'][key]:
+                                    common_keys.update({key : dict_item['data'][key]})
+                                    if key != self.tag_key:
+                                        keys_to_remove.append(key)
+
+                        for key in keys_to_remove:
+                            for _, item in enumerate(flattened_fc_dict):
+                                del item['data'][key]
+
+                        result = self.unflatten_dict(common_keys)
+                        destination_path = path + "/" + file_name
+                        if self.main_key in result:
+                            with open(destination_path, 'a', encoding='utf-8') as write_file:
+                                yaml.safe_dump(result, write_file, sort_keys=False, explicit_start=True)
+                            self.created_files[destination_path] = None
+                        else:
+                            self.unelevated_files.setdefault(self.get_file_key(path, file_name, tags), []).append(self.current_level)
+
+                        for val in flattened_fc_dict:
+                            val_data = self.unflatten_dict(val["data"])
+
+                            if self.main_key not in val_data:
+                                os.remove(val['file'])
+                                with suppress(KeyError):
+                                    del self.created_files[val['file']]
                             else:
-                                write_configs.append(data)
+                                with open(val['file'], 'w', encoding='utf-8') as write_file:
+                                    yaml.safe_dump(val_data, write_file, sort_keys=False, explicit_start=True)
 
-                    if len(write_configs) == 0:
-                        os.remove(file_path)
-                        if file_path in self.created_files:
-                            self.created_files.remove(file_path)
-                    else:
-                        with open(file_path, 'w') as file:
-                            yaml.safe_dump_all(write_configs, file, sort_keys=False, explicit_start=True)
+                        self.forward_associated_tags.setdefault(par_dir, {}).setdefault(path, {}).setdefault(file_name, []).append(tags)
 
-                if self.tag_key in result:
-                    del result[self.tag_key]
+        else:
+            dirs_list = []
+            for dirs in self.forward_associated_tags[path].keys():
+                dirs_list.append(dirs)
 
-                if bool(result):  # write to elevated file
-                    file_path = str(path) + "/" + str(anchor_file.name)
-                    open_type = 'w'
-                    if os.path.exists(file_path):
-                        open_type = 'a'
-                    else:
-                        self.created_files.append(file_path)
-                    with open(file_path, open_type) as file:
-                        result[self.tag_key] = self.get_tags(meta_tag)
-                        file.write("---\n")
-                        yaml.safe_dump(result, file, sort_keys=False)
+            anchor_dir = dirs_list[0]
+            if len(dirs_list) == 1: # solo, auto elevate everything
+                for file in self.forward_associated_tags[path][anchor_dir].keys():
+                    tags = self.forward_associated_tags[path][anchor_dir][file]
+
+                    if self.check_unable_elevate(parent_dir_name, file, tags[0]):
+                        continue
+
+                    file_path = anchor_dir + "/" + file
+                    destination_path = path + "/" + file
+
+                    if os.path.exists(destination_path): # append
+                        with open(destination_path, 'a', encoding='utf-8') as write_file, open(file_path, 'r', encoding='utf-8') as read_file:
+                            yaml.safe_dump_all(yaml.safe_load_all(read_file), write_file, sort_keys=False, explicit_start=True)
+                    else: # just copy files
+                        with open(destination_path, 'a', encoding='utf-8') as write_file, open(file_path, 'r', encoding='utf-8') as read_file:
+                            shutil.copyfileobj(read_file, write_file)
+
+                    # remove old file
+                    os.remove(file_path)
+                    self.created_files[destination_path] = None
+                    with suppress(ValueError, AttributeError):
+                        del self.created_files[file_path]
+
+                    self.forward_associated_tags.setdefault(par_dir, {}).setdefault(path, {}).setdefault(file, []).extend(tags)
+
+            else:
+                for file in self.forward_associated_tags[path][anchor_dir]:
+
+                    if not self.matches_file_pattern(file):
+                        continue
+
+                    file_tags = self.forward_associated_tags[path][anchor_dir][file]
+                    fc_solo = []
+                    flattened_fc_dict = {}
+                    files_to_delete = []
+                    configs_to_write = {}
+                    solo_auto_delete = True
+
+                    # get all common tags between the files
+                    common_tags = file_tags
+                    for dir_item in dirs_list[1:]:
+                        if file not in self.forward_associated_tags[path][dir_item]:
+                            continue
+                        comp_file_tags = self.forward_associated_tags[path][dir_item][file]
+                        common_tags = [tag for tag in common_tags if tag in comp_file_tags]
+
+                    file_path = anchor_dir + "/" + file
+                    with open(file_path, 'r', encoding='utf-8') as read_file:
+                        file_data = yaml.safe_load_all(read_file)
+                        for data in file_data:
+                            if self.check_unable_elevate(parent_dir_name, file, data[self.tag_key][0]):
+                                # Do not try to elevate something if the same config was not elevated somewhere else
+                                configs_to_write.setdefault(file_path, []).append(data)
+                                solo_auto_delete = False
+
+                            elif data[self.tag_key][0] in common_tags:
+                                # Put in dictionary to be compared
+                                flattened_fc_dict.setdefault(data[self.tag_key][0], []).append({ "data" : self.flatten_dict(data, ""), "file" : file_path })
+                                solo_auto_delete = False
+
+                            else: # Parts not common so just elevate this stuff
+                                fc_solo.append({ "data" : data, "file" : file_path })
+
+                        del file_data
+
+                        if solo_auto_delete:
+                            files_to_delete.append(file_path)
+
+                    for dir_item in dirs_list[1:]:
+                        # we are guessing the file exists somewhere else?
+                        # but also maybe not cause we kinda know it exists cause we made it
+                        # I think this approach is safe
+                        if file not in self.forward_associated_tags[path][dir_item]:
+                            continue
+
+                        comp_file_tags = self.forward_associated_tags[path][dir_item][file]
+                        common_tags = [tag for tag in file_tags if tag in comp_file_tags]
+
+                        file_path_comp = dir_item + "/" + file
+                        with open(file_path_comp, 'r', encoding='utf-8') as read_file:
+                            file_data = yaml.safe_load_all(read_file)
+                            for data in file_data:
+                                if self.check_unable_elevate(parent_dir_name, file, data[self.tag_key][0]):
+                                    # Do not try to elevate something if the same config was not elevated somewhere else
+                                    configs_to_write.setdefault(file_path_comp, []).append(data)
+                                    solo_auto_delete = False
+                                elif data[self.tag_key][0] in common_tags: # Can we safely assume it will only have 1 tag? Ask Kris
+                                    flattened_fc_dict.setdefault(data[self.tag_key][0], []).append({ "data" : self.flatten_dict(data, ""), "file" : file_path_comp })
+                                    solo_auto_delete = False
+                                else:
+                                    fc_solo.append({ "data" : data, "file" : file_path_comp })
+
+                            del file_data
+
+                            if solo_auto_delete:
+                                files_to_delete.append(file_path_comp)
+
+                    common_keys = {}
+                    keys_to_remove = {}
+                    results = {}
+                    for meta_tag, tagged_configs in flattened_fc_dict.items():
+                        for config in tagged_configs[1:]:
+                            for key in config['data'].keys():
+                                if key in tagged_configs[0]['data'] and config['data'][key] == tagged_configs[0]['data'][key]:
+                                    common_keys.setdefault(meta_tag, {}).update({key : config['data'][key]})
+                                    if key != self.tag_key:
+                                       keys_to_remove.setdefault(meta_tag, []).append(key)
+
+                    for meta_key, keys in keys_to_remove.items():
+                        for key in keys:
+                            for _, item in enumerate(flattened_fc_dict[meta_key]):
+                                del item['data'][key]
+                    for meta_tag, flattened_result in common_keys.items():
+                        results[meta_tag] = self.unflatten_dict(flattened_result)
+                        results[meta_tag][self.tag_key] = [meta_tag]
+
+                    tags = []
+                    destination_path = path + "/" + file
+                    with open(destination_path, 'a', encoding='utf-8') as write_file:
+                        self.created_files[destination_path] = None
+                        for meta_tag, config in results.items():
+                            if self.main_key in config:
+                                yaml.safe_dump(config, write_file, sort_keys=False, explicit_start=True)
+                                tags.extend(config['mdd_tags'])
+                            else:
+                                self.unelevated_files.setdefault(self.get_file_key(path, file, meta_tag), []).append(self.current_level)
+                        for config in fc_solo:
+                            yaml.safe_dump(config['data'], write_file, sort_keys=False, explicit_start=True)
+                            tags.extend(config['data']['mdd_tags'])
+
+                    self.forward_associated_tags.setdefault(par_dir, {}).setdefault(path, {}).setdefault(file, []).extend(tags)
+
+                    # Below handles with removing stuff out of the old files
+                    # Determine if any part of the config left in each config
+                    for meta_tag, dictionaries in flattened_fc_dict.items():
+                        for val in dictionaries:
+                            val_data = self.unflatten_dict(val["data"])
+                            configs_to_write.setdefault(val['file'], [])
+
+                            if self.main_key in val_data:
+                                configs_to_write[val['file']].append(val_data)
+
+                    # write back configs or delete file
+                    for file_path_write, configs in configs_to_write.items():
+                        if len(configs) == 0: # nothing to write back - remove file
+                            os.remove(file_path_write)
+                            with suppress(KeyError):
+                                del self.created_files[file_path_write]
+                        else:
+                            with open(file_path_write, 'w', encoding='utf-8') as write_file:
+                                yaml.safe_dump_all(configs, write_file, sort_keys=False, explicit_start=True)
+
+                    # Remove all unnecessary files
+                    for del_file in files_to_delete:
+                        os.remove(del_file)
+                        with suppress(KeyError):
+                            del self.created_files[del_file]
+
+        del self.forward_associated_tags[path]
 
     # This method is stupd and complicated so I will explain it
     def aggregate_results(self, filepaths):
         """Goes through each file and combines the results"""
+
         for filepath in filepaths:  # Iterate through all the files we just creatd
+
             data_configs = []
             with open(filepath, 'r', encoding='utf-8') as file:
                 configs = yaml.safe_load_all(file)
@@ -411,6 +564,23 @@ class Elevate:
             with open(filepath, 'w', encoding='utf-8') as file:
                 yaml.safe_dump_all(print_to_file, file, explicit_start=True, sort_keys=False)
 
+    def associate_tags(self):
+        """Creates a dictionary of tags with devices that have those tags"""
+
+        for device_data in self.device_list:
+            device = device_data['name']
+            path = device_data['path']
+            if device in self.ansible_inventory and 'tags' in self.ansible_inventory[device]:
+                tag = ", ".join(sorted(self.ansible_inventory[device]['tags']))
+                parent_dir = '/'.join(path.split('/')[:-1])
+
+                if tag not in self.all_tags:
+                    self.all_tags.append(tag)
+
+                self.forward_associated_tags.setdefault(parent_dir, {}).setdefault(tag, []).append(device)
+
+        del self.ansible_inventory
+
     def iterate_directory(self, child_dict):
         """Iterates through the network's directory from bottom up"""
 
@@ -426,12 +596,15 @@ class Elevate:
                 # means is empty and therefore hit bottom directory
                 hit_bottom_dir = True
                 self.at_bottom_dir = True
+                self.current_level = 0
+                # append to the device list
             elif not hit_bottom_dir:
                 # continue till hit bottom dir
                 parent_keys.append(key)
                 self.iterate_directory_helper(value, parent_keys, hit_bottom_dir)  # iterate through child dictionaries
                 parent_keys.pop()
         self.elevate_level(self.get_parent_path(parent_keys))
+        self.current_level += 1
         hit_bottom_dir = False
         self.at_bottom_dir = False
 
@@ -440,11 +613,12 @@ class Elevate:
 
         result = {}
         if os.path.isdir(path):
-            files = os.listdir(path)
-            for file in files:
-                sub_path = os.path.join(path, file)
-                if os.path.isdir(sub_path):
-                    result[file] = self.generate_directory_structure(sub_path)
+            for file in os.scandir(path):
+                if file.is_dir():
+                    gen_result =  self.generate_directory_structure(file.path)
+                    if not gen_result:
+                        self.device_list.append({"name": file.name, 'path': file.path})
+                    result[file.name] = gen_result
         return result
 
     def elevate(self):
@@ -454,14 +628,11 @@ class Elevate:
         self.remove_and_create_temp_dir()
 
         # Recreated the directory structure as a dictionary
-        yaml_network_data = self.generate_directory_structure(self.mdd_data_dir)
+        self.yaml_network_data = self.generate_directory_structure(self.mdd_data_dir)
 
-        # Elevate the configs
-        self.iterate_directory(yaml_network_data)
-
-        # Clean the elevated configs, aggregating common results
-        # like configs in each file will be move to the top
-        # and matching configs will be merged afterwards
+        # Associate tags with their devices
+        self.associate_tags()
+        self.iterate_directory(self.yaml_network_data)
         self.aggregate_results(self.created_files)
 
 
@@ -471,7 +642,9 @@ def main():
     arguments = dict(
         mdd_data_dir=dict(required=True, type='str'),
         is_test_run=dict(required=True, type='bool'),
-        temp_dir=dict(required=True, type='str')
+        temp_dir=dict(required=True, type='str'),
+        ansible_inventory=dict(required=True, type='dict'),
+        mdd_data_patterns=dict(required=True, type='list')
     )
 
     module = AnsibleModule(argument_spec=arguments, supports_check_mode=False)
@@ -480,7 +653,7 @@ def main():
     if not HAS_YAML:
         module.fail_json(msg=missing_required_lib('yaml'))
 
-    Elevate(module.params['mdd_data_dir'], module.params['temp_dir'], module.params['is_test_run'])
+    Elevate(module.params['mdd_data_dir'], module.params['temp_dir'], module.params['is_test_run'], module.params['ansible_inventory'], module.params['mdd_data_patterns'])
     module.exit_json(changed=True, failed=False, debug=debug)
 
 
