@@ -56,7 +56,6 @@ options:
         description: Where the ansible inventory is located
         required: true
         type: dict
-        elements: str
     mdd_data_patterns:
         description: List of data patterns
         required: true
