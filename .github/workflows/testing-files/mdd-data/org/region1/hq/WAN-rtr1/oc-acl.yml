@@ -1,0 +1,12 @@
+---
+mdd_data:
+  mdd:openconfig:
+    openconfig-acl:acl:
+      openconfig-acl:acl-sets:
+        openconfig-acl:acl-set: []
+      openconfig-acl:interfaces:
+        openconfig-acl:interface: []
+      openconfig-acl-ext:lines:
+        openconfig-acl-ext:line: []
+mdd_tags:
+- WAN_router

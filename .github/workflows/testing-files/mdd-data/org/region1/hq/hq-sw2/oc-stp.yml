@@ -1,0 +1,25 @@
+---
+mdd_data:
+  mdd:openconfig:
+    openconfig-spanning-tree:stp:
+      openconfig-spanning-tree:global:
+        openconfig-spanning-tree:config:
+          openconfig-spanning-tree:enabled-protocol:
+          - PVST
+          openconfig-spanning-tree:loop-guard: false
+          openconfig-spanning-tree:bpdu-guard: false
+          openconfig-spanning-tree:bpdu-filter: false
+          openconfig-spanning-tree-ext:uplinkfast: false
+          openconfig-spanning-tree-ext:backbonefast: false
+      openconfig-spanning-tree:interfaces:
+        openconfig-spanning-tree:interface: []
+      openconfig-spanning-tree:rapid-pvst:
+        openconfig-spanning-tree:vlan: []
+      openconfig-spanning-tree-ext:pvst:
+        openconfig-spanning-tree-ext:vlan: []
+      openconfig-spanning-tree:mstp:
+        openconfig-spanning-tree:config: {}
+        openconfig-spanning-tree:mst-instances:
+          openconfig-spanning-tree:mst-instance: []
+mdd_tags:
+- switch

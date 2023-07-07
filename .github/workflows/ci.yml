@@ -109,6 +109,14 @@ jobs:
           run: ls -la
           working-directory: ${{env.base_path}}/${{env.COLLECTIONS_PATHS}}
 
+        - name: Remove the current reference topology
+          run: rm -r mdd-data
+          working-directory: ${{env.base_path}}
+
+        - name: Copy in testing reference topology
+          run: cp -r .github/workflows/testing-files/mdd-data ./
+          working-directory: ${{env.base_path}}
+
         - name: Run show
           run: ansible-playbook ciscops.mdd.show
           working-directory: ${{env.base_path}}
