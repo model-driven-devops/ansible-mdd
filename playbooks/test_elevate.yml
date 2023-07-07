@@ -1,0 +1,10 @@
+- name: Test elevate output on reference topology
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Run Clean
+      command: pwd
+      register: result
+
+    - debug:
+        var: result
