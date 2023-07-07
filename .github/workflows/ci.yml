@@ -67,9 +67,13 @@ jobs:
         run: ls
         working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}
 
+      - name: Install collection in correct place
+        run: ansible-galaxy collection install -r requirements.yml
+        working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}
+
       - name: Run elevate test
         run: ls
-        working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/playbooks
+        working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}
 
       # - name: Run Show
       #   run: ansible-playbook show.yml
