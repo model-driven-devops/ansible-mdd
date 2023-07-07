@@ -84,9 +84,6 @@ jobs:
         run: ansible-playbook ciscops.mdd.show
         working-directory: elevate_test/mdd
 
-
-
-
       # - name: Checkout mdd repository
       #   uses: actions/checkout@v2
       #   with:
