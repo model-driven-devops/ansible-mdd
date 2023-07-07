@@ -60,20 +60,24 @@ jobs:
       - name: Checkout mdd repository
         uses: actions/checkout@v2
         with:
-          repository: model-driven-devops/mdd
+          repository: model-driven-devops/mdd.git
           path: ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}
 
-      - name: Run elevate test
+      - name: Run ls
         run: ls
-        working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}
+        working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
 
-      - name: Install collection in correct place
+      - name: Install collection
         run: ansible-galaxy collection install -r requirements.yml
-        working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}
+        working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
 
-      - name: Run elevate test
+      - name: Run ls
         run: ls
-        working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}
+        working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
+
+      - name: Run show
+        run: ansible-playbook ciscops.mdd.show
+        working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
 
       # - name: Run Show
       #   run: ansible-playbook show.yml
