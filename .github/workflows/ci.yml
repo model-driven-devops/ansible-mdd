@@ -67,10 +67,24 @@ jobs:
         run: ls
         working-directory: elevate_test/mdd
 
-      - name: Check out code
-        uses: actions/checkout@v2
-        with:
-          path: elevate_test/mdd/ansible_collections
+      # - name: Check out code
+      #   uses: actions/checkout@v2
+      #   with:
+      #     path: elevate_test/mdd/ansible_collections
+
+      # - name: Install collection
+      #   run: ansible-galaxy collection install -r requirements.yml
+      #   working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
+
+      - name: Install current collection
+        run: ansible-galaxy collection install https://github.com/${{ github.repository }}/tree/${{ github.ref }}
+        working-directory: elevate_test/mdd
+
+        # https://github.com/model-driven-devops/ansible-mdd/tree/ppajersk-dev
+
+        #https://github.com/model-driven-devops/ansible-mdd.git,ppajersk-dev
+       #/ansible_collections/${{ env.NAMESPACE }}/${{ env.COLLECTION_NAME }}/mdd
+
 
       - name: Run ls
         run: ls
@@ -80,9 +94,9 @@ jobs:
         run: ls
         working-directory: elevate_test/mdd/ansible_collections
 
-      - name: Run ls
-        run: ls
-        working-directory: elevate_test/mdd/ansible_collections/playbooks
+      # - name: Run ls
+      #   run: ls
+      #   working-directory: elevate_test/mdd/ansible_collections/playbooks
 
       # - name: Run show
       #   # run: ansible-playbook ciscops.mdd.show
