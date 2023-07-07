@@ -68,8 +68,11 @@ jobs:
         working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
 
       - name: Install collection
-        run: ansible-galaxy collection install -r requirements.yml
-        working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
+        uses: actions/checkout@v2
+        with:
+          path: ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
+        #run: ansible-galaxy collection install -r requirements.yml
+        #working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
 
       - name: Run ls
         run: ls
