@@ -74,7 +74,6 @@ jobs:
       ANSIBLE_COLLECTIONS_PATHS: ./ansible_collections
       base_path: elevate_test/mdd
     steps:
-        ## my stuff VVV
         - name: Checkout model-driven-devops/mdd repository
           uses: actions/checkout@v2
           with:
@@ -103,11 +102,11 @@ jobs:
 
         - name: Run ls
           run: ls -la
-          working-directory: ${{env.base_path}}
+          working-directory: ${{env.base_path}}/.github
 
         - name: Run ls
           run: ls -la
-          working-directory: ${{env.base_path}}/${{env.COLLECTIONS_PATHS}}
+          working-directory: ${{env.base_path}}/${{env.COLLECTIONS_PATHS}}/.github
 
         - name: Remove the current reference topology
           run: rm -r mdd-data
@@ -115,7 +114,11 @@ jobs:
 
         - name: Ls to find mdd-data
           run: ls -la
-          working-directory: ${{env.base_path}}/${{env.COLLECTIONS_PATHS}}/.github/testing-files
+          working-directory: ${{env.base_path}}/.github
+
+        - name: Ls to find mdd-data
+          run: ls -la
+          working-directory: ${{env.base_path}}/.github
         # .github/workflows/testing-files/mdd-data
         # - name: Copy in testing reference topology
         #   run: cp -r .github/workflows/testing-files/mdd-data ./
