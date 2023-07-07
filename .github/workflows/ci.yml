@@ -115,7 +115,7 @@ jobs:
 
         - name: Ls to find mdd-data
           run: ls -la
-          working-directory: ${{env.base_path}}/.github/workflows
+          working-directory: ${{env.base_path}}/${{env.COLLECTIONS_PATHS}}/.github/workflows
         # .github/workflows/testing-files/mdd-data
         # - name: Copy in testing reference topology
         #   run: cp -r .github/workflows/testing-files/mdd-data ./
