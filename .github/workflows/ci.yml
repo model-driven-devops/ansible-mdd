@@ -80,10 +80,14 @@ jobs:
         run: ls
         working-directory: elevate_test/mdd/ansible_collections
 
-      - name: Run show
-        # run: ansible-playbook ciscops.mdd.show
-        run: ansible-playbook elevate_test/mdd/ansible_collections/playbooks/show.yml
-        working-directory: elevate_test/mdd
+      - name: Run ls
+        run: ls
+        working-directory: elevate_test/mdd/ansible_collections/playbooks
+
+      # - name: Run show
+      #   # run: ansible-playbook ciscops.mdd.show
+      #   run: ansible-playbook elevate_test/mdd/ansible_collections/playbooks/show.yml
+      #   working-directory: elevate_test/mdd
 
       # - name: Checkout mdd repository
       #   uses: actions/checkout@v2
