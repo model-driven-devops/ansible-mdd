@@ -59,4 +59,9 @@ jobs:
 
       - name: Run elevate test
         run: pwd
+        working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}
+
+      - name: Run elevate test
+        run: ansible-playbook ${{env.NAMESPACE}}.${{env.COLLECTION_NAME}}.test_elevate.yml
+        working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}
         #ansible-playbook ${{env.NAMESPACE}}.${{env.COLLECTION_NAME}}.test_elevate.yml
