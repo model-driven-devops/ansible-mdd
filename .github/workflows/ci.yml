@@ -11,6 +11,7 @@ env:
   NAMESPACE: ciscops
   COLLECTION_NAME: mdd
 
+
 jobs:
 ###
 # Sanity tests (REQUIRED)
@@ -57,83 +58,120 @@ jobs:
         run: ansible-test sanity --docker -v --color
         working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}
 
-      - name: Checkout mdd repository
-        uses: actions/checkout@v2
-        with:
-          repository: model-driven-devops/mdd
-          path: elevate_test/mdd
+  test_elevate:
+    name: Test elevate (Ⓐ${{ matrix.ansible }})
+    strategy:
+      matrix:
+        ansible:
+          # It's important that Sanity is tested against all stable-X.Y branches
+          # Testing against `devel` may fail as new tests are added.
+          # - stable-2.9 # Only if your collection supports Ansible 2.9
+          - stable-2.13
+          - stable-2.14
+          - devel
+    runs-on: ubuntu-latest
+    env:
+      ANSIBLE_COLLECTIONS_PATHS: ./ansible_collections
+      base_path: elevate_test/mdd
+    steps:
+        ## my stuff VVV
+        - name: Checkout model-driven-devops/mdd repository
+          uses: actions/checkout@v2
+          with:
+            repository: model-driven-devops/mdd
+            path: ${{env.base_path}}
 
-      - name: Run ls
-        run: ls
-        working-directory: elevate_test/mdd
+        - name: Run ls
+          run: ls -la
+          working-directory: ${{env.base_path}}
 
-      # - name: Check out code
-      #   uses: actions/checkout@v2
-      #   with:
-      #     path: elevate_test/mdd/ansible_collections
+        - name: Install collection from model-driven-devops/mdd/requirements.yml
+          run: ansible-galaxy collection install -r requirements.yml
+          working-directory: ${{env.base_path}}
 
-      # - name: Install collection
-      #   run: ansible-galaxy collection install -r requirements.yml
-      #   working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
+        - name: Galaxy collection list
+          run: ansible-galaxy collection list
+          working-directory: ${{env.base_path}}
 
-      - name: Install current collection
-        run: ansible-galaxy collection install https://github.com/${{ github.repository }}/tree/${{ github.ref }}
-        working-directory: elevate_test/mdd
+        - name: Remove exiting ansible-mdd collection
+          run: rm -rf ${{env.base_path}}/${{env.ANSIBLE_COLLECTIONS_PATHS}}/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}
 
-        # https://github.com/model-driven-devops/ansible-mdd/tree/ppajersk-dev
+        - name: Install current branch ansible-mdd collection
+          uses: actions/checkout@v2
+          with:
+            path: ${{env.base_path}}/${{env.ANSIBLE_COLLECTIONS_PATHS}}/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}
 
-        #https://github.com/model-driven-devops/ansible-mdd.git,ppajersk-dev
-       #/ansible_collections/${{ env.NAMESPACE }}/${{ env.COLLECTION_NAME }}/mdd
+        - name: Run ls
+          run: ls -la
+          working-directory: ${{env.base_path}}
 
+        - name: Run ls
+          run: ls -la
+          working-directory: ${{env.base_path}}/${{env.COLLECTIONS_PATHS}}
 
-      - name: Run ls
-        run: ls
-        working-directory: elevate_test/mdd
+        - name: Run show
+          run: ansible-playbook ciscops.mdd.show
+          working-directory: ${{env.base_path}}
 
-      - name: Run ls
-        run: ls
-        working-directory: elevate_test/mdd/ansible_collections
+        # - name: Install collection
+        #   run: ansible-galaxy collection install -r requirements.yml
+        #   working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
 
-      # - name: Run ls
-      #   run: ls
-      #   working-directory: elevate_test/mdd/ansible_collections/playbooks
+        # - name: Install current collection
+        #                                          https://github.com/model-driven-devops/ansible-mdd.git,ppajersk-dev
+        #   run: ansible-galaxy collection install https://github.com/${{ github.repository }}/tree/${{ github.ref }}
+        #   working-directory: elevate_test/mdd
 
-      # - name: Run show
-      #   # run: ansible-playbook ciscops.mdd.show
-      #   run: ansible-playbook elevate_test/mdd/ansible_collections/playbooks/show.yml
-      #   working-directory: elevate_test/mdd
+          # https://github.com/model-driven-devops/ansible-mdd/tree/ppajersk-dev
 
-      # - name: Checkout mdd repository
-      #   uses: actions/checkout@v2
-      #   with:
-      #     repository: model-driven-devops/mdd
-      #     path: ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
+          #https://github.com/model-driven-devops/ansible-mdd.git,ppajersk-dev
+        #/ansible_collections/${{ env.NAMESPACE }}/${{ env.COLLECTION_NAME }}/mdd
 
-      # - name: Run ls
-      #   run: ls
-      #   working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
+          # - name: Check out code
+        #   uses: actions/checkout@v2
+        #   with:
+        #     path: elevate_test/mdd/ansible_collections
 
-      # - name: Install collection
-      #   run: ansible-galaxy collection install -r requirements.yml
-      #   working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
+        # - name: Run ls
+        #   run: ls
+        #   working-directory: elevate_test/mdd/ansible_collections/playbooks
 
-      # - name: Run ls
-      #   run: ls
-      #   working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
+        # - name: Run show
+        #   # run: ansible-playbook ciscops.mdd.show
+        #   run: ansible-playbook elevate_test/mdd/ansible_collections/playbooks/show.yml
+        #   working-directory: elevate_test/mdd
 
-      # - name: Run show
-      #   run: ansible-playbook ciscops.mdd.show
-      #   working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
+        # - name: Checkout mdd repository
+        #   uses: actions/checkout@v2
+        #   with:
+        #     repository: model-driven-devops/mdd
+        #     path: ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
 
-      # - name: Run Show
-      #   run: ansible-playbook show.yml
-      #   working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/playbooks
+        # - name: Run ls
+        #   run: ls
+        #   working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
 
-      # - name: Run elevate test
-      #   run: ls
-      #   working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/playbooks
+        # - name: Install collection
+        #   run: ansible-galaxy collection install -r requirements.yml
+        #   working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
 
-      # - name: Run elevate test
-      #   run: ansible-playbook test_elevate.yml
-      #   working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/playbooks
-        #ansible-playbook ${{env.NAMESPACE}}.${{env.COLLECTION_NAME}}.test_elevate.yml
+        # - name: Run ls
+        #   run: ls
+        #   working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
+
+        # - name: Run show
+        #   run: ansible-playbook ciscops.mdd.show
+        #   working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
+
+        # - name: Run Show
+        #   run: ansible-playbook show.yml
+        #   working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/playbooks
+
+        # - name: Run elevate test
+        #   run: ls
+        #   working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/playbooks
+
+        # - name: Run elevate test
+        #   run: ansible-playbook test_elevate.yml
+        #   working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/playbooks
+          #ansible-playbook ${{env.NAMESPACE}}.${{env.COLLECTION_NAME}}.test_elevate.yml
