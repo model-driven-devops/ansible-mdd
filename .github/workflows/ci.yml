@@ -60,7 +60,7 @@ jobs:
       - name: Checkout mdd repository
         uses: actions/checkout@v2
         with:
-          repository: https://github.com/model-driven-devops/mdd
+          repository: model-driven-devops/mdd
           path: ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}
 
       - name: Run Show
