@@ -82,7 +82,7 @@ jobs:
 
       - name: Run show
         # run: ansible-playbook ciscops.mdd.show
-        run: ansible-playbook elevate_test/mdd/ansible_collections/ciscops/mdd/playbooks/show.yml
+        run: ansible-playbook elevate_test/mdd/ansible_collections/playbooks/show.yml
         working-directory: elevate_test/mdd
 
       # - name: Checkout mdd repository
