@@ -61,26 +61,53 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: model-driven-devops/mdd
-          path: ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
+          path: elevate_test/mdd
 
       - name: Run ls
         run: ls
-        working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
+        working-directory: elevate_test/mdd
 
-      - name: Install collection
+      - name: Check out code
         uses: actions/checkout@v2
         with:
-          path: ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
-        #run: ansible-galaxy collection install -r requirements.yml
-        #working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
+          path: elevate_test/mdd/ansible_collections
 
       - name: Run ls
         run: ls
-        working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
+        working-directory: elevate_test/mdd
+
+      - name: Run ls
+        run: ls
+        working-directory: elevate_test/mdd/ansible_collections
 
       - name: Run show
         run: ansible-playbook ciscops.mdd.show
-        working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
+        working-directory: elevate_test/mdd
+
+
+
+
+      # - name: Checkout mdd repository
+      #   uses: actions/checkout@v2
+      #   with:
+      #     repository: model-driven-devops/mdd
+      #     path: ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
+
+      # - name: Run ls
+      #   run: ls
+      #   working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
+
+      # - name: Install collection
+      #   run: ansible-galaxy collection install -r requirements.yml
+      #   working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
+
+      # - name: Run ls
+      #   run: ls
+      #   working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
+
+      # - name: Run show
+      #   run: ansible-playbook ciscops.mdd.show
+      #   working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
 
       # - name: Run Show
       #   run: ansible-playbook show.yml
