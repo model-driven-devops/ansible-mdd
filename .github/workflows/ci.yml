@@ -45,7 +45,7 @@ jobs:
         with:
           # it is just required to run that once as "ansible-test sanity" in the docker image
           # will run on all python versions it supports.
-          python-version: 3.10 #3.9
+          python-version: '3.10'
 
       # Install the head of the given branch (devel, stable-2.10)
       - name: Install ansible-base (${{ matrix.ansible }})
@@ -80,10 +80,6 @@ jobs:
             repository: model-driven-devops/mdd
             path: ${{env.base_path}}
 
-        - name: Run ls
-          run: ls -la
-          working-directory: ${{env.base_path}}
-
         - name: Install collection from model-driven-devops/mdd/requirements.yml
           run: ansible-galaxy collection install -r requirements.yml
           working-directory: ${{env.base_path}}
@@ -106,7 +102,6 @@ jobs:
 
         - name: Copy in testing reference topology
           run: cp -r ${{env.ANSIBLE_COLLECTIONS_PATHS}}/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/.github/testing-files/mdd-data ./
-          # run: cp -r ansible_collections/ciscops/mdd/.github/testing-files/mdd-data ./
           working-directory: ${{env.base_path}}
 
         - name: Copy in testing mdd.yml file
@@ -117,31 +112,19 @@ jobs:
           run: cp .github/testing-files/testing-playbooks/*.yml ./playbooks
           working-directory: ${{env.base_path}}/${{env.ANSIBLE_COLLECTIONS_PATHS}}/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}
 
-        - name: Check playbooks are copied successfully
-          run: ls -la
-          working-directory: ${{env.base_path}}/${{env.ANSIBLE_COLLECTIONS_PATHS}}/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/playbooks
-
-        - name: Check elevate_files dir doesn't exist
-          run: ls -la
-          working-directory: ${{env.base_path}}
-
         # Create dir to store test files from show
-        - name: Create testing dir
+        - name: Create testing dir elevate_test_files
           run: mkdir ./elevate_test_files
           working-directory: ${{env.base_path}}
 
         # Create dir for first set of configs
-        - name: Create testing dir
+        - name: Create testing sub dir 1
           run: mkdir ./elevate_test_files/1
           working-directory: ${{env.base_path}}
 
         # Create dir for second set of configs
-        - name: Create testing dir
+        - name: Create testing sub dir 2
           run: mkdir ./elevate_test_files/2
-          working-directory: ${{env.base_path}}
-
-        - name: Check elevate_files dir exists
-          run: ls -la
           working-directory: ${{env.base_path}}
 
         # Run show with run num 1 to name files correctly
