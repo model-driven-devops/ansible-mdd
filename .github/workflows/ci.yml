@@ -109,6 +109,10 @@ jobs:
           # run: cp -r ansible_collections/ciscops/mdd/.github/testing-files/mdd-data ./
           working-directory: ${{env.base_path}}
 
+        - name: Copy in testing mdd.yml file
+          run: cp -r ${{env.ANSIBLE_COLLECTIONS_PATHS}}/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/.github/testing-files/mdd.yml ./inventory/group_vars/all/
+          working-directory: ${{env.base_path}}
+
         - name: Run show
           run: ansible-playbook ciscops.mdd.show
           working-directory: ${{env.base_path}}
