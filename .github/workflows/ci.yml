@@ -113,108 +113,53 @@ jobs:
           run: cp -r ${{env.ANSIBLE_COLLECTIONS_PATHS}}/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/.github/testing-files/mdd.yml ./inventory/group_vars/all/
           working-directory: ${{env.base_path}}
 
-        - name: Run show
-          run: ansible-playbook ciscops.mdd.show
+        - name: Copy in testing playbooks
+          run: cp .github/testing-files/testing-playbooks/*.yml ./playbooks
+          working-directory: ${{env.base_path}}/${{env.ANSIBLE_COLLECTIONS_PATHS}}/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}
+
+        - name: Check playbooks are copied successfully
+          run: ls -la
+          working-directory: ${{env.base_path}}/${{env.ANSIBLE_COLLECTIONS_PATHS}}/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/playbooks
+
+        - name: Check elevate_files dir doesn't exist
+          run: ls -la
           working-directory: ${{env.base_path}}
 
+        # Create dir to store test files from show
+        - name: Create testing dir
+          run: mkdir ./elevate_test_files
+          working-directory: ${{env.base_path}}
+
+        # Create dir for first set of configs
+        - name: Create testing dir
+          run: mkdir ./elevate_test_files/1
+          working-directory: ${{env.base_path}}
+
+        # Create dir for second set of configs
+        - name: Create testing dir
+          run: mkdir ./elevate_test_files/2
+          working-directory: ${{env.base_path}}
+
+        - name: Check elevate_files dir exists
+          run: ls -la
+          working-directory: ${{env.base_path}}
+
+        # Run show with run num 1 to name files correctly
+        - name: Run modified show to collect pre elevate results
+          run: ansible-playbook ciscops.mdd.show_test -e "run_num=1"
+          working-directory: ${{env.base_path}}
+
+        # Run elevate
         - name: Run Elevate
           run: ansible-playbook ciscops.mdd.elevate
           working-directory: ${{env.base_path}}
 
+        # Run show again to collect results post run
+        - name: Run modified show to collect pre elevate results
+          run: ansible-playbook ciscops.mdd.show_test -e "run_num=2"
+          working-directory: ${{env.base_path}}
 
-        # - name: Run ls
-        #   run: ls -la
-        #   working-directory: ${{env.base_path}}
-
-        # - name: Run ls
-        #   run: ls -la
-        #   working-directory: ${{env.base_path}}/${{env.COLLECTIONS_PATHS}}/.github
-
-
-
-        # - name: Ls to find mdd-data
-        #   run: ls -la
-        #   working-directory: ${{env.base_path}}/ansible_collections
-
-        # - name: Ls to find mdd-data
-        #   run: ls -la
-        #   working-directory: ${{env.base_path}}/ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}
-
-        # - name: Ls to find mdd-data
-        #   run: ls -la
-        #   working-directory: ${{env.base_path}}/ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/.github
-
-        # .github/workflows/testing-files/mdd-data
-        # - name: Copy in testing reference topology
-        #   run: cp -r ansible_collections/ciscops/mdd/testing/testing-files/mdd-data ./
-        #   working-directory: ${{env.base_path}}
-
-
-        # - name: Ls to find mdd-data
-        #   run: ls -la
-        #   working-directory: ${{env.base_path}}
-
-
-
-        # - name: Install collection
-        #   run: ansible-galaxy collection install -r requirements.yml
-        #   working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
-
-        # - name: Install current collection
-        #                                          https://github.com/model-driven-devops/ansible-mdd.git,ppajersk-dev
-        #   run: ansible-galaxy collection install https://github.com/${{ github.repository }}/tree/${{ github.ref }}
-        #   working-directory: elevate_test/mdd
-
-          # https://github.com/model-driven-devops/ansible-mdd/tree/ppajersk-dev
-
-          #https://github.com/model-driven-devops/ansible-mdd.git,ppajersk-dev
-        #/ansible_collections/${{ env.NAMESPACE }}/${{ env.COLLECTION_NAME }}/mdd
-
-          # - name: Check out code
-        #   uses: actions/checkout@v2
-        #   with:
-        #     path: elevate_test/mdd/ansible_collections
-
-        # - name: Run ls
-        #   run: ls
-        #   working-directory: elevate_test/mdd/ansible_collections/playbooks
-
-        # - name: Run show
-        #   # run: ansible-playbook ciscops.mdd.show
-        #   run: ansible-playbook elevate_test/mdd/ansible_collections/playbooks/show.yml
-        #   working-directory: elevate_test/mdd
-
-        # - name: Checkout mdd repository
-        #   uses: actions/checkout@v2
-        #   with:
-        #     repository: model-driven-devops/mdd
-        #     path: ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
-
-        # - name: Run ls
-        #   run: ls
-        #   working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
-
-        # - name: Install collection
-        #   run: ansible-galaxy collection install -r requirements.yml
-        #   working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
-
-        # - name: Run ls
-        #   run: ls
-        #   working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
-
-        # - name: Run show
-        #   run: ansible-playbook ciscops.mdd.show
-        #   working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/mdd
-
-        # - name: Run Show
-        #   run: ansible-playbook show.yml
-        #   working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/playbooks
-
-        # - name: Run elevate test
-        #   run: ls
-        #   working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/playbooks
-
-        # - name: Run elevate test
-        #   run: ansible-playbook test_elevate.yml
-        #   working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/playbooks
-          #ansible-playbook ${{env.NAMESPACE}}.${{env.COLLECTION_NAME}}.test_elevate.yml
+        # Take the diff of the results to ensure elevate is working correctly
+        - name: Diff results
+          run: ansible-playbook ciscops.mdd.diff_elevate
+          working-directory: ${{env.base_path}}

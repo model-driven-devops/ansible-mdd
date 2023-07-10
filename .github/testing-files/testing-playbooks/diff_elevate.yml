@@ -1,0 +1,33 @@
+- name: Compare files in directories
+  hosts: localhost
+  gather_facts: false
+  vars:
+    current_dir: "{{ lookup('env', 'PWD') }}/elevate_test_files"
+  tasks:
+    - name: List files in directory 1
+      find:
+        paths: "{{ current_dir }}/1"
+        file_type: file
+        patterns: "*.txt"
+      register: files1
+
+    - name: List files in directory 2
+      find:
+        paths: "{{ current_dir }}/2"
+        file_type: file
+        patterns: "*.txt"
+      register: files2
+
+    - name: Compare files and create diff statements
+      set_fact:
+        diff_statements: "{{ diff_statements | default([]) + [ 'diff ' + item.0.path + ' ' + item.1.path ] }}"
+      loop: "{{ files1.files | zip(files2.files) }}"
+
+    - name: Fail if there are differences or missing files
+      fail:
+        msg: "Differences or missing files found: files1 and files2 contain differing number of files"
+      when: files1.files | length != files2.files | length
+
+    - name: Diff files
+      command: "{{ item }}"
+      loop: "{{ diff_statements }}"
