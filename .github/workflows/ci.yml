@@ -114,15 +114,15 @@ jobs:
 
         - name: Ls to find mdd-data
           run: ls -la
-          working-directory: ${{env.base_path}}/${{env.COLLECTIONS_PATHS}}
+          working-directory: ${{env.base_path}}/ansible_collections
 
         - name: Ls to find mdd-data
           run: ls -la
-          working-directory: ${{env.base_path}}/.github
+          working-directory: ${{env.base_path}}/ansible_collections
 
         # .github/workflows/testing-files/mdd-data
         - name: Copy in testing reference topology
-          run: cp -r ./${{env.COLLECTIONS_PATHS}}/testing/testing-files/mdd-data ./
+          run: cp -r ansible_collections/testing/testing-files/mdd-data ./
           working-directory: ${{env.base_path}}
 
         - name: Ls to find mdd-data
