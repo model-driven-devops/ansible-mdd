@@ -100,45 +100,57 @@ jobs:
           with:
             path: ${{env.base_path}}/${{env.ANSIBLE_COLLECTIONS_PATHS}}/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}
 
-        - name: Run ls
-          run: ls -la
-          working-directory: ${{env.base_path}}
-
-        - name: Run ls
-          run: ls -la
-          working-directory: ${{env.base_path}}/${{env.COLLECTIONS_PATHS}}/.github
-
         - name: Remove the current reference topology
           run: rm -r mdd-data
           working-directory: ${{env.base_path}}
 
-        - name: Ls to find mdd-data
-          run: ls -la
-          working-directory: ${{env.base_path}}/ansible_collections
-
-        - name: Ls to find mdd-data
-          run: ls -la
-          working-directory: ${{env.base_path}}/ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}
-
-        - name: Ls to find mdd-data
-          run: ls -la
-          working-directory: ${{env.base_path}}/ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/.github
-
-        # .github/workflows/testing-files/mdd-data
-        # - name: Copy in testing reference topology
-        #   run: cp -r ansible_collections/ciscops/mdd/testing/testing-files/mdd-data ./
-        #   working-directory: ${{env.base_path}}
         - name: Copy in testing reference topology
-          run: cp -r ansible_collections/ciscops/mdd/.github/testing-files/mdd-data ./
-          working-directory: ${{env.base_path}}
-
-        - name: Ls to find mdd-data
-          run: ls -la
+          run: cp -r ${{env.ANSIBLE_COLLECTIONS_PATHS}}/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/.github/testing-files/mdd-data ./
+          # run: cp -r ansible_collections/ciscops/mdd/.github/testing-files/mdd-data ./
           working-directory: ${{env.base_path}}
 
         - name: Run show
           run: ansible-playbook ciscops.mdd.show
           working-directory: ${{env.base_path}}
+
+        - name: Run Elevate
+          run: ansible-playbook ciscops.mdd.elevate
+          working-directory: ${{env.base_path}}
+
+
+        # - name: Run ls
+        #   run: ls -la
+        #   working-directory: ${{env.base_path}}
+
+        # - name: Run ls
+        #   run: ls -la
+        #   working-directory: ${{env.base_path}}/${{env.COLLECTIONS_PATHS}}/.github
+
+
+
+        # - name: Ls to find mdd-data
+        #   run: ls -la
+        #   working-directory: ${{env.base_path}}/ansible_collections
+
+        # - name: Ls to find mdd-data
+        #   run: ls -la
+        #   working-directory: ${{env.base_path}}/ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}
+
+        # - name: Ls to find mdd-data
+        #   run: ls -la
+        #   working-directory: ${{env.base_path}}/ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/.github
+
+        # .github/workflows/testing-files/mdd-data
+        # - name: Copy in testing reference topology
+        #   run: cp -r ansible_collections/ciscops/mdd/testing/testing-files/mdd-data ./
+        #   working-directory: ${{env.base_path}}
+
+
+        # - name: Ls to find mdd-data
+        #   run: ls -la
+        #   working-directory: ${{env.base_path}}
+
+
 
         # - name: Install collection
         #   run: ansible-galaxy collection install -r requirements.yml
