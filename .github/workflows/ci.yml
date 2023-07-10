@@ -119,10 +119,15 @@ jobs:
         - name: Ls to find mdd-data
           run: ls -la
           working-directory: ${{env.base_path}}/.github
+
         # .github/workflows/testing-files/mdd-data
-        # - name: Copy in testing reference topology
-        #   run: cp -r .github/workflows/testing-files/mdd-data ./
-        #   working-directory: ${{env.base_path}}
+        - name: Copy in testing reference topology
+          run: cp -r testing/testing-files/mdd-data ./
+          working-directory: ${{env.base_path}}
+
+        - name: Ls to find mdd-data
+          run: ls -la
+          working-directory: ${{env.base_path}}
 
         - name: Run show
           run: ansible-playbook ciscops.mdd.show
