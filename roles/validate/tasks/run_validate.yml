@@ -12,4 +12,8 @@
 - set_fact:
     validation_failures: '{{ (validation_failures | default([])) + [validation_output.failed_schema] }}'
   when: validation_output.failed
-  
+
+- set_fact:
+    validation_failure_errors: "{{ (validation_failure_errors | default([])) + validation_output.x_error_list | map('replace', \"'\", '') | list | map('split', ': ') | map('last') }}"
+  when: validation_output.x_error_list is defined
+

@@ -5,10 +5,10 @@ telemetry_node_label: 'telemetry1'
 telemetry_url: "{{ telemetry_rest_url }}/jsonrpc"
 telemetry_telegraf_dir: telemetry-stack/conf/telegraf
 telemetry_base_dir: telemetry-stack
-telemetry_node_ip: "{{ hostvars[telemetry_node_label].ansible_host }}"
+telemetry_host_address: "{{ hostvars[telemetry_node_label].ansible_host }}"
 
 # Host IP
-host_address: "{{ telemetry_node_ip }}"
+host_address: "{{ telemetry_host_address }}"
 
 # Telegraf port
 telegraf_port: "{{ lookup('env', 'TELEGRAF_PORT') | default ('57000', true) }}"
@@ -24,7 +24,8 @@ influxdb_port: "{{ lookup('env', 'INFLUXDB_PORT') | default ('8086', true) }}"
 ds_type: "{{ lookup('env', 'DS_TYPE') | default ('influxdb', true) }}"
 
 # Influx var for sending data to
-influx_db:
+# is_influx_db: "{{ lookup('env', 'IS_INFLUX_DB') | default (false) }}"
+is_influx_db: false
 
 # Grafana configs
 grafana_datasource_name: "{{ lookup('env', 'GRAFANA_DATASOURCE_NAME') | default ('Grafana InfluxDB', true) }}"

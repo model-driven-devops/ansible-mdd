@@ -33,11 +33,6 @@ author:
   - Kris Stickney (@kstickne)
   - Paul Pajerski (@ppajersk)
 options:
-    send:
-        description:
-        - Flag to denote whether to send or not
-        required: true
-        type: bool
     report:
         description:
         - The json report from validate
@@ -62,10 +57,10 @@ import json
 
 debug = []
 
-def send_data(report, host_ip):
+def send_data(report, host_ip, db_port, db_bucket_name, db_token, measurement_name):
     try:
-        client = InfluxDBClient(host=host_ip, port=8086, database='',username=None, password=None,
-                                headers={"Authorization": ''})
+        client = InfluxDBClient(host=host_ip, port=db_port, database=db_bucket_name,username=None, password=None,
+                                headers={"Authorization": 'Token ' + db_token })
 
         failure_list = report['consolidated_report']['failures']
 
@@ -91,9 +86,9 @@ def send_data(report, host_ip):
 
                 json_body = [ # regular
                     {
-                        "measurement": "gitlab_pipeline_report",
+                        "measurement": measurement_name,
                         # "tags": {
-                        #     "person": [""],
+                        #     "person": ["Paul"],
                         #     "status": status
                         # },
                         "time": current_time,
@@ -114,18 +109,24 @@ def send_data(report, host_ip):
 
 def main():
     arguments = dict(
-        send=dict(required=True, type='bool'),
         report=dict(required=True, type='dict'),
-        host_ip=dict(required=True, type='str')
+        host_ip=dict(required=True, type='str'),
+        db_port=dict(required=True, type='str'),
+        db_bucket_name=dict(required=True, type='str'),
+        db_token=dict(required=True, type='str'),
+        measurement_name=dict(required=True, type='str')
     )
 
     module = AnsibleModule(argument_spec=arguments, supports_check_mode=False)
 
-    if module.params['send']:
-        failed, error, debug = send_data(module.params['report'], module.params['host_ip'])
-        module.exit_json(changed=True, failed=failed, result=error, debug=debug)
-    else:
-        module.exit_json(changed=False, failed=False)
+    failed, error, debug = send_data(
+            module.params['report'],
+            module.params['host_ip'],
+            module.params['db_port'],
+            module.params['db_bucket_name'],
+            module.params['db_token'],
+            module.params['measurement_name'])
+    module.exit_json(changed=True, failed=failed, result=error, debug=debug)
 
 if __name__ == '__main__':
     main()

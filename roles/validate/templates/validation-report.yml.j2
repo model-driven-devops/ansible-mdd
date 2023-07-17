@@ -6,16 +6,18 @@
 {% for host in play_hosts | sort %}
   {% set found = {'value': false} %}
   {% set result = hostvars[host]['validation_failures'] | default({'data':'unchanged'}) %}
+  {% set result_errors = hostvars[host]['validation_failure_errors'] | default({'data':'unchanged'}) %}
   {% if result  != {'data':'unchanged'} %}
 {#  {{ host }}: "{{ result.data }}"#}
     {% for entry in consolidated_report %}
       {% if entry.data == result %}
         {% set _ = found.update({'value': true}) %}
         {% set _ = entry.hosts.append(host) %}
+        {# {% set _ = entry.reasons.append(host) %} #}
       {% endif %}
     {% endfor %}
     {% if not found.value | bool %}
-      {% set entry_dict = {'hosts': [host], 'data': result} %}
+      {% set entry_dict = {'hosts': [host], 'data': result, 'reasons': result_errors} %}
       {% set _ = consolidated_report.append(entry_dict) %}
     {% endif %}
   {% else %}
@@ -27,5 +29,6 @@ consolidated_report:
 {% for entry in consolidated_report %}
     - hosts: "{{ entry.hosts }}"
       schemas: "{{ entry.data }}"
+      reasons: "{{ entry.reasons }}"
 {% endfor %}
   passed: {{ passed_all }}
