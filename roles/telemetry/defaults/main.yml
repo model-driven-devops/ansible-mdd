@@ -1,0 +1,38 @@
+---
+# Node configs
+telemetry_host_group: 'telemetry'
+telemetry_node_label: 'telemetry1'
+telemetry_url: "{{ telemetry_rest_url }}/jsonrpc"
+telemetry_telegraf_dir: telemetry-stack/conf/telegraf
+telemetry_base_dir: telemetry-stack
+telemetry_node_ip: "{{ hostvars[telemetry_node_label].ansible_host }}"
+
+# Host IP
+host_address: "{{ telemetry_node_ip }}"
+
+# Telegraf port
+telegraf_port: "{{ lookup('env', 'TELEGRAF_PORT') | default ('57000', true) }}"
+
+# InfluxDB configs
+influxdb_token: "{{ lookup('env', 'INFLUXDB_TOKEN') | default ('veryverysecuretoken', true) }}"
+influxdb_org: "{{ lookup('env', 'INFLUXDB_ORG') | default ('testorg', true) }}"
+influxdb_bucket: "{{ lookup('env', 'INFLUXDB_BUCKET') | default ('testbucket', true) }}"
+influxdb_username: "{{ lookup('env', 'INFLUXDB_USERNAME') | default ('admin', true) }}"
+influxdb_password: "{{ lookup('env', 'INFLUXDB_PASSWORD') | default ('password123', true) }}"
+influxdb_port_backup: "{{ lookup('env', 'INFLUXDB_PORT') | default ('8083', true) }}"
+influxdb_port: "{{ lookup('env', 'INFLUXDB_PORT') | default ('8086', true) }}"
+ds_type: "{{ lookup('env', 'DS_TYPE') | default ('influxdb', true) }}"
+
+# Influx var for sending data to
+influx_db:
+
+# Grafana configs
+grafana_datasource_name: "{{ lookup('env', 'GRAFANA_DATASOURCE_NAME') | default ('Grafana InfluxDB', true) }}"
+grafana_username: "{{ lookup('env', 'GRAFANA_USERNAME') | default ('admin', true) }}"
+grafana_password: "{{ lookup('env', 'GRAFANA_PASSWORD') | default ('admin', true) }}"
+grafana_port: "{{ lookup('env', 'GRAFANA_PORT') | default ('3000', true) }}"
+measurement_name: "{{ lookup('env', 'GRAFANA_MEASUREMENT_NAME') | default ('Gitlab pipeline diagnostics', true) }}"
+
+# Node username
+telemetry_username: "{{ lookup('env', 'TELEMETRY_USERNAME') | default ('ubuntu', true) }}"
+telemetry_password: "{{ lookup('env', 'TELEMETRY_PASSWORD') | default ('admin', true) }}"

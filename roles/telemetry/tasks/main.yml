@@ -1,0 +1,34 @@
+#
+# If telemetry_rest_url was not set in inventory, see if it is an environment variable.
+#
+- set_fact:
+    telemetry_rest_url: "{{ lookup('env', 'TELEMETRY_URL') | default('') }}"
+  when: telemetry_rest_url is not defined or not telemetry_rest_url
+
+#
+# If not set as an environment variable, then see if we can figure it out from
+# the inventory
+#
+- set_fact:
+    telemetry_rest_url: "http://{{ hostvars[telemetry_hostname].ansible_host }}:{{ grafana_port }}"
+  when: "not telemetry_rest_url and telemetry_host_group in groups"
+  vars:
+    telemetry_hostname: "{{ groups[telemetry_host_group] | first }}"
+
+- set_fact:
+    telemetry_username: "{{ lookup('env', 'TELEMETRY_USERNAME') | default ('ubuntu', true) }}"
+    telemetry_password: "{{ lookup('env', 'TELEMETRY_PASSWORD') | default ('admin', true) }}"
+  when: telemetry_username is not defined or not telemetry_username
+
+- block:
+  - name: Make sure that we have an TELEMETRY host to talk to
+    assert:
+      that:
+        - telemetry_url is defined
+        - telemetry_url
+      fail_msg: "Cannot find an TELEMETRY host to use"
+      success_msg: "Using TELEMETRY host: {{ telemetry_rest_url }}"
+
+  - set_fact:
+      telemetry_available: yes
+  when: telemetry_required | default('yes') | bool

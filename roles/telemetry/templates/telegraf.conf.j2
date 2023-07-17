@@ -1,0 +1,17 @@
+# Cisco MDT Telemetry
+#[[inputs.cisco_telemetry_mdt]]
+# transport = "grpc"
+# service_address = ":57000"
+
+[[inputs.http_listener_v2]]
+  service_address = ":57000"
+  data_format = "influx"
+
+# Outputs for ciscomdt
+[[outputs.influxdb_v2]]
+  urls = [ "https://{{ host_address }}:8086" ]
+  token = "{{ influxdb_token }}"
+  organization = "{{ influxdb_org }}"
+  bucket = "{{ influxdb_bucket }}"
+
+

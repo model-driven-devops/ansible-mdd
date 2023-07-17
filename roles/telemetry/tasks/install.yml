@@ -1,0 +1,154 @@
+---
+- name: Check for docker presence
+  shell: which docker
+  failed_when: false
+  register: docker_result
+
+- name: Set docker presence
+  set_fact:
+    docker_is_present: "{{ docker_result.rc == 0 }}"
+
+- name: Install aptitude
+  apt:
+    name: aptitude
+    state: latest
+    update_cache: true
+  when: docker_is_present is false
+
+- name: Install required system packages
+  apt:
+    pkg:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - software-properties-common
+    state: latest
+    update_cache: true
+  when: docker_is_present is false
+
+- name: Add Docker GPG apt Key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+  when: docker_is_present is false
+
+- name: Add Docker Repository
+  apt_repository:
+    repo: deb https://download.docker.com/linux/ubuntu focal stable
+    state: present
+  when: docker_is_present is false
+
+- name: Update apt and install docker-ce
+  apt:
+    name: docker-ce
+    state: latest
+    update_cache: true
+  when: docker_is_present is false
+
+- name: Install Docker Compose plugin
+  apt:
+    name: docker-compose
+    state: present
+  when: docker_is_present is false
+
+- name: Check for directory presence
+  shell: test -d "{{ telemetry_base_dir }}"
+  failed_when: false
+  register: dir_result
+
+- name: Set directory presence
+  set_fact:
+    directory_is_present: "{{ dir_result.rc == 0 }}"
+
+# Create new directory for telemetry
+- name: Create telemetry directory
+  shell: mkdir -p "{{ telemetry_telegraf_dir }}"
+  when: directory_is_present is false
+
+- name: Create telegraf config file
+  copy:
+    content: "{{ telegraf_template }}"
+    dest: "{{ telemetry_telegraf_dir }}/telegraf.conf"
+    force: true
+
+- name: Create docker-compose config file
+  copy:
+    content: "{{ docker_template }}"
+    dest: "{{ telemetry_base_dir }}/docker-compose.yml"
+    force: true
+
+# Create docker containers
+- name: Docker Compose Up
+  docker_compose:
+    project_src: "{{ telemetry_base_dir }}"
+    state: present
+
+# Wait for 10 seconds for docker container to come up
+- name: Pause to allow containers to boot up
+  pause:
+    seconds: 10
+
+- name: Check container state
+  docker_container_info:
+    name: grafana
+  loop:
+    - grafana
+    - influxdb
+    - telegraf
+  register: container_info
+  failed_when: container_info.container.State is not defined
+
+- name: Configure Grafana datasource
+  grafana_datasource:
+    name: "{{ grafana_datasource_name }}" # Variable
+    grafana_user: "{{ grafana_username }}"
+    grafana_password: "{{ grafana_password }}"
+    database: "{{ influxdb_bucket }}"
+    ds_type: "{{ ds_type }}"
+    ds_url: "http://{{ host_address }}:{{ influxdb_port }}" # use influx db port
+    grafana_url: "http://{{ host_address }}:{{ grafana_port }}" # use grafana port
+    state: "{{ item }}"
+    tls_skip_verify: true
+    additional_json_data:
+      httpHeaderName1: "Authorization"
+    additional_secure_json_data:
+      httpHeaderValue1: "Token {{ influxdb_token }}"
+  loop:
+    - absent
+    - present
+  failed_when: false
+  register: grafana_result
+  no_log: true
+
+- name: Collect UID
+  set_fact:
+    datasource_uid: "{{ item.datasource.uid }}"
+  loop: "{{ grafana_result.results }}"
+  when: item.datasource is defined and item.datasource is not none
+  no_log: true
+
+- name: Render Grafana dashboard file
+  set_fact:
+    grafana_dashboard_template: "{{ lookup('template', 'grafana_dashboard.json.j2') }}"
+
+- name: Create Grafana dashboard file on {{ inventory_hostname }} node
+  copy:
+    content: "{{ grafana_dashboard_template }}"
+    dest: "{{ telemetry_base_dir }}/grafana_dashboard.json"
+    force: true
+
+- name: Import Grafana dashboard
+  community.grafana.grafana_dashboard:
+    grafana_url: "http://{{ host_address }}:{{ grafana_port }}"
+    grafana_user: "{{ grafana_username }}"
+    grafana_password: "{{ grafana_password }}"
+    state: present
+    commit_message: Updated by ansible
+    overwrite: yes
+    path: "{{ telemetry_base_dir }}/grafana_dashboard.json"
+  no_log: true
+
+- debug:
+    msg:
+      - "Grafana url http://{{ host_address }}:{{ grafana_port }}"
+      - "InfluxDB url http://{{ host_address }}:{{ influxdb_port }}"

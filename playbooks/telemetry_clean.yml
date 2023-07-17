@@ -1,0 +1,17 @@
+---
+- name: Clean telemetry
+  hosts: telemetry
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Wait for host to become reachable/usable
+      wait_for_connection:
+        timeout: 60
+      register: wait_connection
+      retries: 10
+      until: wait_connection is success
+
+    - name: Remove Telemetry stack
+      include_role:
+        name: ciscops.mdd.telemetry
+        tasks_from: remove

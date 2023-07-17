@@ -1,0 +1,8 @@
+---
+- name: Docker Compose Down
+  docker_compose:
+    project_src: "{{ telemetry_base_dir }}"
+    state: absent
+
+- name: Remove telemetry directory
+  shell: sudo rm -r "{{ telemetry_base_dir }}"

@@ -1,0 +1,57 @@
+version: "2"
+services:
+  influxdb:
+    container_name: influxdb
+    image: influxdb:latest
+    ports:
+      - "{{ influxdb_port_backup }}:{{ influxdb_port_backup }}"
+      - "{{ influxdb_port }}:{{ influxdb_port }}"
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME={{ influxdb_username }}
+      - DOCKER_INFLUXDB_INIT_PASSWORD={{ influxdb_password }}
+      - DOCKER_INFLUXDB_INIT_ORG={{ influxdb_org }}
+      - DOCKER_INFLUXDB_INIT_BUCKET={{ influxdb_bucket }}
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN={{ influxdb_token }}
+      # - INFLUXD_TLS_CERT=/etc/ssl/influxdb-selfsigned.crt # added for https
+      # - INFLUXD_TLS_KEY=/etc/ssl/influxdb-selfsigned.key # added for https
+    volumes:
+      - ./vols/:/var/lib/influxdb2
+      # - ./ssl/influxdb-selfsigned.crt:/etc/ssl/influxdb-selfsigned.crt # added for https
+      # - ./ssl/influxdb-selfsigned.key:/etc/ssl/influxdb-selfsigned.key # added for https
+    restart: always
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:latest
+    ports:
+      - "{{ grafana_port }}:{{ grafana_port }}"
+    links:
+      - influxdb
+    volumes:
+      - grafana_data:/var/lib/grafana
+      # - /var/lib/grafana/ssl/grafana.crt:/var/lib/grafana/ssl/grafana.crt  # added for https
+      # - /var/lib/grafana/ssl/grafana.key:/var/lib/grafana/ssl/grafana.key  # added for https
+    environment:
+      # - GF_SERVER_PROTOCOL=https # added for https
+      # - GF_SERVER_CERT_FILE=/var/lib/grafana/ssl/grafana.crt # added for https
+      # - GF_SERVER_CERT_KEY=/var/lib/grafana/ssl/grafana.key # added for https
+      - GF_INSTALL_PLUGINS=marcusolsson-dynamictext-panel # Plugin for dynamic text panels
+    restart: always
+
+  telegraf:
+    container_name: telegraf
+    image: telegraf:latest
+    ports:
+      - "{{ telegraf_port }}:{{ telegraf_port }}"
+    environment:
+      - INFLUXDB_TOKEN={{ influxdb_token }}
+    links:
+      - influxdb
+    volumes:
+      - ./conf/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: always
+
+volumes:
+  grafana_data:
