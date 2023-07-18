@@ -105,8 +105,8 @@
     grafana_password: "{{ grafana_password }}"
     database: "{{ influxdb_bucket }}"
     ds_type: "{{ ds_type }}"
-    ds_url: "http://{{ host_address }}:{{ influxdb_port }}" # use influx db port
-    grafana_url: "http://{{ host_address }}:{{ grafana_port }}" # use grafana port
+    ds_url: "http://{{ telemetry_host_address }}:{{ influxdb_port }}" # use influx db port
+    grafana_url: "http://{{ telemetry_host_address }}:{{ grafana_port }}" # use grafana port
     state: "{{ item }}"
     tls_skip_verify: true
     additional_json_data:
@@ -139,7 +139,7 @@
 
 - name: Import Grafana dashboard
   community.grafana.grafana_dashboard:
-    grafana_url: "http://{{ host_address }}:{{ grafana_port }}"
+    grafana_url: "http://{{ telemetry_host_address }}:{{ grafana_port }}"
     grafana_user: "{{ grafana_username }}"
     grafana_password: "{{ grafana_password }}"
     state: present
@@ -150,5 +150,6 @@
 
 - debug:
     msg:
-      - "Grafana url http://{{ host_address }}:{{ grafana_port }}"
-      - "InfluxDB url http://{{ host_address }}:{{ influxdb_port }}"
+      - "Grafana url http://{{ telemetry_host_address }}:{{ grafana_port }}"
+      - "InfluxDB url http://{{ telemetry_host_address }}:{{ influxdb_port }}"
+      - "Edit your inventory file and set influx_available to true to log results"
