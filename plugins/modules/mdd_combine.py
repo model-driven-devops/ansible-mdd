@@ -106,25 +106,26 @@ def get_merge_key(path, list_key_map=None):
 
 
 def merge_dicts(all_configs):
-    def _merge(result_cfgs, v, path=None, filepath=None, hierarchyLevel=None, playbook_tags=None, weight=None):
+    def _merge(result_cfgs, v, path=None, filepath=None, hierarchy_level=None, playbook_tags=None, weight=None):
         path = path or []
         for k, v in v.items():
             if isinstance(v, dict):
                 if k in result_cfgs and isinstance(result_cfgs[k], dict):
-                    result_cfgs[k] = _merge(result_cfgs[k], v, path + [str(k)], filepath, hierarchyLevel, playbook_tags,
+                    result_cfgs[k] = _merge(result_cfgs[k], v, path + [str(k)], filepath, hierarchy_level,
+                                            playbook_tags,
                                             weight)
                 else:
-                    result_cfgs[k] = _merge({}, v, path + [str(k)], filepath, hierarchyLevel, playbook_tags, weight)
+                    result_cfgs[k] = _merge({}, v, path + [str(k)], filepath, hierarchy_level, playbook_tags, weight)
             else:
                 if k not in result_cfgs:
-                    result_cfgs[k] = (v, filepath, playbook_tags, hierarchyLevel, weight)
+                    result_cfgs[k] = (v, filepath, playbook_tags, hierarchy_level, weight)
                 elif k in result_cfgs and weight > result_cfgs[k][4]:
-                    result_cfgs[k] = (v, filepath, playbook_tags, hierarchyLevel, weight)
+                    result_cfgs[k] = (v, filepath, playbook_tags, hierarchy_level, weight)
         return result_cfgs
 
     result_configs = {}
     for i in all_configs:
-        result_configs = _merge(result_configs, i['config'], filepath=i['filepath'], hierarchyLevel=i['level'],
+        result_configs = _merge(result_configs, i['config'], filepath=i['filepath'], hierarchy_level=i['level'],
                                 playbook_tags=i['tags'], weight=i['weight'])
     return result_configs
 
@@ -163,7 +164,7 @@ def dictify_merge_lists(list_of_configs, list_key_map=None):
                 else:
                     convert_cfgs[k] = v
             else:
-                convert_cfgs[k] = (v)
+                convert_cfgs[k] = v
         return convert_cfgs
 
     for i in list_of_configs:
@@ -224,7 +225,8 @@ def return_nested_dict(root_dict, keys_list):
 
 
 def update_nested_dict(root_dict, keys_list, new_value):
-    *rest_of_keys, last_key = keys_list
+    last_key = keys_list[-1]
+    rest_of_keys = keys_list[:-1]
     nested_dict = root_dict
     for key in rest_of_keys:
         nested_dict = nested_dict[key]
