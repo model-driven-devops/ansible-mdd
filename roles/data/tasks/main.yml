@@ -4,27 +4,39 @@
 # is a part of.  This can be set via the mdd_dir_items variable with a default
 # in the role.
 #
-- include_role:
-    name: ciscops.mdd.common
-    tasks_from: files_in_path
-  vars:
-    mdd_file_patterns: "{{ mdd_data_patterns }}"
+# - include_role:
+#     name: ciscops.mdd.common
+#     tasks_from: files_in_path
+#   vars:
+#     mdd_file_patterns: "{{ mdd_data_patterns }}"
 
 #
 # Merge in the data from the file if the tags match with the host (or are not specified)
 #
-- name: Gather the MDD Data
-  set_fact:
-    mdd_data_list: "{{ ( mdd_data_list | default([]) ) + [ mdd_file.mdd_data ] }}"
-  loop: "{{ mdd_file_list }}"
-  when: ('all' in mdd_file.mdd_tags | default(['all'])) or (mdd_file.mdd_tags | intersect(tags | default([])))
-  vars:
-    mdd_file: "{{ lookup('template', item ) | from_yaml }}"
+# - name: Gather the MDD Data
+#   set_fact:
+#     mdd_data_list: "{{ ( mdd_data_list | default([]) ) + [ mdd_file.mdd_data ] }}"
+#   loop: "{{ mdd_file_list }}"
+#   when: ('all' in mdd_file.mdd_tags | default(['all'])) or (mdd_file.mdd_tags | intersect(tags | default([])))
+#   vars:
+#     mdd_file: "{{ lookup('template', item ) | from_yaml }}"
 
 - name: Combine the MDD Data
+  mdd_combine:
+    mdd_root: "{{ mdd_data_root }}"
+    host: "{{ inventory_hostname }}"
+    mdd_filespec_list: "{{ mdd_data_patterns }}"
+    tags: "{{ tags }}"
+  register: mdd_combine_output
+
+# - name: Combine the MDD Data
+#   set_fact:
+#     mdd_data: "{{ mdd_data_list | ciscops.mdd.mdd_combine(recursive=True) }}"
+#   when: mdd_data_list is defined
+
+- name: Assign mdd_data
   set_fact:
-    mdd_data: "{{ mdd_data_list | ciscops.mdd.mdd_combine(recursive=True) }}"
-  when: mdd_data_list is defined
+    mdd_data: "{{ mdd_combine_output.mdd_data | default({}) }}"
 
 - include_tasks: netbox.yml 
   when: netbox_api is defined or lookup('env', 'NETBOX_API', default=false)
