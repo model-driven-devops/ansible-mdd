@@ -25,7 +25,7 @@
   mdd_combine:
     mdd_root: "{{ mdd_data_root }}"
     host: "{{ inventory_hostname }}"
-    mdd_filespec_list: "{{ mdd_data_patterns }}"
+    filespec_list: "{{ mdd_data_patterns }}"
     tags: "{{ tags }}"
   register: mdd_combine_output
 
