@@ -21,10 +21,10 @@ options:
         description: The host for which the data is to be generated
         required: true
         type: str
-    config_file_prefix:
-        description: prefix to identify configuration file, e.g. "oc-"
+    mdd_filespec_list:
+        description: mdd_filespec_list to identify configuration file, e.g. "oc-"
         required: true
-        type: str
+        type: list
     tags:
         description: The tags for which to made the MDD Data
         required: false
@@ -59,7 +59,7 @@ EXAMPLES = r"""
         mdd_data_root: "{{ mdd_data_root }}"
         host: "{{ inventory_hostname }}"
         tags: "{{ tags }}"
-        config_file_prefix: "{{ config_file_prefix }}"
+        mdd_filespec_list: "{{ mdd_filespec_list }}"
       register: mdd_output
 
     - debug:
@@ -77,6 +77,8 @@ import re
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 import yaml
+import json
+import fnmatch
 
 
 def get_merge_key(path, list_key_map=None):
@@ -90,7 +92,7 @@ def get_merge_key(path, list_key_map=None):
             'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:protocols:openconfig-network-instance:protocol:[a-zA-Z0-9_-]+:openconfig-network-instance:ospfv2:openconfig-network-instance:areas:openconfig-network-instance:area$': 'openconfig-network-instance:identifier',
             'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:vlans:openconfig-network-instance:vlan$': 'openconfig-network-instance:vlan-id',
             'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:defined-sets:openconfig-bgp-policy:bgp-defined-sets:openconfig-bgp-policy:ext-community-sets:openconfig-bgp-policy:ext-community-set$': 'openconfig-bgp-policy:ext-community-set-name',
-            'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:defined-sets:openconfig-routing-policy:prefix-sets:openconfig-routing-policy:prefix-set$': 'openconfig-routing-policy:name',
+            'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:defined-sets:openconfig-routing-policy:mdd_filespec_list-sets:openconfig-routing-policy:mdd_filespec_list-set$': 'openconfig-routing-policy:name',
             'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:defined-sets:openconfig-routing-policy:tag-sets:openconfig-routing-policy:tag-set$': 'openconfig-routing-policy:name',
             'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:policy-definitions:openconfig-routing-policy:policy-definition$': 'openconfig-routing-policy:name',
             'mdd:openconfig:openconfig-system:system:openconfig-system-ext:services:openconfig-system-ext:key-chains:openconfig-system-ext:key-chain$': 'openconfig-system-ext:name',
@@ -250,14 +252,19 @@ def combine(config_list, list_key_map=None):
     config_with_meta_data_copy = copy.deepcopy(config_with_meta_data)
     final_config = replace_tuples(config_with_meta_data_copy)
 
-    return final_config, config_with_meta_data_copy
+    return final_config, config_with_meta_data
 
 
 def intersection(lst1, lst2):
     return list(set(lst1) & set(lst2))
 
+def matches_filespec(filename, mdd_filespec_list):
+    for filespec in mdd_filespec_list:
+        if fnmatch.fnmatch(filename, filespec):
+            return True
+    return False
 
-def find_and_read_configs(top_dir, device_name, prefix, tags=[]):
+def find_and_read_configs(top_dir, device_name, mdd_filespec_list, tags=[]):
     tags.append('all')  # every device gets an "all" tag
     configs = []
     hierarchy_level = 0
@@ -266,8 +273,9 @@ def find_and_read_configs(top_dir, device_name, prefix, tags=[]):
             current_dir = os.path.join(root, device_name)
             while current_dir != top_dir:
                 for filename in os.listdir(current_dir):
-                    if filename.startswith(prefix):
+                    if matches_filespec(filename, mdd_filespec_list):
                         with open(os.path.join(current_dir, filename), 'r') as f:
+                            # Consider catching when a user gives us a file that is not really yaml
                             yaml_configs = yaml.safe_load_all(f)
                             for yaml_config in yaml_configs:
                                 file_tags = yaml_config.get('mdd_tags',
@@ -288,21 +296,27 @@ def find_and_read_configs(top_dir, device_name, prefix, tags=[]):
             break
     return configs
 
-
 def main():
     arguments = dict(
         mdd_root=dict(required=True, type='str'),
         host=dict(required=True, type='str'),
-        config_file_prefix=dict(required=True, type='str'),
+        mdd_filespec_list=dict(required=True, type='list'),
         tags=dict(required=False, type='list'),
         list_key_map=dict(required=False, type='dict')
     )
     module = AnsibleModule(argument_spec=arguments, supports_check_mode=False)
     mdd_root = module.params['mdd_root']
     host = module.params['host']
-    config_file_prefix = module.params['config_file_prefix']
+    mdd_filespec_list = module.params['mdd_filespec_list']
     tags = module.params['tags']
     list_key_map = module.params['list_key_map']
 
-    configs_list = find_and_read_configs(mdd_root, host, config_file_prefix, tags)
+    mdd_data = {}
+    mdd_metadata = {}
+    module.debug('POOP')
+    configs_list = find_and_read_configs(mdd_root, host, mdd_filespec_list, tags)
     mdd_data, metadata = combine(configs_list, list_key_map)
+    module.exit_json(changed=False, mdd_data=mdd_data, mdd_metadata=metadata, failed=False)
+
+if __name__ == '__main__':
+    main()
