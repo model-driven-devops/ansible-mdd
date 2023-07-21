@@ -249,9 +249,9 @@ def find_paths(d, list_key_map, path=[]):
     def _find_paths(d, path=[]):
         if isinstance(d, dict):
             for k, v in d.items():
-                merge_key = get_merge_key(":".join(path), list_key_map)
+                merge_key = get_merge_key(":".join(str(path)), list_key_map)
                 if merge_key:
-                    special_paths.append(("/:/".join(path), len(path)))
+                    special_paths.append(("/:/".join(str(path)), len(path)))
                 _find_paths(v, path + [str(k)])
 
     _find_paths(d)
