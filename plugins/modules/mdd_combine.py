@@ -1,3 +1,28 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# Copyright (c) 2017 Cisco and/or its affiliates.
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ['preview'], 'supported_by': 'community'}
 DOCUMENTATION = r"""
 ---
 module: mdd_combine
@@ -5,7 +30,7 @@ short_description: Generate host-specific MDD Data
 description:
   - Generate host-specific MDD Data
 author:
-  - Steven Mosher
+  - Steven Mosher (@stmosher)
 requirements:
   - copy
   - os
@@ -25,13 +50,16 @@ options:
         description: List of filespecs to identify configuration file, e.g. "[oc-*.yml]"
         required: true
         type: list
+        elements: str
     tags:
         description: The tags for which to made the MDD Data
         required: false
         type: list
+        elements: str
     list_key_map:
         description: The key list dict for the context-aware sorting
         required: false
+        default: OC
         type: dict
     default_weight:
         description: The default wieght for data that does not specify
@@ -44,7 +72,7 @@ mdd_data:
     description: The host-specific configuration data
     returned: success
     type: dict
-    sample: 
+    sample:
 metadata:
     description: The metadata for the generated configuration data
     returned: changed
@@ -68,7 +96,7 @@ EXAMPLES = r"""
 
     - debug:
         var: mdd_output
-    
+
     - name: Combine the MDD Data
       set_fact:
         mdd_data: "{{ mdd_output.mdd_data }}"
@@ -78,33 +106,43 @@ EXAMPLES = r"""
 import copy
 import os
 import re
-
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-import yaml
-import json
+import traceback
 import fnmatch
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+
+YAML_IMPORT_ERROR = 0
+
+try:
+    import yaml
+except ImportError:
+    HAS_YAML = False
+    YAML_IMPORT_ERROR = traceback.format_exc()
+else:
+    HAS_YAML = True
+
+# pylint: disable=line-too-long
+default_list_key_map = {
+    'mdd:openconfig:openconfig-acl:acl:openconfig-acl:acl-sets:openconfig-acl:acl-set$': 'openconfig-acl:name',
+    'mdd:openconfig:openconfig-interfaces:interfaces:openconfig-interfaces:interface$': 'openconfig-interfaces:name',
+    'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance$': 'openconfig-network-instance:name',
+    'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:protocols:openconfig-network-instance:protocol$': 'openconfig-network-instance:name',
+    'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:protocols:openconfig-network-instance:protocol:[a-zA-Z0-9_-]+:openconfig-network-instance:bgp:openconfig-network-instance:global:openconfig-network-instance:afi-safis:openconfig-network-instance:afi-safi$': 'openconfig-network-instance:afi-safi-name',
+    'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:protocols:openconfig-network-instance:protocol:[a-zA-Z0-9_-]+:openconfig-network-instance:ospfv2:openconfig-network-instance:areas:openconfig-network-instance:area$': 'openconfig-network-instance:identifier',
+    'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:vlans:openconfig-network-instance:vlan$': 'openconfig-network-instance:vlan-id',
+    'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:defined-sets:openconfig-bgp-policy:bgp-defined-sets:openconfig-bgp-policy:ext-community-sets:openconfig-bgp-policy:ext-community-set$': 'openconfig-bgp-policy:ext-community-set-name',
+    'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:defined-sets:openconfig-routing-policy:filespec_list-sets:openconfig-routing-policy:filespec_list-set$': 'openconfig-routing-policy:name',
+    'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:defined-sets:openconfig-routing-policy:tag-sets:openconfig-routing-policy:tag-set$': 'openconfig-routing-policy:name',
+    'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:policy-definitions:openconfig-routing-policy:policy-definition$': 'openconfig-routing-policy:name',
+    'mdd:openconfig:openconfig-system:system:openconfig-system-ext:services:openconfig-system-ext:key-chains:openconfig-system-ext:key-chain$': 'openconfig-system-ext:name',
+    'mdd:openconfig:openconfig-system:system:openconfig-system-ext:services:openconfig-system-ext:nat:openconfig-system-ext:inside:openconfig-system-ext:source:openconfig-system-ext:local-addresses-access-lists:openconfig-system-ext:local-addresses-access-list$': 'openconfig-system-ext:local-addresses-access-list-name',
+    'mdd:openconfig:openconfig-system:system:openconfig-system-ext:services:openconfig-system-ext:nat:openconfig-system-ext:pools:openconfig-system-ext:pool$': 'openconfig-system-ext:name',
+    'mdd:openconfig:openconfig-system:system:openconfig-system-ext:services:openconfig-system-ext:object-tracking:openconfig-system-ext:object-track$': 'openconfig-system-ext:id',
+    'mdd:openconfig:openconfig-system:system:openconfig-system:logging:openconfig-system:remote-servers:openconfig-system:remote-server$': 'openconfig-system:host'
+}
+# pylint: enable=line-too-long
 
 
-def get_merge_key(path, list_key_map=None):
-    if list_key_map is None:
-        list_key_map = {
-            'mdd:openconfig:openconfig-acl:acl:openconfig-acl:acl-sets:openconfig-acl:acl-set$': 'openconfig-acl:name',
-            'mdd:openconfig:openconfig-interfaces:interfaces:openconfig-interfaces:interface$': 'openconfig-interfaces:name',
-            'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance$': 'openconfig-network-instance:name',
-            'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:protocols:openconfig-network-instance:protocol$': 'openconfig-network-instance:name',
-            'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:protocols:openconfig-network-instance:protocol:[a-zA-Z0-9_-]+:openconfig-network-instance:bgp:openconfig-network-instance:global:openconfig-network-instance:afi-safis:openconfig-network-instance:afi-safi$': 'openconfig-network-instance:afi-safi-name',
-            'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:protocols:openconfig-network-instance:protocol:[a-zA-Z0-9_-]+:openconfig-network-instance:ospfv2:openconfig-network-instance:areas:openconfig-network-instance:area$': 'openconfig-network-instance:identifier',
-            'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:vlans:openconfig-network-instance:vlan$': 'openconfig-network-instance:vlan-id',
-            'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:defined-sets:openconfig-bgp-policy:bgp-defined-sets:openconfig-bgp-policy:ext-community-sets:openconfig-bgp-policy:ext-community-set$': 'openconfig-bgp-policy:ext-community-set-name',
-            'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:defined-sets:openconfig-routing-policy:filespec_list-sets:openconfig-routing-policy:filespec_list-set$': 'openconfig-routing-policy:name',
-            'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:defined-sets:openconfig-routing-policy:tag-sets:openconfig-routing-policy:tag-set$': 'openconfig-routing-policy:name',
-            'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:policy-definitions:openconfig-routing-policy:policy-definition$': 'openconfig-routing-policy:name',
-            'mdd:openconfig:openconfig-system:system:openconfig-system-ext:services:openconfig-system-ext:key-chains:openconfig-system-ext:key-chain$': 'openconfig-system-ext:name',
-            'mdd:openconfig:openconfig-system:system:openconfig-system-ext:services:openconfig-system-ext:nat:openconfig-system-ext:inside:openconfig-system-ext:source:openconfig-system-ext:local-addresses-access-lists:openconfig-system-ext:local-addresses-access-list$': 'openconfig-system-ext:local-addresses-access-list-name',
-            'mdd:openconfig:openconfig-system:system:openconfig-system-ext:services:openconfig-system-ext:nat:openconfig-system-ext:pools:openconfig-system-ext:pool$': 'openconfig-system-ext:name',
-            'mdd:openconfig:openconfig-system:system:openconfig-system-ext:services:openconfig-system-ext:object-tracking:openconfig-system-ext:object-track$': 'openconfig-system-ext:id',
-            'mdd:openconfig:openconfig-system:system:openconfig-system:logging:openconfig-system:remote-servers:openconfig-system:remote-server$': 'openconfig-system:host'
-        }
+def get_merge_key(path, list_key_map):
     for k, v in list_key_map.items():
         if re.search(k, path):
             return v
@@ -149,7 +187,7 @@ def dict_to_list(my_dict):
     return my_list
 
 
-def dictify_merge_lists(list_of_configs, list_key_map=None):
+def dictify_merge_lists(list_of_configs, list_key_map):
     new_list = []
 
     def _to_dict(convert_cfgs, v, path=None):
@@ -179,7 +217,7 @@ def dictify_merge_lists(list_of_configs, list_key_map=None):
     return new_list
 
 
-def undictify_merge_lists(d, list_key_map=None):
+def undictify_merge_lists(d, list_key_map):
     p = find_paths(d, list_key_map)
     for i in p:
         path = i[0]
@@ -205,7 +243,7 @@ def replace_tuples(cfgs):
     return cfgs
 
 
-def find_paths(d, path=[], list_key_map=None):
+def find_paths(d, list_key_map, path=[]):
     special_paths = []
 
     def _find_paths(d, path=[]):
@@ -239,7 +277,7 @@ def update_nested_dict(root_dict, keys_list, new_value):
     nested_dict[last_key] = new_value
 
 
-def combine(config_list, list_key_map=None):
+def combine(config_list, list_key_map):
     # Ensure configs are sorted by device level to org level
     sorted_list = sorted(config_list, key=lambda x: x['level'])  # this is in ascending order
 
@@ -262,11 +300,13 @@ def combine(config_list, list_key_map=None):
 def intersection(lst1, lst2):
     return list(set(lst1) & set(lst2))
 
+
 def matches_filespec(filename, filespec_list):
     for filespec in filespec_list:
         if fnmatch.fnmatch(filename, filespec):
             return True
     return False
+
 
 def find_and_read_configs(top_dir, device_name, filespec_list, default_weight, tags=[]):
     tags.append('all')  # every device gets an "all" tag
@@ -300,16 +340,22 @@ def find_and_read_configs(top_dir, device_name, filespec_list, default_weight, t
             break
     return configs
 
+
 def main():
     arguments = dict(
         mdd_root=dict(required=True, type='str'),
         host=dict(required=True, type='str'),
-        filespec_list=dict(required=True, type='list'),
+        filespec_list=dict(required=True, type='list', elements=str),
         default_weight=dict(type='int', default=1000),
-        tags=dict(required=False, type='list'),
-        list_key_map=dict(required=False, type='dict')
+        tags=dict(required=False, type='list', elements=str),
+        list_key_map=dict(required=False, type='dict', default=default_list_key_map)
     )
     module = AnsibleModule(argument_spec=arguments, supports_check_mode=False)
+
+    if not HAS_YAML:
+        # Needs: from ansible.module_utils.basic import missing_required_lib
+        module.fail_json(msg=missing_required_lib('yaml'), exception=YAML_IMPORT_ERROR)
+
     mdd_root = module.params['mdd_root']
     host = module.params['host']
     filespec_list = module.params['filespec_list']
@@ -323,6 +369,7 @@ def main():
     configs_list = find_and_read_configs(mdd_root, host, filespec_list, default_weight, tags)
     mdd_data, metadata = combine(configs_list, list_key_map)
     module.exit_json(changed=False, mdd_data=mdd_data, mdd_metadata=metadata, failed=False)
+
 
 if __name__ == '__main__':
     main()
