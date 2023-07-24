@@ -75,7 +75,7 @@ import os
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 JSONSCHEMA_IMPORT_ERROR = 0
-IPADDRESS_IMPORT_ERROR = 0
+YAML_IMPORT_ERROR = 0
 
 try:
     from jsonschema import Draft202012Validator
@@ -119,7 +119,7 @@ def main():
 
     if not HAS_YAML:
         # Needs: from ansible.module_utils.basic import missing_required_lib
-        module.fail_json(msg=missing_required_lib('yaml'), exception=IPADDRESS_IMPORT_ERROR)
+        module.fail_json(msg=missing_required_lib('yaml'), exception=YAML_IMPORT_ERROR)
 
     data = module.params['data']
     schema = {}

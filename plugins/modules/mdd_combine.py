@@ -59,7 +59,6 @@ options:
     list_key_map:
         description: The key list dict for the context-aware sorting
         required: false
-        default: OC
         type: dict
     default_weight:
         description: The default wieght for data that does not specify
@@ -120,26 +119,24 @@ except ImportError:
 else:
     HAS_YAML = True
 
-# pylint: disable=line-too-long
 default_list_key_map = {
     'mdd:openconfig:openconfig-acl:acl:openconfig-acl:acl-sets:openconfig-acl:acl-set$': 'openconfig-acl:name',
     'mdd:openconfig:openconfig-interfaces:interfaces:openconfig-interfaces:interface$': 'openconfig-interfaces:name',
     'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance$': 'openconfig-network-instance:name',
-    'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:protocols:openconfig-network-instance:protocol$': 'openconfig-network-instance:name',
-    'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:protocols:openconfig-network-instance:protocol:[a-zA-Z0-9_-]+:openconfig-network-instance:bgp:openconfig-network-instance:global:openconfig-network-instance:afi-safis:openconfig-network-instance:afi-safi$': 'openconfig-network-instance:afi-safi-name',
-    'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:protocols:openconfig-network-instance:protocol:[a-zA-Z0-9_-]+:openconfig-network-instance:ospfv2:openconfig-network-instance:areas:openconfig-network-instance:area$': 'openconfig-network-instance:identifier',
-    'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:vlans:openconfig-network-instance:vlan$': 'openconfig-network-instance:vlan-id',
-    'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:defined-sets:openconfig-bgp-policy:bgp-defined-sets:openconfig-bgp-policy:ext-community-sets:openconfig-bgp-policy:ext-community-set$': 'openconfig-bgp-policy:ext-community-set-name',
-    'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:defined-sets:openconfig-routing-policy:filespec_list-sets:openconfig-routing-policy:filespec_list-set$': 'openconfig-routing-policy:name',
-    'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:defined-sets:openconfig-routing-policy:tag-sets:openconfig-routing-policy:tag-set$': 'openconfig-routing-policy:name',
-    'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:policy-definitions:openconfig-routing-policy:policy-definition$': 'openconfig-routing-policy:name',
-    'mdd:openconfig:openconfig-system:system:openconfig-system-ext:services:openconfig-system-ext:key-chains:openconfig-system-ext:key-chain$': 'openconfig-system-ext:name',
-    'mdd:openconfig:openconfig-system:system:openconfig-system-ext:services:openconfig-system-ext:nat:openconfig-system-ext:inside:openconfig-system-ext:source:openconfig-system-ext:local-addresses-access-lists:openconfig-system-ext:local-addresses-access-list$': 'openconfig-system-ext:local-addresses-access-list-name',
-    'mdd:openconfig:openconfig-system:system:openconfig-system-ext:services:openconfig-system-ext:nat:openconfig-system-ext:pools:openconfig-system-ext:pool$': 'openconfig-system-ext:name',
-    'mdd:openconfig:openconfig-system:system:openconfig-system-ext:services:openconfig-system-ext:object-tracking:openconfig-system-ext:object-track$': 'openconfig-system-ext:id',
-    'mdd:openconfig:openconfig-system:system:openconfig-system:logging:openconfig-system:remote-servers:openconfig-system:remote-server$': 'openconfig-system:host'
+    'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:protocols:openconfig-network-instance:protocol$': 'openconfig-network-instance:name',  # noqa: E501
+    'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:protocols:openconfig-network-instance:protocol:[a-zA-Z0-9_-]+:openconfig-network-instance:bgp:openconfig-network-instance:global:openconfig-network-instance:afi-safis:openconfig-network-instance:afi-safi$': 'openconfig-network-instance:afi-safi-name',  # noqa: E501
+    'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:protocols:openconfig-network-instance:protocol:[a-zA-Z0-9_-]+:openconfig-network-instance:ospfv2:openconfig-network-instance:areas:openconfig-network-instance:area$': 'openconfig-network-instance:identifier',  # noqa: E501
+    'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:vlans:openconfig-network-instance:vlan$': 'openconfig-network-instance:vlan-id',  # noqa: E501
+    'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:defined-sets:openconfig-bgp-policy:bgp-defined-sets:openconfig-bgp-policy:ext-community-sets:openconfig-bgp-policy:ext-community-set$': 'openconfig-bgp-policy:ext-community-set-name',  # noqa: E501
+    'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:defined-sets:openconfig-routing-policy:filespec_list-sets:openconfig-routing-policy:filespec_list-set$': 'openconfig-routing-policy:name',  # noqa: E501
+    'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:defined-sets:openconfig-routing-policy:tag-sets:openconfig-routing-policy:tag-set$': 'openconfig-routing-policy:name',  # noqa: E501v
+    'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:policy-definitions:openconfig-routing-policy:policy-definition$': 'openconfig-routing-policy:name',  # noqa: E501
+    'mdd:openconfig:openconfig-system:system:openconfig-system-ext:services:openconfig-system-ext:key-chains:openconfig-system-ext:key-chain$': 'openconfig-system-ext:name',  # noqa: E501
+    'mdd:openconfig:openconfig-system:system:openconfig-system-ext:services:openconfig-system-ext:nat:openconfig-system-ext:inside:openconfig-system-ext:source:openconfig-system-ext:local-addresses-access-lists:openconfig-system-ext:local-addresses-access-list$': 'openconfig-system-ext:local-addresses-access-list-name',  # noqa: E501
+    'mdd:openconfig:openconfig-system:system:openconfig-system-ext:services:openconfig-system-ext:nat:openconfig-system-ext:pools:openconfig-system-ext:pool$': 'openconfig-system-ext:name',  # noqa: E501
+    'mdd:openconfig:openconfig-system:system:openconfig-system-ext:services:openconfig-system-ext:object-tracking:openconfig-system-ext:object-track$': 'openconfig-system-ext:id',  # noqa: E501
+    'mdd:openconfig:openconfig-system:system:openconfig-system:logging:openconfig-system:remote-servers:openconfig-system:remote-server$': 'openconfig-system:host'  # noqa: E501
 }
-# pylint: enable=line-too-long
 
 
 def get_merge_key(path, list_key_map):
@@ -243,10 +240,14 @@ def replace_tuples(cfgs):
     return cfgs
 
 
-def find_paths(d, list_key_map, path=[]):
+def find_paths(d, list_key_map, path=None):
+    if path is None:
+        path = []
     special_paths = []
 
-    def _find_paths(d, path=[]):
+    def _find_paths(d, path=None):
+        if path is None:
+            path = []
         if isinstance(d, dict):
             for k, v in d.items():
                 merge_key = get_merge_key(":".join(path), list_key_map)
@@ -308,7 +309,9 @@ def matches_filespec(filename, filespec_list):
     return False
 
 
-def find_and_read_configs(top_dir, device_name, filespec_list, default_weight, tags=[]):
+def find_and_read_configs(top_dir, device_name, filespec_list, default_weight, tags=None):
+    if tags is None:
+        tags = []
     tags.append('all')  # every device gets an "all" tag
     configs = []
     hierarchy_level = 0
@@ -345,10 +348,11 @@ def main():
     arguments = dict(
         mdd_root=dict(required=True, type='str'),
         host=dict(required=True, type='str'),
-        filespec_list=dict(required=True, type='list', elements=str),
+        filespec_list=dict(required=True, type='list', elements='str'),
         default_weight=dict(type='int', default=1000),
-        tags=dict(required=False, type='list', elements=str),
-        list_key_map=dict(required=False, type='dict', default=default_list_key_map)
+        tags=dict(required=False, type='list', elements='str'),
+        # The list_key_map argument is not a secret and does not require `no_log`.
+        list_key_map=dict(required=False, type='dict', no_log=False)
     )
     module = AnsibleModule(argument_spec=arguments, supports_check_mode=False)
 
@@ -361,7 +365,10 @@ def main():
     filespec_list = module.params['filespec_list']
     tags = module.params['tags']
     list_key_map = module.params['list_key_map']
-    default_weight = module.params['default_weight']
+    if module.params['default_weight']:
+        default_weight = module.params['default_weight']
+    else:
+        default_weight = default_list_key_map
 
     mdd_data = {}
     mdd_metadata = {}
