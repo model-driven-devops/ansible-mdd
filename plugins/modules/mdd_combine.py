@@ -364,11 +364,16 @@ def main():
     host = module.params['host']
     filespec_list = module.params['filespec_list']
     tags = module.params['tags']
-    list_key_map = module.params['list_key_map']
+
+    if module.params['list_key_map']:
+        list_key_map = module.params['list_key_map']
+    else:
+        list_key_map = default_list_key_map
+
     if module.params['default_weight']:
         default_weight = module.params['default_weight']
     else:
-        default_weight = default_list_key_map
+        default_weight = 1000
 
     mdd_data = {}
     mdd_metadata = {}
