@@ -250,10 +250,15 @@ def find_paths(d, list_key_map, path=None):
             path = []
         if isinstance(d, dict):
             for k, v in d.items():
-                merge_key = get_merge_key(":".join(path), list_key_map)
-                if merge_key:
-                    special_paths.append(("/:/".join(path), len(path)))
-                _find_paths(v, path + [str(k)])
+                if not v:
+                    merge_key = get_merge_key(":".join(path + [str(k)]), list_key_map)
+                    if merge_key:
+                        special_paths.append(("/:/".join(path + [str(k)]), len(path)))
+                else:
+                    merge_key = get_merge_key(":".join(path), list_key_map)
+                    if merge_key:
+                        special_paths.append(("/:/".join(path), len(path)))
+                    _find_paths(v, path + [str(k)])
 
     _find_paths(d)
     set_special_paths = set(special_paths)
