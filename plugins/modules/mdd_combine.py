@@ -20,6 +20,7 @@
 #
 
 from __future__ import (absolute_import, division, print_function)
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ['preview'], 'supported_by': 'community'}
@@ -123,19 +124,32 @@ default_list_key_map = {
     'mdd:openconfig:openconfig-acl:acl:openconfig-acl:acl-sets:openconfig-acl:acl-set$': 'openconfig-acl:name',
     'mdd:openconfig:openconfig-interfaces:interfaces:openconfig-interfaces:interface$': 'openconfig-interfaces:name',
     'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance$': 'openconfig-network-instance:name',
-    'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:protocols:openconfig-network-instance:protocol$': 'openconfig-network-instance:name',  # noqa: E501
-    'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:protocols:openconfig-network-instance:protocol:[a-zA-Z0-9_-]+:openconfig-network-instance:bgp:openconfig-network-instance:global:openconfig-network-instance:afi-safis:openconfig-network-instance:afi-safi$': 'openconfig-network-instance:afi-safi-name',  # noqa: E501
-    'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:protocols:openconfig-network-instance:protocol:[a-zA-Z0-9_-]+:openconfig-network-instance:ospfv2:openconfig-network-instance:areas:openconfig-network-instance:area$': 'openconfig-network-instance:identifier',  # noqa: E501
-    'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:vlans:openconfig-network-instance:vlan$': 'openconfig-network-instance:vlan-id',  # noqa: E501
-    'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:defined-sets:openconfig-bgp-policy:bgp-defined-sets:openconfig-bgp-policy:ext-community-sets:openconfig-bgp-policy:ext-community-set$': 'openconfig-bgp-policy:ext-community-set-name',  # noqa: E501
-    'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:defined-sets:openconfig-routing-policy:filespec_list-sets:openconfig-routing-policy:filespec_list-set$': 'openconfig-routing-policy:name',  # noqa: E501
-    'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:defined-sets:openconfig-routing-policy:tag-sets:openconfig-routing-policy:tag-set$': 'openconfig-routing-policy:name',  # noqa: E501v
-    'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:policy-definitions:openconfig-routing-policy:policy-definition$': 'openconfig-routing-policy:name',  # noqa: E501
-    'mdd:openconfig:openconfig-system:system:openconfig-system-ext:services:openconfig-system-ext:key-chains:openconfig-system-ext:key-chain$': 'openconfig-system-ext:name',  # noqa: E501
-    'mdd:openconfig:openconfig-system:system:openconfig-system-ext:services:openconfig-system-ext:nat:openconfig-system-ext:inside:openconfig-system-ext:source:openconfig-system-ext:local-addresses-access-lists:openconfig-system-ext:local-addresses-access-list$': 'openconfig-system-ext:local-addresses-access-list-name',  # noqa: E501
-    'mdd:openconfig:openconfig-system:system:openconfig-system-ext:services:openconfig-system-ext:nat:openconfig-system-ext:pools:openconfig-system-ext:pool$': 'openconfig-system-ext:name',  # noqa: E501
-    'mdd:openconfig:openconfig-system:system:openconfig-system-ext:services:openconfig-system-ext:object-tracking:openconfig-system-ext:object-track$': 'openconfig-system-ext:id',  # noqa: E501
-    'mdd:openconfig:openconfig-system:system:openconfig-system:logging:openconfig-system:remote-servers:openconfig-system:remote-server$': 'openconfig-system:host'  # noqa: E501
+    'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:protocols:openconfig-network-instance:protocol$': 'openconfig-network-instance:name',
+    # noqa: E501
+    'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:protocols:openconfig-network-instance:protocol:[a-zA-Z0-9_-]+:openconfig-network-instance:bgp:openconfig-network-instance:global:openconfig-network-instance:afi-safis:openconfig-network-instance:afi-safi$': 'openconfig-network-instance:afi-safi-name',
+    # noqa: E501
+    'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:protocols:openconfig-network-instance:protocol:[a-zA-Z0-9_-]+:openconfig-network-instance:ospfv2:openconfig-network-instance:areas:openconfig-network-instance:area$': 'openconfig-network-instance:identifier',
+    # noqa: E501
+    'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:vlans:openconfig-network-instance:vlan$': 'openconfig-network-instance:vlan-id',
+    # noqa: E501
+    'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:defined-sets:openconfig-bgp-policy:bgp-defined-sets:openconfig-bgp-policy:ext-community-sets:openconfig-bgp-policy:ext-community-set$': 'openconfig-bgp-policy:ext-community-set-name',
+    # noqa: E501
+    'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:defined-sets:openconfig-routing-policy:filespec_list-sets:openconfig-routing-policy:filespec_list-set$': 'openconfig-routing-policy:name',
+    # noqa: E501
+    'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:defined-sets:openconfig-routing-policy:tag-sets:openconfig-routing-policy:tag-set$': 'openconfig-routing-policy:name',
+    # noqa: E501v
+    'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:policy-definitions:openconfig-routing-policy:policy-definition$': 'openconfig-routing-policy:name',
+    # noqa: E501
+    'mdd:openconfig:openconfig-system:system:openconfig-system-ext:services:openconfig-system-ext:key-chains:openconfig-system-ext:key-chain$': 'openconfig-system-ext:name',
+    # noqa: E501
+    'mdd:openconfig:openconfig-system:system:openconfig-system-ext:services:openconfig-system-ext:nat:openconfig-system-ext:inside:openconfig-system-ext:source:openconfig-system-ext:local-addresses-access-lists:openconfig-system-ext:local-addresses-access-list$': 'openconfig-system-ext:local-addresses-access-list-name',
+    # noqa: E501
+    'mdd:openconfig:openconfig-system:system:openconfig-system-ext:services:openconfig-system-ext:nat:openconfig-system-ext:pools:openconfig-system-ext:pool$': 'openconfig-system-ext:name',
+    # noqa: E501
+    'mdd:openconfig:openconfig-system:system:openconfig-system-ext:services:openconfig-system-ext:object-tracking:openconfig-system-ext:object-track$': 'openconfig-system-ext:id',
+    # noqa: E501
+    'mdd:openconfig:openconfig-system:system:openconfig-system:logging:openconfig-system:remote-servers:openconfig-system:remote-server$': 'openconfig-system:host'
+    # noqa: E501
 }
 
 
@@ -146,7 +160,7 @@ def get_merge_key(path, list_key_map):
     return None
 
 
-def merge_dicts(all_configs):
+def merge_dicts(all_configs, module):
     def _merge(result_cfgs, v, path=None, filepath=None, hierarchy_level=None, playbook_tags=None, weight=None):
         path = path or []
         for k, v in v.items():
@@ -158,9 +172,17 @@ def merge_dicts(all_configs):
                 else:
                     result_cfgs[k] = _merge({}, v, path + [str(k)], filepath, hierarchy_level, playbook_tags, weight)
             else:
-                if k not in result_cfgs:
+                if k not in result_cfgs:  # if not there, add
                     result_cfgs[k] = (v, filepath, playbook_tags, hierarchy_level, weight)
-                elif k in result_cfgs and weight > result_cfgs[k][4]:
+                elif k in result_cfgs and hierarchy_level == result_cfgs[k][3] and result_cfgs[k][0]:  # if key found multiple places at same hierarchy level, error
+                    if filepath == result_cfgs[k][1]:
+                        module.fail_json(
+                            msg=f"Merge Error: key {k} was found multiple times at the same hierarchy level (level: {result_cfgs[k][3]}) in file {filepath}.")
+                    else:
+                        module.fail_json(
+                            msg=f"Merge Error: key {k} was found multiple times at the same hierarchy level (level: {result_cfgs[k][3]}) in files {filepath} and {result_cfgs[k][1]}.")
+                    module.exit_json(changed=False, failed=True)
+                elif k in result_cfgs and weight > result_cfgs[k][4]:  # if key exists but weight is higher, replace
                     result_cfgs[k] = (v, filepath, playbook_tags, hierarchy_level, weight)
         return result_cfgs
 
@@ -283,7 +305,7 @@ def update_nested_dict(root_dict, keys_list, new_value):
     nested_dict[last_key] = new_value
 
 
-def combine(config_list, list_key_map):
+def combine(config_list, list_key_map, module):
     # Ensure configs are sorted by device level to org level
     sorted_list = sorted(config_list, key=lambda x: x['level'])  # this is in ascending order
 
@@ -291,7 +313,7 @@ def combine(config_list, list_key_map):
     for_merging_configs = dictify_merge_lists(sorted_list, list_key_map)
 
     # Do the merging
-    merge_results = merge_dicts(for_merging_configs)
+    merge_results = merge_dicts(for_merging_configs, module)
 
     # Convert the Merge List dicts back to lists
     config_with_meta_data = undictify_merge_lists(merge_results, list_key_map)
@@ -314,7 +336,7 @@ def matches_filespec(filename, filespec_list):
     return False
 
 
-def find_and_read_configs(top_dir, device_name, filespec_list, default_weight, tags=None):
+def find_and_read_configs(top_dir, device_name, filespec_list, default_weight, tags=None, module=None):
     if tags is None:
         tags = []
     tags.append('all')  # every device gets an "all" tag
@@ -327,22 +349,27 @@ def find_and_read_configs(top_dir, device_name, filespec_list, default_weight, t
                 for filename in os.listdir(current_dir):
                     if matches_filespec(filename, filespec_list):
                         with open(os.path.join(current_dir, filename), 'r') as f:
-                            # Consider catching when a user gives us a file that is not really yaml
-                            yaml_configs = yaml.safe_load_all(f)
-                            for yaml_config in yaml_configs:
-                                file_tags = yaml_config.get('mdd_tags',
-                                                            ['all'])  # if no mdd_tags, then file gets 'all' tag
-                                matched_tags = intersection(tags, file_tags)
-                                if matched_tags:
-                                    configs.append(
-                                        {
-                                            'config': yaml_config.get('mdd_data', {}),
-                                            'filepath': f.name,
-                                            'tags': matched_tags,
-                                            'weight': yaml_config.get('weight', default_weight),
-                                            'level': hierarchy_level
-                                        }
-                                    )
+                            try:
+                                yaml_configs = yaml.safe_load_all(f)
+                                for yaml_config in yaml_configs:
+                                    file_tags = yaml_config.get('mdd_tags',
+                                                                ['all'])  # if no mdd_tags, then file gets 'all' tag
+                                    matched_tags = intersection(tags, file_tags)
+                                    if matched_tags:
+                                        configs.append(
+                                            {
+                                                'config': yaml_config.get('mdd_data', {}),
+                                                'filepath': f.name,
+                                                'tags': matched_tags,
+                                                'weight': yaml_config.get('weight', default_weight),
+                                                'level': hierarchy_level
+                                            }
+                                        )
+                            except yaml.YAMLError:
+                                module.fail_json(
+                                    msg=f"An error occurred loading file {os.path.join(current_dir, filename)}")
+                                module.exit_json(changed=False, failed=True)
+
                 hierarchy_level += 1
                 current_dir = os.path.dirname(current_dir)
             break
@@ -383,8 +410,8 @@ def main():
     mdd_data = {}
     mdd_metadata = {}
     module.debug('POOP')
-    configs_list = find_and_read_configs(mdd_root, host, filespec_list, default_weight, tags)
-    mdd_data, metadata = combine(configs_list, list_key_map)
+    configs_list = find_and_read_configs(mdd_root, host, filespec_list, default_weight, tags, module)
+    mdd_data, metadata = combine(configs_list, list_key_map, module)
     module.exit_json(changed=False, mdd_data=mdd_data, mdd_metadata=metadata, failed=False)
 
 
