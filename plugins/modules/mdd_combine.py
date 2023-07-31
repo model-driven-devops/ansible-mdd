@@ -124,32 +124,19 @@ default_list_key_map = {
     'mdd:openconfig:openconfig-acl:acl:openconfig-acl:acl-sets:openconfig-acl:acl-set$': 'openconfig-acl:name',
     'mdd:openconfig:openconfig-interfaces:interfaces:openconfig-interfaces:interface$': 'openconfig-interfaces:name',
     'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance$': 'openconfig-network-instance:name',
-    'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:protocols:openconfig-network-instance:protocol$': 'openconfig-network-instance:name',
-    # noqa: E501
-    'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:protocols:openconfig-network-instance:protocol:[a-zA-Z0-9_-]+:openconfig-network-instance:bgp:openconfig-network-instance:global:openconfig-network-instance:afi-safis:openconfig-network-instance:afi-safi$': 'openconfig-network-instance:afi-safi-name',
-    # noqa: E501
-    'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:protocols:openconfig-network-instance:protocol:[a-zA-Z0-9_-]+:openconfig-network-instance:ospfv2:openconfig-network-instance:areas:openconfig-network-instance:area$': 'openconfig-network-instance:identifier',
-    # noqa: E501
-    'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:vlans:openconfig-network-instance:vlan$': 'openconfig-network-instance:vlan-id',
-    # noqa: E501
-    'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:defined-sets:openconfig-bgp-policy:bgp-defined-sets:openconfig-bgp-policy:ext-community-sets:openconfig-bgp-policy:ext-community-set$': 'openconfig-bgp-policy:ext-community-set-name',
-    # noqa: E501
-    'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:defined-sets:openconfig-routing-policy:filespec_list-sets:openconfig-routing-policy:filespec_list-set$': 'openconfig-routing-policy:name',
-    # noqa: E501
-    'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:defined-sets:openconfig-routing-policy:tag-sets:openconfig-routing-policy:tag-set$': 'openconfig-routing-policy:name',
-    # noqa: E501v
-    'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:policy-definitions:openconfig-routing-policy:policy-definition$': 'openconfig-routing-policy:name',
-    # noqa: E501
-    'mdd:openconfig:openconfig-system:system:openconfig-system-ext:services:openconfig-system-ext:key-chains:openconfig-system-ext:key-chain$': 'openconfig-system-ext:name',
-    # noqa: E501
-    'mdd:openconfig:openconfig-system:system:openconfig-system-ext:services:openconfig-system-ext:nat:openconfig-system-ext:inside:openconfig-system-ext:source:openconfig-system-ext:local-addresses-access-lists:openconfig-system-ext:local-addresses-access-list$': 'openconfig-system-ext:local-addresses-access-list-name',
-    # noqa: E501
-    'mdd:openconfig:openconfig-system:system:openconfig-system-ext:services:openconfig-system-ext:nat:openconfig-system-ext:pools:openconfig-system-ext:pool$': 'openconfig-system-ext:name',
-    # noqa: E501
-    'mdd:openconfig:openconfig-system:system:openconfig-system-ext:services:openconfig-system-ext:object-tracking:openconfig-system-ext:object-track$': 'openconfig-system-ext:id',
-    # noqa: E501
-    'mdd:openconfig:openconfig-system:system:openconfig-system:logging:openconfig-system:remote-servers:openconfig-system:remote-server$': 'openconfig-system:host'
-    # noqa: E501
+    'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:protocols:openconfig-network-instance:protocol$': 'openconfig-network-instance:name',  # noqa: E501
+    'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:protocols:openconfig-network-instance:protocol:[a-zA-Z0-9_-]+:openconfig-network-instance:bgp:openconfig-network-instance:global:openconfig-network-instance:afi-safis:openconfig-network-instance:afi-safi$': 'openconfig-network-instance:afi-safi-name',  # noqa: E501
+    'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:protocols:openconfig-network-instance:protocol:[a-zA-Z0-9_-]+:openconfig-network-instance:ospfv2:openconfig-network-instance:areas:openconfig-network-instance:area$': 'openconfig-network-instance:identifier',  # noqa: E501
+    'mdd:openconfig:openconfig-network-instance:network-instances:openconfig-network-instance:network-instance:[a-zA-Z0-9_-]+:openconfig-network-instance:vlans:openconfig-network-instance:vlan$': 'openconfig-network-instance:vlan-id',  # noqa: E501
+    'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:defined-sets:openconfig-bgp-policy:bgp-defined-sets:openconfig-bgp-policy:ext-community-sets:openconfig-bgp-policy:ext-community-set$': 'openconfig-bgp-policy:ext-community-set-name',  # noqa: E501
+    'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:defined-sets:openconfig-routing-policy:filespec_list-sets:openconfig-routing-policy:filespec_list-set$': 'openconfig-routing-policy:name',  # noqa: E501
+    'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:defined-sets:openconfig-routing-policy:tag-sets:openconfig-routing-policy:tag-set$': 'openconfig-routing-policy:name',  # noqa: E501v
+    'mdd:openconfig:openconfig-routing-policy:routing-policy:openconfig-routing-policy:policy-definitions:openconfig-routing-policy:policy-definition$': 'openconfig-routing-policy:name',  # noqa: E501
+    'mdd:openconfig:openconfig-system:system:openconfig-system-ext:services:openconfig-system-ext:key-chains:openconfig-system-ext:key-chain$': 'openconfig-system-ext:name',  # noqa: E501
+    'mdd:openconfig:openconfig-system:system:openconfig-system-ext:services:openconfig-system-ext:nat:openconfig-system-ext:inside:openconfig-system-ext:source:openconfig-system-ext:local-addresses-access-lists:openconfig-system-ext:local-addresses-access-list$': 'openconfig-system-ext:local-addresses-access-list-name',  # noqa: E501
+    'mdd:openconfig:openconfig-system:system:openconfig-system-ext:services:openconfig-system-ext:nat:openconfig-system-ext:pools:openconfig-system-ext:pool$': 'openconfig-system-ext:name',  # noqa: E501
+    'mdd:openconfig:openconfig-system:system:openconfig-system-ext:services:openconfig-system-ext:object-tracking:openconfig-system-ext:object-track$': 'openconfig-system-ext:id',  # noqa: E501
+    'mdd:openconfig:openconfig-system:system:openconfig-system:logging:openconfig-system:remote-servers:openconfig-system:remote-server$': 'openconfig-system:host'  # noqa: E501
 }
 
 
@@ -172,17 +159,22 @@ def merge_dicts(all_configs, module):
                 else:
                     result_cfgs[k] = _merge({}, v, path + [str(k)], filepath, hierarchy_level, playbook_tags, weight)
             else:
-                if k not in result_cfgs:  # if not there, add
+                # if key not there, add
+                if k not in result_cfgs:
                     result_cfgs[k] = (v, filepath, playbook_tags, hierarchy_level, weight)
-                elif k in result_cfgs and hierarchy_level == result_cfgs[k][3] and result_cfgs[k][0]:  # if key found multiple places at same hierarchy level, error
+                # if key found multiple places at same hierarchy level, error
+                elif k in result_cfgs and hierarchy_level == result_cfgs[k][3] and result_cfgs[k][0]:
                     if filepath == result_cfgs[k][1]:
                         module.fail_json(
-                            msg=f"Merge Error: key {k} was found multiple times at the same hierarchy level (level: {result_cfgs[k][3]}) in file {filepath}.")
+                            msg="Merge Error: key {1} was found multiple times at the same hierarchy level (level: {2}) in file {3}.".format(
+                                k, result_cfgs[k][3], filepath))
                     else:
                         module.fail_json(
-                            msg=f"Merge Error: key {k} was found multiple times at the same hierarchy level (level: {result_cfgs[k][3]}) in files {filepath} and {result_cfgs[k][1]}.")
+                            msg="Merge Error: key {1} was found multiple times at the same hierarchy level (level: {2}) in files {3} and {4}.".format(
+                                k, result_cfgs[k][3], filepath, result_cfgs[k][1]))
                     module.exit_json(changed=False, failed=True)
-                elif k in result_cfgs and weight > result_cfgs[k][4]:  # if key exists but weight is higher, replace
+                # if key exists but weight is higher, replace
+                elif k in result_cfgs and weight > result_cfgs[k][4]:
                     result_cfgs[k] = (v, filepath, playbook_tags, hierarchy_level, weight)
         return result_cfgs
 
@@ -367,7 +359,7 @@ def find_and_read_configs(top_dir, device_name, filespec_list, default_weight, t
                                         )
                             except yaml.YAMLError:
                                 module.fail_json(
-                                    msg=f"An error occurred loading file {os.path.join(current_dir, filename)}")
+                                    msg="An error occurred loading file {1}".format(os.path.join(current_dir, filename)))
                                 module.exit_json(changed=False, failed=True)
 
                 hierarchy_level += 1
