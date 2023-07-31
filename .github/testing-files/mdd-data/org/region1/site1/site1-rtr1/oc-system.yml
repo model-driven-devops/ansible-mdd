@@ -1,0 +1,121 @@
+---
+mdd_data:
+  mdd:openconfig:
+    openconfig-system:system:
+      openconfig-system:aaa:
+        openconfig-system:server-groups:
+          openconfig-system:server-group: []
+        openconfig-system:accounting: {}
+        openconfig-system:authorization: {}
+        openconfig-system:authentication: {}
+      openconfig-system:clock:
+        openconfig-system:config:
+          openconfig-system:timezone-name: UTC 0 0
+      openconfig-system:config:
+        openconfig-system:hostname: site1-rtr1
+      openconfig-system:dns:
+        openconfig-system:servers:
+          openconfig-system:server: []
+      openconfig-system:logging:
+        openconfig-system:console:
+          openconfig-system:config:
+            openconfig-system-ext:enabled: true
+          openconfig-system:selectors:
+            openconfig-system:selector:
+            - openconfig-system:facility: SYSLOG
+              openconfig-system:severity: DEBUG
+              openconfig-system:config:
+                openconfig-system:facility: SYSLOG
+                openconfig-system:severity: DEBUG
+        openconfig-system-ext:terminal-monitor:
+          openconfig-system-ext:selectors:
+            openconfig-system-ext:selector:
+            - openconfig-system-ext:facility: SYSLOG
+              openconfig-system-ext:severity: DEBUG
+              openconfig-system-ext:config:
+                openconfig-system-ext:facility: SYSLOG
+                openconfig-system-ext:severity: DEBUG
+        openconfig-system:remote-servers: {}
+        openconfig-system-ext:buffered:
+          openconfig-system-ext:config:
+          - openconfig-system-ext:enabled: true
+            openconfig-system-ext:severity: DEBUG
+            openconfig-system-ext:buffer-size: '4096'
+      openconfig-system:ntp:
+        openconfig-system:config: {}
+        openconfig-system:ntp-keys:
+          openconfig-system:ntp-key: []
+        openconfig-system:servers:
+          openconfig-system:server: []
+      openconfig-system:ssh-server:
+        openconfig-system:config:
+          openconfig-system-ext:ssh-timeout: 60
+          openconfig-system:protocol-version: V2
+          openconfig-system:timeout: 1800
+          openconfig-system-ext:absolute-timeout-minutes: 60
+          openconfig-system:session-limit: 16
+        openconfig-system-ext:algorithm:
+          openconfig-system-ext:config:
+            openconfig-system-ext:encryption:
+            - aes128-ctr
+            - aes192-ctr
+            - aes256-ctr
+      openconfig-system-ext:services:
+        openconfig-system-ext:http:
+          openconfig-system-ext:config:
+            openconfig-system-ext:http-enabled: true
+            openconfig-system-ext:https-enabled: true
+            openconfig-system-ext:ip-http-max-connections: 2
+          openconfig-system-ext:ip-http-timeout-policy:
+            openconfig-system-ext:idle:
+              openconfig-system-ext:config: {}
+        openconfig-system-ext:config:
+          openconfig-system-ext:ip-domain-lookup: true
+          openconfig-system-ext:archive-logging: false
+          openconfig-system-ext:ip-bootp-server: false
+          openconfig-system-ext:ip-dns-server: false
+          openconfig-system-ext:ip-identd: false
+          openconfig-system-ext:ip-rcmd-rcp-enable: false
+          openconfig-system-ext:ip-rcmd-rsh-enable: false
+          openconfig-system-ext:finger: false
+          openconfig-system-ext:service-config: false
+          openconfig-system-ext:service-tcp-small-servers: false
+          openconfig-system-ext:service-udp-small-servers: false
+          openconfig-system-ext:service-pad: false
+          openconfig-system-ext:service-password-encryption: false
+          openconfig-system-ext:ip-gratuitous-arps: true
+        openconfig-system-ext:login-security-policy:
+          openconfig-system-ext:config:
+            openconfig-system-ext:on-success: true
+            openconfig-system-ext:on-failure: false
+          openconfig-system-ext:block-for:
+            openconfig-system-ext:config: {}
+        openconfig-system-ext:object-tracking:
+          openconfig-system-ext:config:
+            openconfig-system-ext:timer: {}
+          openconfig-system-ext:object-track: []
+        openconfig-system-ext:key-chains:
+          openconfig-system-ext:key-chain: []
+        openconfig-system-ext:boot-network:
+          openconfig-system-ext:config:
+            openconfig-system-ext:bootnetwork-enabled: DISABLED
+        openconfig-system-ext:nat:
+          openconfig-system-ext:pools:
+            openconfig-system-ext:pool: []
+          openconfig-system-ext:inside:
+            openconfig-system-ext:source: {}
+      openconfig-system-ext:timestamps:
+        openconfig-system-ext:logging:
+          openconfig-system-ext:config:
+            openconfig-system-ext:enabled: true
+            openconfig-system-ext:datetime: true
+            openconfig-system-ext:uptime: false
+            openconfig-system-ext:localtime: false
+        openconfig-system-ext:debugging:
+          openconfig-system-ext:config:
+            openconfig-system-ext:enabled: true
+            openconfig-system-ext:datetime: true
+            openconfig-system-ext:uptime: false
+            openconfig-system-ext:localtime: false
+mdd_tags:
+- site_router

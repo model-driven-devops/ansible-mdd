@@ -1,0 +1,53 @@
+---
+# You can specify a test run by adding -e "test=true"
+- name: elevate configs
+  hosts: localhost
+  gather_facts: false
+  vars:
+    temp_dir: "{{ mdd_data_parent }}/temp_dir"
+    is_test_run: "{{ test | default(false) }}"
+  tasks:
+    - name: Get ansible inventory
+      command: "ansible-inventory -i {{ mdd_inventory_root }} --list"
+      register: ansible_inventory
+
+    - name: elevate
+      elevate_configs:
+        mdd_data_dir: "{{ mdd_data_root }}"
+        is_test_run: "{{ is_test_run }}"
+        temp_dir: "{{ temp_dir }}"
+        ansible_inventory: "{{ ansible_inventory.stdout_lines | join('\n') }}"
+        mdd_data_patterns: "{{ mdd_data_patterns }}"
+      register: elevate_result
+
+    - debug:
+        var: elevate_result.debug
+
+    - pause:
+        prompt: "Is this result okay? (yes/no)"
+        echo: yes
+      register: result
+      until: result.user_input.lower() in ['yes', 'no', 'y', 'n']
+      retries: 5
+      delay: 1
+      when: is_test_run
+
+    - set_fact:
+        is_ok_continue: false
+    - set_fact:
+        is_ok_continue: true
+      when: is_test_run and result.user_input.lower() in ['yes', 'y']
+
+    - name: Delete temp directory if present
+      file:
+        path: "{{ temp_dir }}/"
+        state: absent
+      when: not is_ok_continue
+
+    - name: CP Good Files to mdd_data
+      command: "{{ item }}"
+      with_items:
+        - "rm -r {{ mdd_data_root }}/"
+        - "cp -r {{ temp_dir }}/ {{ mdd_data_root }}/"
+        - "rm -r {{ temp_dir }}/"
+      when: is_ok_continue

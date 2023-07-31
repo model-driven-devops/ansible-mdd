@@ -1,0 +1,20 @@
+---
+mdd_data:
+  mdd:openconfig:
+    openconfig-routing-policy:routing-policy:
+      openconfig-routing-policy:defined-sets:
+        openconfig-bgp-policy:bgp-defined-sets:
+          openconfig-bgp-policy:as-path-sets:
+            openconfig-bgp-policy:as-path-set: []
+          openconfig-bgp-policy:community-sets:
+            openconfig-bgp-policy:community-set: []
+          openconfig-bgp-policy:ext-community-sets:
+            openconfig-bgp-policy:ext-community-set: []
+        openconfig-routing-policy:tag-sets:
+          openconfig-routing-policy:tag-set: []
+        openconfig-routing-policy:prefix-sets:
+          openconfig-routing-policy:prefix-set: []
+      openconfig-routing-policy:policy-definitions:
+        openconfig-routing-policy:policy-definition: []
+mdd_tags:
+- WAN_router

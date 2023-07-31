@@ -1,0 +1,124 @@
+---
+mdd_data:
+  mdd:openconfig:
+    openconfig-interfaces:interfaces:
+      openconfig-interfaces:interface:
+      - openconfig-interfaces:name: GigabitEthernet1
+        openconfig-interfaces:config:
+          openconfig-interfaces:name: GigabitEthernet1
+          openconfig-interfaces:type: ethernetCsmacd
+          openconfig-interfaces:enabled: true
+        openconfig-interfaces:subinterfaces:
+          openconfig-interfaces:subinterface:
+          - openconfig-interfaces:index: 0
+            openconfig-interfaces:config:
+              openconfig-interfaces:index: 0
+              openconfig-interfaces:enabled: true
+            openconfig-if-ip:ipv4:
+              openconfig-if-ip:addresses:
+                openconfig-if-ip:address: []
+              openconfig-if-ip:config:
+                openconfig-if-ip:dhcp-client: true
+        openconfig-if-ethernet:ethernet:
+          openconfig-if-ethernet:config:
+            openconfig-if-ethernet:auto-negotiate: true
+      - openconfig-interfaces:name: GigabitEthernet2
+        openconfig-interfaces:config:
+          openconfig-interfaces:name: GigabitEthernet2
+          openconfig-interfaces:type: ethernetCsmacd
+          openconfig-interfaces:enabled: false
+        openconfig-interfaces:subinterfaces:
+          openconfig-interfaces:subinterface:
+          - openconfig-interfaces:index: 0
+            openconfig-interfaces:config:
+              openconfig-interfaces:index: 0
+              openconfig-interfaces:enabled: false
+        openconfig-if-ethernet:ethernet:
+          openconfig-if-ethernet:config:
+            openconfig-if-ethernet:auto-negotiate: true
+      - openconfig-interfaces:name: GigabitEthernet3
+        openconfig-interfaces:config:
+          openconfig-interfaces:name: GigabitEthernet3
+          openconfig-interfaces:type: ethernetCsmacd
+          openconfig-interfaces:enabled: false
+        openconfig-interfaces:subinterfaces:
+          openconfig-interfaces:subinterface:
+          - openconfig-interfaces:index: 0
+            openconfig-interfaces:config:
+              openconfig-interfaces:index: 0
+              openconfig-interfaces:enabled: false
+        openconfig-if-ethernet:ethernet:
+          openconfig-if-ethernet:config:
+            openconfig-if-ethernet:auto-negotiate: true
+      - openconfig-interfaces:name: GigabitEthernet4
+        openconfig-interfaces:config:
+          openconfig-interfaces:name: GigabitEthernet4
+          openconfig-interfaces:type: ethernetCsmacd
+          openconfig-interfaces:enabled: false
+        openconfig-interfaces:subinterfaces:
+          openconfig-interfaces:subinterface:
+          - openconfig-interfaces:index: 0
+            openconfig-interfaces:config:
+              openconfig-interfaces:index: 0
+              openconfig-interfaces:enabled: false
+        openconfig-if-ethernet:ethernet:
+          openconfig-if-ethernet:config:
+            openconfig-if-ethernet:auto-negotiate: true
+      - openconfig-interfaces:name: GigabitEthernet5
+        openconfig-interfaces:config:
+          openconfig-interfaces:name: GigabitEthernet5
+          openconfig-interfaces:type: ethernetCsmacd
+          openconfig-interfaces:enabled: false
+        openconfig-interfaces:subinterfaces:
+          openconfig-interfaces:subinterface:
+          - openconfig-interfaces:index: 0
+            openconfig-interfaces:config:
+              openconfig-interfaces:index: 0
+              openconfig-interfaces:enabled: false
+        openconfig-if-ethernet:ethernet:
+          openconfig-if-ethernet:config:
+            openconfig-if-ethernet:auto-negotiate: true
+      - openconfig-interfaces:name: GigabitEthernet6
+        openconfig-interfaces:config:
+          openconfig-interfaces:name: GigabitEthernet6
+          openconfig-interfaces:type: ethernetCsmacd
+          openconfig-interfaces:enabled: false
+        openconfig-interfaces:subinterfaces:
+          openconfig-interfaces:subinterface:
+          - openconfig-interfaces:index: 0
+            openconfig-interfaces:config:
+              openconfig-interfaces:index: 0
+              openconfig-interfaces:enabled: false
+        openconfig-if-ethernet:ethernet:
+          openconfig-if-ethernet:config:
+            openconfig-if-ethernet:auto-negotiate: true
+      - openconfig-interfaces:name: GigabitEthernet7
+        openconfig-interfaces:config:
+          openconfig-interfaces:name: GigabitEthernet7
+          openconfig-interfaces:type: ethernetCsmacd
+          openconfig-interfaces:enabled: false
+        openconfig-interfaces:subinterfaces:
+          openconfig-interfaces:subinterface:
+          - openconfig-interfaces:index: 0
+            openconfig-interfaces:config:
+              openconfig-interfaces:index: 0
+              openconfig-interfaces:enabled: false
+        openconfig-if-ethernet:ethernet:
+          openconfig-if-ethernet:config:
+            openconfig-if-ethernet:auto-negotiate: true
+      - openconfig-interfaces:name: GigabitEthernet8
+        openconfig-interfaces:config:
+          openconfig-interfaces:name: GigabitEthernet8
+          openconfig-interfaces:type: ethernetCsmacd
+          openconfig-interfaces:enabled: false
+        openconfig-interfaces:subinterfaces:
+          openconfig-interfaces:subinterface:
+          - openconfig-interfaces:index: 0
+            openconfig-interfaces:config:
+              openconfig-interfaces:index: 0
+              openconfig-interfaces:enabled: false
+        openconfig-if-ethernet:ethernet:
+          openconfig-if-ethernet:config:
+            openconfig-if-ethernet:auto-negotiate: true
+mdd_tags:
+- WAN_router

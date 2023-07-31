@@ -1,15 +1,30 @@
 - name: Harvest Data from NSO
   hosts: network
   connection: local
-  gather_facts: no
+  gather_facts: false
   roles:
     - ciscops.mdd.data
     - ciscops.mdd.nso
   vars:
-    create_dirs: yes
+    create_dirs: true
   tasks:
+      - name: Execute ansible-inventory command
+        command: "ansible-inventory -i {{ mdd_inventory_root }} --host {{ inventory_hostname }}"
+        register: command_output
 
-    - name: Harvest Data
-      include_role:
-        name: ciscops.mdd.nso
-        tasks_from: update_yaml_data
+      - name: Clean output data
+        set_fact:
+            device_inv_data: "{{ command_output.stdout_lines | join('\n') }}"
+
+      - name: Retrieve and set the device tags
+        set_fact:
+            device_tags: "{{ [[device_inv_data.tags | sort | join(', ')][0]] }}"
+
+      - name: Retrieve device tags
+        debug:
+          var: device_tags
+
+      - name: Harvest Data
+        include_role:
+          name: ciscops.mdd.nso
+          tasks_from: update_yaml_data

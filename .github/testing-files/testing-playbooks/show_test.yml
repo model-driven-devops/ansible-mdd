@@ -1,0 +1,19 @@
+- hosts: network
+  connection: local
+  gather_facts: false
+  vars:
+    run_number: "{{ run_num | default('1') }}"
+    current_dir: "{{ lookup('env', 'PWD') }}/elevate_test_files"
+  roles:
+    - ciscops.mdd.data
+  tasks:
+    - name: Translate and truncate interface names
+      set_fact:
+        mdd_data: "{{ mdd_data | ciscops.mdd.intf_xform(cml_intf_xlate) }}"
+      when: (cml_group is defined and cml_group in group_names) and (cml_intf_xlate is defined and cml_intf_xlate)
+
+    - name: Save debug output to a file
+      lineinfile:
+        path: "{{ current_dir }}/{{ run_number }}/{{ inventory_hostname }}.txt"
+        line: "{{ inventory_hostname }}: {{ mdd_data | to_nice_json }}"
+        create: yes

@@ -11,6 +11,7 @@ env:
   NAMESPACE: ciscops
   COLLECTION_NAME: mdd
 
+
 jobs:
 ###
 # Sanity tests (REQUIRED)
@@ -56,3 +57,92 @@ jobs:
       - name: Run sanity tests
         run: ansible-test sanity --docker -v --color
         working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}
+
+  test_elevate:
+    name: Test elevate (Ⓐ${{ matrix.ansible }})
+    strategy:
+      matrix:
+        ansible:
+          # It's important that Sanity is tested against all stable-X.Y branches
+          # Testing against `devel` may fail as new tests are added.
+          # - stable-2.9 # Only if your collection supports Ansible 2.9
+          - stable-2.13
+          - stable-2.14
+          - devel
+    runs-on: ubuntu-latest
+    env:
+      ANSIBLE_COLLECTIONS_PATHS: ./ansible_collections
+      base_path: elevate_test/mdd
+    steps:
+        - name: Checkout model-driven-devops/mdd repository
+          uses: actions/checkout@v2
+          with:
+            repository: model-driven-devops/mdd
+            path: ${{env.base_path}}
+
+        - name: Install collection from model-driven-devops/mdd/requirements.yml
+          run: ansible-galaxy collection install -r requirements.yml
+          working-directory: ${{env.base_path}}
+
+        - name: Galaxy collection list
+          run: ansible-galaxy collection list
+          working-directory: ${{env.base_path}}
+
+        - name: Remove exiting ansible-mdd collection
+          run: rm -rf ${{env.base_path}}/${{env.ANSIBLE_COLLECTIONS_PATHS}}/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}
+
+        - name: Install current branch ansible-mdd collection
+          uses: actions/checkout@v2
+          with:
+            path: ${{env.base_path}}/${{env.ANSIBLE_COLLECTIONS_PATHS}}/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}
+
+        - name: Remove the current reference topology
+          run: rm -r mdd-data
+          working-directory: ${{env.base_path}}
+
+        - name: Copy in testing reference topology
+          run: cp -r ${{env.ANSIBLE_COLLECTIONS_PATHS}}/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/.github/testing-files/mdd-data ./
+          working-directory: ${{env.base_path}}
+
+        - name: Copy in testing mdd.yml file
+          run: cp -r ${{env.ANSIBLE_COLLECTIONS_PATHS}}/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/.github/testing-files/mdd.yml ./inventory/group_vars/all/
+          working-directory: ${{env.base_path}}
+
+        - name: Copy in testing playbooks
+          run: cp .github/testing-files/testing-playbooks/*.yml ./playbooks
+          working-directory: ${{env.base_path}}/${{env.ANSIBLE_COLLECTIONS_PATHS}}/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}
+
+        # Create dir to store test files from show
+        - name: Create testing dir elevate_test_files
+          run: mkdir ./elevate_test_files
+          working-directory: ${{env.base_path}}
+
+        # Create dir for first set of configs
+        - name: Create testing sub dir 1
+          run: mkdir ./elevate_test_files/1
+          working-directory: ${{env.base_path}}
+
+        # Create dir for second set of configs
+        - name: Create testing sub dir 2
+          run: mkdir ./elevate_test_files/2
+          working-directory: ${{env.base_path}}
+
+        # Run show with run num 1 to name files correctly
+        - name: Run modified show to collect pre elevate results
+          run: ansible-playbook ciscops.mdd.show_test -e "run_num=1"
+          working-directory: ${{env.base_path}}
+
+        # Run elevate
+        - name: Run Elevate
+          run: ansible-playbook ciscops.mdd.elevate
+          working-directory: ${{env.base_path}}
+
+        # Run show again to collect results post run
+        - name: Run modified show to collect pre elevate results
+          run: ansible-playbook ciscops.mdd.show_test -e "run_num=2"
+          working-directory: ${{env.base_path}}
+
+        # Take the diff of the results to ensure elevate is working correctly
+        - name: Diff results
+          run: ansible-playbook ciscops.mdd.diff_elevate
+          working-directory: ${{env.base_path}}
