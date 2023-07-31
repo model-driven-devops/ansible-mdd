@@ -45,7 +45,11 @@
     # Default interface mapping for CML
     default_cml_default_mappings:
       Loopback(\d+): Loopback\1
+      Port-channel(\d+): Port-channel\1
+      Tunnel(\d+): Tunnel\1
       Vlan(\d+): Vlan\1
+      vasileft(\d+): vasileft\1
+      vasiright(\d+): vasiright\1
   tasks:
 
     - name: Get CDP data
