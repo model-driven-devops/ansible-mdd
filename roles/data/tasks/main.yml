@@ -1,6 +1,6 @@
 ---
 #
-# Create a heirarchical directory derived from the groups/regions this device
+# Create a hierarchical directory derived from the groups/regions this device
 # is a part of.  This can be set via the mdd_dir_items variable with a default
 # in the role.
 #
@@ -27,6 +27,7 @@
     host: "{{ inventory_hostname }}"
     filespec_list: "{{ mdd_data_patterns }}"
     tags: "{{ tags }}"
+    hostvars: "{{ hostvars[inventory_hostname] }}"
   register: mdd_combine_output
 
 # - name: Combine the MDD Data

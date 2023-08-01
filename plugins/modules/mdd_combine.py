@@ -34,6 +34,7 @@ author:
   - Steven Mosher (@stmosher)
 requirements:
   - copy
+  - jinja2
   - os
   - re
   - yaml
@@ -62,9 +63,13 @@ options:
         required: false
         type: dict
     default_weight:
-        description: The default wieght for data that does not specify
+        description: The default weight for data that does not specify
         default: 1000
         type: int
+    hostvars:
+        description: hostvars to be used in jinja templating
+        required: true
+        type: dict
 """
 
 RETURN = r'''
@@ -92,6 +97,7 @@ EXAMPLES = r"""
         host: "{{ inventory_hostname }}"
         tags: "{{ tags }}"
         filespec_list: "{{ filespec_list }}"
+        hostvars: "{{ hostvars[inventory_hostname] }}"
       register: mdd_output
 
     - debug:
@@ -108,6 +114,7 @@ import os
 import re
 import traceback
 import fnmatch
+from jinja2 import Environment, FileSystemLoader
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 YAML_IMPORT_ERROR = 0
@@ -328,7 +335,7 @@ def matches_filespec(filename, filespec_list):
     return False
 
 
-def find_and_read_configs(top_dir, device_name, filespec_list, default_weight, tags=None, module=None):
+def find_and_read_configs(top_dir, device_name, filespec_list, default_weight, tags=None, module=None, hostvars=None):
     if tags is None:
         tags = []
     tags.append('all')  # every device gets an "all" tag
@@ -340,9 +347,12 @@ def find_and_read_configs(top_dir, device_name, filespec_list, default_weight, t
             while current_dir != top_dir:
                 for filename in os.listdir(current_dir):
                     if matches_filespec(filename, filespec_list):
+                        env = Environment(loader=FileSystemLoader(current_dir))
                         with open(os.path.join(current_dir, filename), 'r') as f:
                             try:
-                                yaml_configs = yaml.safe_load_all(f)
+                                template = env.from_string(f.read())
+                                config_rendered = template.render(hostvars)
+                                yaml_configs = yaml.safe_load_all(config_rendered)
                                 for yaml_config in yaml_configs:
                                     file_tags = yaml_config.get('mdd_tags',
                                                                 ['all'])  # if no mdd_tags, then file gets 'all' tag
@@ -375,6 +385,7 @@ def main():
         filespec_list=dict(required=True, type='list', elements='str'),
         default_weight=dict(type='int', default=1000),
         tags=dict(required=False, type='list', elements='str'),
+        hostvars=dict(required=True, type='dict'),
         # The list_key_map argument is not a secret and does not require `no_log`.
         list_key_map=dict(required=False, type='dict', no_log=False)
     )
@@ -389,6 +400,8 @@ def main():
     filespec_list = module.params['filespec_list']
     tags = module.params['tags']
 
+    hostvars = module.params['hostvars']
+
     if module.params['list_key_map']:
         list_key_map = module.params['list_key_map']
     else:
@@ -402,7 +415,7 @@ def main():
     mdd_data = {}
     mdd_metadata = {}
     module.debug('POOP')
-    configs_list = find_and_read_configs(mdd_root, host, filespec_list, default_weight, tags, module)
+    configs_list = find_and_read_configs(mdd_root, host, filespec_list, default_weight, tags, module, hostvars)
     mdd_data, metadata = combine(configs_list, list_key_map, module)
     module.exit_json(changed=False, mdd_data=mdd_data, mdd_metadata=metadata, failed=False)
 
