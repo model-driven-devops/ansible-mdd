@@ -54,5 +54,5 @@ jobs:
       # The docker container has all the pinned dependencies that are required
       # and all python versions ansible supports.
       - name: Run sanity tests
-        run: ansible-test sanity --skip-test import --docker -v --color
+        run: ansible-test sanity --docker -v --color
         working-directory: ./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}

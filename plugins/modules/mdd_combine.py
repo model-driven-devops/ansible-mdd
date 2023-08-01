@@ -114,7 +114,6 @@ import os
 import re
 import traceback
 import fnmatch
-from jinja2 import Environment, FileSystemLoader
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 YAML_IMPORT_ERROR = 0
@@ -126,6 +125,16 @@ except ImportError:
     YAML_IMPORT_ERROR = traceback.format_exc()
 else:
     HAS_YAML = True
+
+JINJA2_IMPORT_ERROR = 0
+
+try:
+    from jinja2 import Environment, FileSystemLoader
+except ImportError:
+    HAS_JINJA2 = False
+    JINJA2_IMPORT_ERROR = traceback.format_exc()
+else:
+    HAS_JINJA2 = True
 
 default_list_key_map = {
     'mdd:openconfig:openconfig-acl:acl:openconfig-acl:acl-sets:openconfig-acl:acl-set$': 'openconfig-acl:name',
@@ -394,6 +403,10 @@ def main():
     if not HAS_YAML:
         # Needs: from ansible.module_utils.basic import missing_required_lib
         module.fail_json(msg=missing_required_lib('yaml'), exception=YAML_IMPORT_ERROR)
+
+    if not HAS_JINJA2:
+        # Needs: from ansible.module_utils.basic import missing_required_lib
+        module.fail_json(msg=missing_required_lib('jinja2'), exception=JINJA2_IMPORT_ERROR)
 
     mdd_root = module.params['mdd_root']
     host = module.params['host']
