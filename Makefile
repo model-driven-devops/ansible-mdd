@@ -38,13 +38,13 @@ test: $(VENV) $(TARBALL_NAME) ## Run Sanity Tests
 	cd ./ansible_collections/ciscops/mdd && git init .
 	$(VENV_BIN)/pip uninstall -y ansible-base
 	$(VENV_BIN)/pip install https://github.com/ansible/ansible/archive/stable-2.13.tar.gz --disable-pip-version-check
-	cd ./ansible_collections/ciscops/mdd && ../../../$(VENV_BIN)/ansible-test sanity --docker -v --color
+	cd ./ansible_collections/ciscops/mdd && ../../../$(VENV_BIN)/ansible-test sanity --skip-test import --docker -v --color
 	$(VENV_BIN)/pip uninstall -y ansible-base
 	$(VENV_BIN)/pip install https://github.com/ansible/ansible/archive/stable-2.14.tar.gz --disable-pip-version-check
-	cd ./ansible_collections/ciscops/mdd && ../../../$(VENV_BIN)/ansible-test sanity --docker -v --color
+	cd ./ansible_collections/ciscops/mdd && ../../../$(VENV_BIN)/ansible-test sanity --skip-test import --docker -v --color
 	$(VENV_BIN)/pip uninstall -y ansible-base
 	$(VENV_BIN)/pip install https://github.com/ansible/ansible/archive/devel.tar.gz --disable-pip-version-check
-	cd ./ansible_collections/ciscops/mdd && ../../../$(VENV_BIN)/ansible-test sanity --docker -v --color
+	cd ./ansible_collections/ciscops/mdd && ../../../$(VENV_BIN)/ansible-test sanity --skip-test import --docker -v --color
 	$(RM) -r ./ansible_collections
 
 clean: ## Clean

@@ -414,7 +414,6 @@ def main():
 
     mdd_data = {}
     mdd_metadata = {}
-    module.debug('POOP')
     configs_list = find_and_read_configs(mdd_root, host, filespec_list, default_weight, tags, module, hostvars)
     mdd_data, metadata = combine(configs_list, list_key_map, module)
     module.exit_json(changed=False, mdd_data=mdd_data, mdd_metadata=metadata, failed=False)
