@@ -1,4 +1,15 @@
 ---
+#
+# Create a hierarchical directory derived from the groups/regions this device
+# is a part of.  This can be set via the mdd_dir_items variable with a default
+# in the role.
+#
+- include_role:
+    name: ciscops.mdd.common
+    tasks_from: files_in_path
+  vars:
+    mdd_file_patterns: "{{ mdd_data_patterns }}"
+
 - name: Combine the MDD Data
   mdd_combine:
     mdd_root: "{{ mdd_data_root }}"

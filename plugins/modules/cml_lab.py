@@ -207,7 +207,7 @@ def map_physical_interfaces_to_logical_interfaces(topo_node, physical_interfaces
     return mapping
 
 
-def cml_topology_create_initial(devices_with_interface_dict, remote_device_info_full, start_from, device_template, use_cat9kv=False):
+def cml_topology_create_initial(devices_with_interface_dict, remote_device_info_full, start_from, device_template, use_cat9kv=False, devices=None):
     """
     Creates CML topology file and adds nodes
     :param devices_with_interface_dict:
@@ -228,227 +228,229 @@ def cml_topology_create_initial(devices_with_interface_dict, remote_device_info_
     node_counter = 0
     x_position = 0
     for device in devices_with_interface_dict:
-        configs = {
-            "router": '''
-hostname {0}
-!
-vrf definition Mgmt-intf
- address-family ipv4
- exit-address-family
-!
-ip domain name mdd.cisco.com
-!
-crypto key generate rsa modulus 2048
-!
-username admin privilege 15 secret 0 admin
-!
-interface GigabitEthernet1
- vrf forwarding Mgmt-intf
- ip address dhcp
- no shutdown
-!
-ip ssh time-out 60
-ip ssh authentication-retries 2
-!
-line con 0
-line aux 0
-line vty 0 4
- login local
- transport input ssh
- exec-timeout 0 0
- exit
-netconf ssh
-end
-'''.format(device),
-            "switch": '''
-"hostname {0}
-!
-vrf definition Mgmt-intf
- address-family ipv4
- exit-address-family
-!
-ip domain name mdd.cisco.com
-!
-crypto key generate rsa modulus 2048
-!
-username admin privilege 15 secret 0 admin
-!
-interface GigabitEthernet0/0
- no switchport
- vrf forwarding Mgmt-intf
- ip address dhcp
- no shutdown
-!
-interface GigabitEthernet0/1
- no switchport
-!
-interface GigabitEthernet0/2
- no switchport
-!
-interface GigabitEthernet0/3
- no switchport
-!
-interface GigabitEthernet1/0
- no switchport
-!
-interface GigabitEthernet1/1
- no switchport
-!
-interface GigabitEthernet1/2
- no switchport
-!
-interface GigabitEthernet1/3
- no switchport
-!
-no ip http server
-no ip http secure-server
-ip ssh time-out 60
-ip ssh authentication-retries 2
-!
-line con 0
-line aux 0
-line vty 0 4
- login local
- transport input ssh
- exec-timeout 0 0
- exit
- netconf ssh
- end"
-'''.format(device),
-            "l3switch": '''
-hostname {0}
-!
-vrf definition Mgmt-intf
-!
- address-family ipv4
- exit-address-family
-!
-ip domain name mdd.cisco.com
-!
-crypto key generate rsa modulus 2048
-!
-enable secret 0 Xcisco1234
-!
-username admin privilege 15 secret 0 admin
-!
-interface GigabitEthernet0/0
- no switchport
- vrf forwarding Mgmt-intf
- ip address dhcp
- no shutdown
-!
-interface GigabitEthernet1/0/1
- no switchport
-!
-interface GigabitEthernet1/0/2
- no switchport
-!
-interface GigabitEthernet1/0/3
- no switchport
-!
-interface GigabitEthernet1/0/4
- no switchport
-!
-interface GigabitEthernet1/0/5
- no switchport
-!
-interface GigabitEthernet1/0/6
- no switchport
-!
-interface GigabitEthernet1/0/7
- no switchport
-!
-interface GigabitEthernet1/0/8
- no switchport
-!
-interface GigabitEthernet1/0/9
- no switchport
-!
-interface GigabitEthernet1/0/10
- no switchport
-!
-interface GigabitEthernet1/0/11
- no switchport
-!
-interface GigabitEthernet1/0/12
- no switchport
-!
-interface GigabitEthernet1/0/13
- no switchport
-!
-interface GigabitEthernet1/0/14
- no switchport
-!
-interface GigabitEthernet1/0/15
- no switchport
-!
-interface GigabitEthernet1/0/16
- no switchport
-!
-interface GigabitEthernet1/0/17
- no switchport
-!
-interface GigabitEthernet1/0/18
- no switchport
-!
-interface GigabitEthernet1/0/19
- no switchport
-!
-interface GigabitEthernet1/0/20
- no switchport
-!
-interface GigabitEthernet1/0/21
- no switchport
-!
-interface GigabitEthernet1/0/22
- no switchport
-!
-interface GigabitEthernet1/0/23
- no switchport
-!
-interface GigabitEthernet1/0/24
- no switchport
-!
-no ip http server
-no ip http secure-server
-ip ssh time-out 60
-ip ssh authentication-retries 2
-!
-ip ssh version 2
-!
-ip ssh server algorithm mac hmac-sha1 hmac-sha2-256 hmac-sha2-512
-ip ssh server algorithm kex diffie-hellman-group14-sha1
-!
-line con 0
-line aux 0
-line vty 0 4
- login local
- transport input ssh
- exec-timeout 0 0
- exit
-netconf ssh
-ip routing
-license boot level network-advantage addon dna-advantage
-license boot level network-advantage
-end
-'''.format(device)
-        }
-        device_type = remote_device_info_full.get(device, {}).get("type", "router")
-        device_info = copy.deepcopy(device_template.get(device_type))
-        device_info["hostname"] = device
-        device_info["x_position"] = x_position
-        device_info["id"] = "n{0}".format(node_counter)
-        device_info["configuration"] = configs[device_type]
-        node_counter += 1
-        x_position += 150
-        topo_node = create_node(device_info)
-        add_interfaces_to_topology(topo_node, device_info, devices_with_interface_dict[device], use_cat9kv)
-        physical_virtual_map = map_physical_interfaces_to_logical_interfaces(topo_node,
-                                                                             devices_with_interface_dict[device],
-                                                                             start_from)
-        mappings.update({device: {"interfaces": physical_virtual_map,
-                                  "node_id": device_info["id"]}})
-        topology["nodes"].append(topo_node)
+        # # Only add devices that were included in devices list
+        if device in devices:
+            configs = {
+                "router": '''
+    hostname {0}
+    !
+    vrf definition Mgmt-intf
+     address-family ipv4
+     exit-address-family
+    !
+    ip domain name mdd.cisco.com
+    !
+    crypto key generate rsa modulus 2048
+    !
+    username admin privilege 15 secret 0 admin
+    !
+    interface GigabitEthernet1
+     vrf forwarding Mgmt-intf
+     ip address dhcp
+     no shutdown
+    !
+    ip ssh time-out 60
+    ip ssh authentication-retries 2
+    !
+    line con 0
+    line aux 0
+    line vty 0 4
+     login local
+     transport input ssh
+     exec-timeout 0 0
+     exit
+    netconf ssh
+    end
+    '''.format(device),
+                "switch": '''
+    "hostname {0}
+    !
+    vrf definition Mgmt-intf
+     address-family ipv4
+     exit-address-family
+    !
+    ip domain name mdd.cisco.com
+    !
+    crypto key generate rsa modulus 2048
+    !
+    username admin privilege 15 secret 0 admin
+    !
+    interface GigabitEthernet0/0
+     no switchport
+     vrf forwarding Mgmt-intf
+     ip address dhcp
+     no shutdown
+    !
+    interface GigabitEthernet0/1
+     no switchport
+    !
+    interface GigabitEthernet0/2
+     no switchport
+    !
+    interface GigabitEthernet0/3
+     no switchport
+    !
+    interface GigabitEthernet1/0
+     no switchport
+    !
+    interface GigabitEthernet1/1
+     no switchport
+    !
+    interface GigabitEthernet1/2
+     no switchport
+    !
+    interface GigabitEthernet1/3
+     no switchport
+    !
+    no ip http server
+    no ip http secure-server
+    ip ssh time-out 60
+    ip ssh authentication-retries 2
+    !
+    line con 0
+    line aux 0
+    line vty 0 4
+     login local
+     transport input ssh
+     exec-timeout 0 0
+     exit
+     netconf ssh
+     end"
+    '''.format(device),
+                "l3switch": '''
+    hostname {0}
+    !
+    vrf definition Mgmt-intf
+    !
+     address-family ipv4
+     exit-address-family
+    !
+    ip domain name mdd.cisco.com
+    !
+    crypto key generate rsa modulus 2048
+    !
+    enable secret 0 Xcisco1234
+    !
+    username admin privilege 15 secret 0 admin
+    !
+    interface GigabitEthernet0/0
+     no switchport
+     vrf forwarding Mgmt-intf
+     ip address dhcp
+     no shutdown
+    !
+    interface GigabitEthernet1/0/1
+     no switchport
+    !
+    interface GigabitEthernet1/0/2
+     no switchport
+    !
+    interface GigabitEthernet1/0/3
+     no switchport
+    !
+    interface GigabitEthernet1/0/4
+     no switchport
+    !
+    interface GigabitEthernet1/0/5
+     no switchport
+    !
+    interface GigabitEthernet1/0/6
+     no switchport
+    !
+    interface GigabitEthernet1/0/7
+     no switchport
+    !
+    interface GigabitEthernet1/0/8
+     no switchport
+    !
+    interface GigabitEthernet1/0/9
+     no switchport
+    !
+    interface GigabitEthernet1/0/10
+     no switchport
+    !
+    interface GigabitEthernet1/0/11
+     no switchport
+    !
+    interface GigabitEthernet1/0/12
+     no switchport
+    !
+    interface GigabitEthernet1/0/13
+     no switchport
+    !
+    interface GigabitEthernet1/0/14
+     no switchport
+    !
+    interface GigabitEthernet1/0/15
+     no switchport
+    !
+    interface GigabitEthernet1/0/16
+     no switchport
+    !
+    interface GigabitEthernet1/0/17
+     no switchport
+    !
+    interface GigabitEthernet1/0/18
+     no switchport
+    !
+    interface GigabitEthernet1/0/19
+     no switchport
+    !
+    interface GigabitEthernet1/0/20
+     no switchport
+    !
+    interface GigabitEthernet1/0/21
+     no switchport
+    !
+    interface GigabitEthernet1/0/22
+     no switchport
+    !
+    interface GigabitEthernet1/0/23
+     no switchport
+    !
+    interface GigabitEthernet1/0/24
+     no switchport
+    !
+    no ip http server
+    no ip http secure-server
+    ip ssh time-out 60
+    ip ssh authentication-retries 2
+    !
+    ip ssh version 2
+    !
+    ip ssh server algorithm mac hmac-sha1 hmac-sha2-256 hmac-sha2-512
+    ip ssh server algorithm kex diffie-hellman-group14-sha1
+    !
+    line con 0
+    line aux 0
+    line vty 0 4
+     login local
+     transport input ssh
+     exec-timeout 0 0
+     exit
+    netconf ssh
+    ip routing
+    license boot level network-advantage addon dna-advantage
+    license boot level network-advantage
+    end
+    '''.format(device)
+            }
+            device_type = remote_device_info_full.get(device, {}).get("type", "router")
+            device_info = copy.deepcopy(device_template.get(device_type))
+            device_info["hostname"] = device
+            device_info["x_position"] = x_position
+            device_info["id"] = "n{0}".format(node_counter)
+            device_info["configuration"] = configs[device_type]
+            node_counter += 1
+            x_position += 150
+            topo_node = create_node(device_info)
+            add_interfaces_to_topology(topo_node, device_info, devices_with_interface_dict[device], use_cat9kv)
+            physical_virtual_map = map_physical_interfaces_to_logical_interfaces(topo_node,
+                                                                                 devices_with_interface_dict[device],
+                                                                                 start_from)
+            mappings.update({device: {"interfaces": physical_virtual_map,
+                                      "node_id": device_info["id"]}})
+            topology["nodes"].append(topo_node)
 
     return topology, mappings
 
@@ -481,7 +483,7 @@ def find_capabilities(device, cdp_line):
     return {device: {"platform": platform, "type": device_type}}
 
 
-def parse_cdp_output(cdp_data, dev, devices):
+def parse_cdp_output(cdp_data, dev):
     """
     Find local interface, remote name, remote interface, remote platform, remote capabilities
 
@@ -526,18 +528,14 @@ def parse_cdp_output(cdp_data, dev, devices):
             line_list = i.split()
             local_interface = line_list[1] + line_list[2]
             remote_interface = line_list[-2] + line_list[-1]
-            # Only add devices that were included in devices list
-            if any(d['hostname'] == remote for d in devices):
-                device_links_list.append({dev['hostname']: local_interface, remote: remote_interface})
-                device_info.update(find_capabilities(remote, line_list))
+            device_links_list.append({dev['hostname']: local_interface, remote: remote_interface})
+            device_info.update(find_capabilities(remote, line_list))
         elif len(i.split()) > 1:  # line with data below the device name line
             line_list = i.split()
             local_interface = line_list[0] + line_list[1]
             remote_interface = line_list[-2] + line_list[-1]
-            # Only add devices that were included in devices list
-            if any(d['hostname'] == remote for d in devices):
-                device_links_list.append({dev['hostname']: local_interface, remote: remote_interface})
-                device_info.update(find_capabilities(remote, line_list))
+            device_links_list.append({dev['hostname']: local_interface, remote: remote_interface})
+            device_info.update(find_capabilities(remote, line_list))
     return device_links_list, device_info
 
 
@@ -572,7 +570,7 @@ def sort_device_interfaces(remote_device_i):
         remote_device_i[item].sort()
 
 
-def cml_topology_add_links(topo, maps, d_links):
+def cml_topology_add_links(topo, maps, d_links, devices):
     """
     Add links to CML topology
     """
@@ -582,24 +580,25 @@ def cml_topology_add_links(topo, maps, d_links):
             # print(
             #     f"Warning - Link {d_link} contains {len(d_link)} endpoints. Links must have 2 endpoints. This will not be added to the CML topology")
             continue
-        link_temp = {"id": "l{0}".format(counter)}
-        d_count = 0
-        for k, v in d_link.items():
-            if d_count == 0:
-                link_temp.update({
-                    "n1": maps[k]["node_id"],
-                    "i1": maps[k]["interfaces"][v]["id"],
-                    "label": "{0}<->".format(k)
-                })
-            elif d_count == 1:
-                link_temp.update({
-                    "n2": maps[k]["node_id"],
-                    "i2": maps[k]["interfaces"][v]["id"],
-                })
-                link_temp["label"] = link_temp["label"] + k
-            d_count += 1
-        topo["links"].append(link_temp)
-        counter += 1
+        elif all(host in devices for host in list(d_link.keys())):
+            link_temp = {"id": "l{0}".format(counter)}
+            d_count = 0
+            for k, v in d_link.items():
+                if d_count == 0:
+                    link_temp.update({
+                        "n1": maps[k]["node_id"],
+                        "i1": maps[k]["interfaces"][v]["id"],
+                        "label": "{0}<->".format(k)
+                    })
+                elif d_count == 1:
+                    link_temp.update({
+                        "n2": maps[k]["node_id"],
+                        "i2": maps[k]["interfaces"][v]["id"],
+                    })
+                    link_temp["label"] = link_temp["label"] + k
+                d_count += 1
+            topo["links"].append(link_temp)
+            counter += 1
 
 
 def extend_naming(short_name):
@@ -696,6 +695,10 @@ def cml_topology_add_external_connectors_and_links(topo, device_template):
     ext_conn_links_create(topo, new_topo, link_node_start, link_start)
 
 
+def get_device_names(devices):
+    return [d['hostname'] for d in devices]
+
+
 def main():
     arguments = dict(
         devices=dict(required=True, type='list', elements='dict'),
@@ -717,16 +720,18 @@ def main():
     start_from = module.params['start_from']
     use_cat9kv = module.params['use_cat9kv']
 
+    device_names = get_device_names(devices)
+
     for device in devices:
-        temp_device_links, remote_device_info = parse_cdp_output(device['cdp'], device, devices)
+        temp_device_links, remote_device_info = parse_cdp_output(device['cdp'], device)
         remote_device_info_full.update(remote_device_info)
         for link in temp_device_links:  # add any newly found links to device links
             if link not in device_links:
                 device_links.append(link)  # now saved newly discovered links
     devices_with_interface_dict = check_for_and_remove_error_links(device_links)
     sort_device_interfaces(devices_with_interface_dict)
-    topology_cml, mappings_cml = cml_topology_create_initial(devices_with_interface_dict, remote_device_info_full, start_from, device_template, use_cat9kv)
-    cml_topology_add_links(topology_cml, mappings_cml, device_links)
+    topology_cml, mappings_cml = cml_topology_create_initial(devices_with_interface_dict, remote_device_info_full, start_from, device_template, use_cat9kv, device_names)
+    cml_topology_add_links(topology_cml, mappings_cml, device_links, device_names)
     if module.params['ext_conn']:
         cml_topology_add_external_connectors_and_links(topology_cml, device_template)
     mappings = create_interface_mapping_dict(mappings_cml, default_mappings)
