@@ -9,6 +9,12 @@
     create_dirs: yes
   tasks:
 
+    - include_role:
+        name: ciscops.mdd.common
+        tasks_from: files_in_path
+      vars:
+        mdd_file_patterns: "{{ mdd_data_patterns }}"
+
     - name: Harvest Data
       include_role:
         name: ciscops.mdd.nso
