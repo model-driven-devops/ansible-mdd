@@ -19,10 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import (absolute_import, division, print_function)
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ['preview'], 'supported_by': 'community'}
-
 
 DOCUMENTATION = r"""
 ---
@@ -207,7 +207,8 @@ def map_physical_interfaces_to_logical_interfaces(topo_node, physical_interfaces
     return mapping
 
 
-def cml_topology_create_initial(devices_with_interface_dict, remote_device_info_full, start_from, device_template, use_cat9kv=False, devices=None):
+def cml_topology_create_initial(devices_with_interface_dict, remote_device_info_full, start_from, device_template,
+                                use_cat9kv=False, devices=None):
     """
     Creates CML topology file and adds nodes
     :param devices_with_interface_dict:
@@ -730,7 +731,8 @@ def main():
                 device_links.append(link)  # now saved newly discovered links
     devices_with_interface_dict = check_for_and_remove_error_links(device_links)
     sort_device_interfaces(devices_with_interface_dict)
-    topology_cml, mappings_cml = cml_topology_create_initial(devices_with_interface_dict, remote_device_info_full, start_from, device_template, use_cat9kv, device_names)
+    topology_cml, mappings_cml = cml_topology_create_initial(devices_with_interface_dict, remote_device_info_full,
+                                                             start_from, device_template, use_cat9kv, device_names)
     cml_topology_add_links(topology_cml, mappings_cml, device_links, device_names)
     if module.params['ext_conn']:
         cml_topology_add_external_connectors_and_links(topology_cml, device_template)
