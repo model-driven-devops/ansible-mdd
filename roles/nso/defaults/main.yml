@@ -51,3 +51,7 @@ nso_global_settings:
       - aes256-ctr
       - aes128-cbc
       - 3des-cbc
+  ned-settings:
+    cisco-ios:
+      auto:
+        interface-switchport-status: True
