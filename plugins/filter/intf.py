@@ -15,7 +15,8 @@ keys_to_replace = [
     "openconfig-system-ext:ssh-source-interface",
     "openconfig-network-instance:interface-id",
     "openconfig-network-instance:index",
-    "openconfig-network-instance:local-address"
+    "openconfig-network-instance:local-address",
+    "openconfig-system-ext:track-interface"
 ]
 
 
