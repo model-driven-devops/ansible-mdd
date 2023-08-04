@@ -1,4 +1,5 @@
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 import re
@@ -75,76 +76,98 @@ def intf_truncate(data, intf_dict):
         oc_data = data["mdd:openconfig"]
 
         # Truncate interfaces
-        if "openconfig-interfaces:interfaces" in oc_data and "openconfig-interfaces:interface" in oc_data["openconfig-interfaces:interfaces"]:
+        if "openconfig-interfaces:interfaces" in oc_data and "openconfig-interfaces:interface" in oc_data[
+            "openconfig-interfaces:interfaces"]:
             for interface in oc_data["openconfig-interfaces:interfaces"]["openconfig-interfaces:interface"]:
                 if found_full_match(interface["openconfig-interfaces:name"].split(".")[0], intf_dict):
                     temp_interface_list.append(interface)
-            data_out["mdd:openconfig"]["openconfig-interfaces:interfaces"]["openconfig-interfaces:interface"] = temp_interface_list
+            data_out["mdd:openconfig"]["openconfig-interfaces:interfaces"][
+                "openconfig-interfaces:interface"] = temp_interface_list
 
         # Truncate STP interfaces
-        if "openconfig-spanning-tree:stp" in oc_data and "openconfig-spanning-tree:interfaces" in oc_data["openconfig-spanning-tree:stp"]:
-            for interface in oc_data["openconfig-spanning-tree:stp"]["openconfig-spanning-tree:interfaces"]["openconfig-spanning-tree:interface"]:
+        if "openconfig-spanning-tree:stp" in oc_data and "openconfig-spanning-tree:interfaces" in oc_data[
+            "openconfig-spanning-tree:stp"]:
+            for interface in oc_data["openconfig-spanning-tree:stp"]["openconfig-spanning-tree:interfaces"][
+                "openconfig-spanning-tree:interface"]:
                 if found_full_match(interface["openconfig-spanning-tree:name"].split(".")[0], intf_dict):
                     temp_stp_interface_list.append(interface)
             (data_out["mdd:openconfig"]["openconfig-spanning-tree:stp"]["openconfig-spanning-tree:interfaces"]
-             ["openconfig-spanning-tree:interface"]) = temp_stp_interface_list
+            ["openconfig-spanning-tree:interface"]) = temp_stp_interface_list
 
         # Truncate network instance OSPF interfaces
-        if "openconfig-network-instance:network-instances" in oc_data and ("openconfig-network-instance:network-instance" in
-                                                                           oc_data["openconfig-network-instance:network-instances"]):
+        if "openconfig-network-instance:network-instances" in oc_data and (
+                "openconfig-network-instance:network-instance" in
+                oc_data["openconfig-network-instance:network-instances"]):
             for (instance_index, instance) in enumerate(oc_data["openconfig-network-instance:network-instances"]
                                                         ["openconfig-network-instance:network-instance"]):
                 if "openconfig-network-instance:protocols" in instance:
-                    for (prot_index, protocol) in enumerate(instance["openconfig-network-instance:protocols"]["openconfig-network-instance:protocol"]):
+                    for (prot_index, protocol) in enumerate(
+                            instance["openconfig-network-instance:protocols"]["openconfig-network-instance:protocol"]):
                         if "openconfig-network-instance:ospfv2" in protocol and ("openconfig-network-instance:areas" in
-                                                                                 protocol["openconfig-network-instance:ospfv2"]):
+                                                                                 protocol[
+                                                                                     "openconfig-network-instance:ospfv2"]):
                             temp_ospf_interface_list = []
-                            for (area_index, area) in enumerate(protocol["openconfig-network-instance:ospfv2"]["openconfig-network-instance:areas"]
-                                                                ["openconfig-network-instance:area"]):
+                            for (area_index, area) in enumerate(
+                                    protocol["openconfig-network-instance:ospfv2"]["openconfig-network-instance:areas"]
+                                    ["openconfig-network-instance:area"]):
                                 if "openconfig-network-instance:interfaces" in area:
-                                    for interface in area["openconfig-network-instance:interfaces"]["openconfig-network-instance:interface"]:
-                                        if found_full_match(interface["openconfig-network-instance:id"].split(".")[0], intf_dict):
+                                    for interface in area["openconfig-network-instance:interfaces"][
+                                        "openconfig-network-instance:interface"]:
+                                        if found_full_match(interface["openconfig-network-instance:id"].split(".")[0],
+                                                            intf_dict):
                                             temp_ospf_interface_list.append(interface)
                                     (data_out["mdd:openconfig"]["openconfig-network-instance:network-instances"]
-                                     ["openconfig-network-instance:network-instance"][instance_index]["openconfig-network-instance:protocols"]
-                                     ["openconfig-network-instance:protocol"][prot_index]["openconfig-network-instance:ospfv2"]
-                                     ["openconfig-network-instance:areas"]["openconfig-network-instance:area"][area_index]
-                                     ["openconfig-network-instance:interfaces"]["openconfig-network-instance:interface"]) = temp_ospf_interface_list
+                                    ["openconfig-network-instance:network-instance"][instance_index][
+                                        "openconfig-network-instance:protocols"]
+                                    ["openconfig-network-instance:protocol"][prot_index][
+                                        "openconfig-network-instance:ospfv2"]
+                                    ["openconfig-network-instance:areas"]["openconfig-network-instance:area"][
+                                        area_index]
+                                    ["openconfig-network-instance:interfaces"][
+                                        "openconfig-network-instance:interface"]) = temp_ospf_interface_list
 
         # Truncate network-instance interfaces
-        if "openconfig-network-instance:network-instances" in oc_data and ("openconfig-network-instance:network-instance" in
-                                                                           oc_data["openconfig-network-instance:network-instances"]):
+        if "openconfig-network-instance:network-instances" in oc_data and (
+                "openconfig-network-instance:network-instance" in
+                oc_data["openconfig-network-instance:network-instances"]):
             for (instance_index, instance) in enumerate(oc_data["openconfig-network-instance:network-instances"]
                                                         ["openconfig-network-instance:network-instance"]):
                 if "openconfig-network-instance:interfaces" in instance:
                     temp_instance_interface_list = []
 
-                    for interface in instance["openconfig-network-instance:interfaces"]["openconfig-network-instance:interface"]:
+                    for interface in instance["openconfig-network-instance:interfaces"][
+                        "openconfig-network-instance:interface"]:
                         if found_full_match(interface["openconfig-network-instance:id"].split(".")[0], intf_dict):
                             temp_instance_interface_list.append(interface)
 
-                    (data_out["mdd:openconfig"]["openconfig-network-instance:network-instances"]["openconfig-network-instance:network-instance"]
-                     [instance_index]["openconfig-network-instance:interfaces"]["openconfig-network-instance:interface"]) = temp_instance_interface_list
+                    (data_out["mdd:openconfig"]["openconfig-network-instance:network-instances"][
+                        "openconfig-network-instance:network-instance"]
+                    [instance_index]["openconfig-network-instance:interfaces"][
+                        "openconfig-network-instance:interface"]) = temp_instance_interface_list
 
         # Truncate network-instance MPLS interfaces
-        if "openconfig-network-instance:network-instances" in oc_data and ("openconfig-network-instance:network-instance" in
-                                                                           oc_data["openconfig-network-instance:network-instances"]):
+        if "openconfig-network-instance:network-instances" in oc_data and (
+                "openconfig-network-instance:network-instance" in
+                oc_data["openconfig-network-instance:network-instances"]):
             for (instance_index, instance) in enumerate(oc_data["openconfig-network-instance:network-instances"]
                                                         ["openconfig-network-instance:network-instance"]):
                 if (len(instance.get("openconfig-network-instance:mpls", {})
-                        .get("openconfig-network-instance:global", {})
-                        .get("openconfig-network-instance:interface-attributes", {})
-                        .get("openconfig-network-instance:interface", [])) > 0):
+                                .get("openconfig-network-instance:global", {})
+                                .get("openconfig-network-instance:interface-attributes", {})
+                                .get("openconfig-network-instance:interface", [])) > 0):
                     temp_mpls_interface_list = []
 
                     for interface in (instance["openconfig-network-instance:mpls"]["openconfig-network-instance:global"]
-                                      ["openconfig-network-instance:interface-attributes"]["openconfig-network-instance:interface"]):
-                        if found_full_match(interface["openconfig-network-instance:interface-id"].split(".")[0], intf_dict):
+                    ["openconfig-network-instance:interface-attributes"]["openconfig-network-instance:interface"]):
+                        if found_full_match(interface["openconfig-network-instance:interface-id"].split(".")[0],
+                                            intf_dict):
                             temp_mpls_interface_list.append(interface)
 
-                    (data_out["mdd:openconfig"]["openconfig-network-instance:network-instances"]["openconfig-network-instance:network-instance"]
-                     [instance_index]["openconfig-network-instance:mpls"]["openconfig-network-instance:global"]
-                     ["openconfig-network-instance:interface-attributes"]["openconfig-network-instance:interface"]) = temp_mpls_interface_list
+                    (data_out["mdd:openconfig"]["openconfig-network-instance:network-instances"][
+                        "openconfig-network-instance:network-instance"]
+                    [instance_index]["openconfig-network-instance:mpls"]["openconfig-network-instance:global"]
+                    ["openconfig-network-instance:interface-attributes"][
+                        "openconfig-network-instance:interface"]) = temp_mpls_interface_list
 
     return data_out
 
@@ -161,7 +184,9 @@ def config_truncate(data):
         oc_data = data["mdd:openconfig"]
 
         # Truncate VTY ACLs
-        if "openconfig-acl:acl" in oc_data and "openconfig-acl-ext:lines" in oc_data["openconfig-acl:acl"] and "openconfig-acl-ext:line" in oc_data["openconfig-acl:acl"]["openconfig-acl-ext:lines"]:
+        if "openconfig-acl:acl" in oc_data and "openconfig-acl-ext:lines" in oc_data[
+            "openconfig-acl:acl"] and "openconfig-acl-ext:line" in oc_data["openconfig-acl:acl"][
+            "openconfig-acl-ext:lines"]:
             data_out["mdd:openconfig"]["openconfig-acl:acl"]["openconfig-acl-ext:lines"]["openconfig-acl-ext:line"] = []
 
     return data_out
