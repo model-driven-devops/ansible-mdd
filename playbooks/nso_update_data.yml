@@ -17,9 +17,9 @@
       when: ('oc' in mdd_data_types)
       throttle: "{{ workers }}"
       block:
-        - name: Translate and truncate interface names
+        - name: Translate/truncate interface names, truncate test config
           set_fact:
-            mdd_data: "{{ mdd_data | ciscops.mdd.intf_xform(cml_intf_xlate) }}"
+            mdd_data: "{{ mdd_data | ciscops.mdd.config_xform(cml_intf_xlate) }}"
           when: (cml_group is defined and cml_group in group_names) and (cml_intf_xlate is defined and cml_intf_xlate)
 
         - name: Update MDD Data

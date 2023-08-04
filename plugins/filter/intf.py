@@ -149,9 +149,28 @@ def intf_truncate(data, intf_dict):
     return data_out
 
 
-def intf_xform(data, intf_dict):
+def config_truncate(data):
+    if not data:
+        return {}
+
+    data_out = data.copy()
+    """
+    mdd:openconfig:  openconfig-acl:acl:  openconfig-acl-ext:lines:  openconfig-acl-ext:line:
+    """
+    if "mdd:openconfig" in data:
+        oc_data = data["mdd:openconfig"]
+
+        # Truncate VTY ACLs
+        if "openconfig-acl:acl" in oc_data and "openconfig-acl-ext:lines" in oc_data["openconfig-acl:acl"] and "openconfig-acl-ext:line" in oc_data["openconfig-acl:acl"]["openconfig-acl-ext:lines"]:
+            data_out["mdd:openconfig"]["openconfig-acl:acl"]["openconfig-acl-ext:lines"]["openconfig-acl-ext:line"] = []
+
+    return data_out
+
+
+def config_xform(data, intf_dict):
     data = intf_truncate(data, intf_dict)
     data = intf_xlate(data, intf_dict)
+    data = config_truncate(data)
     return data
 
 
@@ -161,5 +180,5 @@ class FilterModule(object):
         return {
             'intf_xlate': intf_xlate,
             'intf_truncate': intf_truncate,
-            'intf_xform': intf_xform
+            'config_xform': config_xform
         }
