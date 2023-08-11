@@ -52,9 +52,12 @@ def xlate_value(data, intf_dict):
         return
 
 
-def intf_xlate(data, intf_dict):
+def intf_xlate(data, intf_dict = {}):
     if not data:
         return {}
+    
+    if intf_dict == {}:
+        return data
 
     data_out = data.copy()
     xlate_value(data_out, intf_dict)
@@ -62,9 +65,12 @@ def intf_xlate(data, intf_dict):
     return data_out
 
 
-def intf_truncate(data, intf_dict):
+def intf_truncate(data, intf_dict = {}):
     if not data:
         return {}
+
+    if intf_dict == {}:
+        return data
 
     regex_list = intf_dict.keys()
     temp_interface_list = []
@@ -148,31 +154,28 @@ def intf_truncate(data, intf_dict):
 
     return data_out
 
-
-def config_truncate(data):
-    if not data:
-        return {}
-
-    data_out = data.copy()
-    """
-    mdd:openconfig:  openconfig-acl:acl:  openconfig-acl-ext:lines:  openconfig-acl-ext:line:
-    """
-    if "mdd:openconfig" in data:
-        oc_data = data["mdd:openconfig"]
-
-        # Truncate VTY ACLs
-        if ("openconfig-acl:acl" in oc_data
-                and "openconfig-acl-ext:lines" in oc_data["openconfig-acl:acl"]
-                and "openconfig-acl-ext:line" in oc_data["openconfig-acl:acl"]["openconfig-acl-ext:lines"]):
-            data_out["mdd:openconfig"]["openconfig-acl:acl"]["openconfig-acl-ext:lines"]["openconfig-acl-ext:line"] = []
-
-    return data_out
+def config_truncate(data, truncate_list = []):
+    """Find all values from a nested dictionary for a given key."""
+    if truncate_list == []:
+        return data
+    
+    if isinstance(data, dict):
+        for key in data:
+            if isinstance(data[key], str) and key in truncate_list:
+                del data[key]
+            else:
+                config_truncate(data[key], truncate_list)
+    elif isinstance(data, list):
+        for item in data:
+            config_truncate(item, truncate_list)
+    else:
+        return data
 
 
-def config_xform(data, intf_dict):
+def config_xform(data, intf_dict = {}, truncate_list = []):
     data = intf_truncate(data, intf_dict)
     data = intf_xlate(data, intf_dict)
-    data = config_truncate(data)
+    data = config_truncate(data, truncate_list)
     return data
 
 

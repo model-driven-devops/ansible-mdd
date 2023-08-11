@@ -4,10 +4,18 @@
   roles:
     - ciscops.mdd.data
   tasks:
-    - name: Translate/truncate interface names, truncate test config
+    - name: Translate/truncate interface names
       set_fact:
-        mdd_data: "{{ mdd_data | ciscops.mdd.config_xform(cml_intf_xlate) }}"
-      when: (cml_group is defined and cml_group in group_names) and (cml_intf_xlate is defined and cml_intf_xlate)
-        
+        mdd_data: "{{ mdd_data | ciscops.mdd.config_xform(cml_intf_xlate, []) }}"
+      when: cml_intf_xlate is defined and cml_intf_xlate
+
+    - name: Truncate config
+      set_fact:
+        mdd_data: "{{ mdd_data | ciscops.mdd.config_xform({}, cml_truncate_list) }}"
+
+    - name: Translate/truncate interface names and truncate config
+      set_fact:
+        mdd_data: "{{ mdd_data | ciscops.mdd.config_xform(cml_intf_xlate, cml_truncate_list) }}"
+      when: (cml_intf_xlate is defined and cml_intf_xlate) and (cml_truncate_list is defined and cml_truncate_list)        
     - debug:
         var: mdd_data
