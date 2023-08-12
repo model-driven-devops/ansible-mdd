@@ -52,11 +52,11 @@ def xlate_value(data, intf_dict):
         return
 
 
-def intf_xlate(data, intf_dict = {}):
+def intf_xlate(data, intf_dict=None):
     if not data:
         return {}
-    
-    if intf_dict == {}:
+
+    if intf_dict is None:
         return data
 
     data_out = data.copy()
@@ -65,11 +65,11 @@ def intf_xlate(data, intf_dict = {}):
     return data_out
 
 
-def intf_truncate(data, intf_dict = {}):
+def intf_truncate(data, intf_dict=None):
     if not data:
         return {}
 
-    if intf_dict == {}:
+    if intf_dict is None:
         return data
 
     regex_list = intf_dict.keys()
@@ -154,25 +154,35 @@ def intf_truncate(data, intf_dict = {}):
 
     return data_out
 
-def config_truncate(data, truncate_list = []):
-    """Find all values from a nested dictionary for a given key."""
-    if truncate_list == []:
-        return data
-    
+
+def delete_key(data, key_list):
     if isinstance(data, dict):
-        for key in data:
-            if isinstance(data[key], str) and key in truncate_list:
+        for key in list(data):
+            if key in key_list:
                 del data[key]
             else:
-                config_truncate(data[key], truncate_list)
+                delete_key(data[key], key_list)
     elif isinstance(data, list):
         for item in data:
-            config_truncate(item, truncate_list)
-    else:
+            delete_key(item, key_list)
+
+
+def config_truncate(data, truncate_list=None):
+    """Find all values from a nested dictionary for a given key."""
+
+    if not data:
+        return {}
+
+    if truncate_list is None:
         return data
 
+    data_out = data.copy()
 
-def config_xform(data, intf_dict = {}, truncate_list = []):
+    delete_key(data_out, truncate_list)
+    return data_out
+
+
+def config_xform(data, intf_dict=None, truncate_list=None):
     data = intf_truncate(data, intf_dict)
     data = intf_xlate(data, intf_dict)
     data = config_truncate(data, truncate_list)
