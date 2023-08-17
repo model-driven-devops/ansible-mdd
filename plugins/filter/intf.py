@@ -157,14 +157,12 @@ def intf_truncate(data, intf_dict=None):
 
 def delete_key(data, key_list):
     if isinstance(data, dict):
-        for key in list(data):
-            if key in key_list:
-                del data[key]
+        if key_list[0] in list(data):
+            if len(key_list) == 1:
+                del data[key_list[0]]
             else:
+                key = key_list.pop(0)
                 delete_key(data[key], key_list)
-    elif isinstance(data, list):
-        for item in data:
-            delete_key(item, key_list)
 
 
 def config_truncate(data, truncate_list=None):
@@ -178,7 +176,8 @@ def config_truncate(data, truncate_list=None):
 
     data_out = data.copy()
 
-    delete_key(data_out, truncate_list)
+    for path in truncate_list:
+        delete_key(data_out, path)
     return data_out
 
 
