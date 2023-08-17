@@ -93,13 +93,13 @@
 
     - name: Create topology file
       copy:
-        content: "{{ topology | to_nice_yaml(indent=2,sort_keys=False) }}"
+        content: "{{ topology | ciscops.mdd.to_even_nicer_yaml }}"
         dest: "{{ lookup('env', 'PWD') }}/files/cml_lab.yaml"
       run_once: yes
       no_log: yes
 
     - name: Create mapping file
       copy:
-        content: "{{ {'all': {'hosts': results.mappings}} | to_nice_yaml(indent=2,sort_keys=False) }}"
+        content: "{{ {'all': {'hosts': results.mappings}} | ciscops.mdd.to_even_nicer_yaml }}"
         dest: "{{ lookup('env', 'PWD') }}/{{ inventory_dir }}/cml_intf_map.yml"
       run_once: yes
