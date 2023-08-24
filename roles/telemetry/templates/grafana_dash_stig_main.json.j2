@@ -1,0 +1,555 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 3,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": [
+            {
+              "options": {
+                "Fail": {
+                  "color": "dark-red",
+                  "index": 0,
+                  "text": "Fail"
+                }
+              },
+              "type": "value"
+            }
+          ]
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "care_stigs.Fail"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#e8001b",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "care_stigs.Pass"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#53db41",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "care_stigs.Pass"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Devices with > $percentageVar% of Stigs passing"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "care_stigs.Fail"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Devices with < $percentageVar% of Stigs passing"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Devices with > 51% of Stigs passing"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#53db41",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 14,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "displayLabels": [
+          "percent",
+          "name"
+        ],
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Value",
+          "sortDesc": true,
+          "values": [
+            "percent",
+            "value"
+          ]
+        },
+        "pieType": "pie",
+        "reduceOptions": {
+          "calcs": [
+            "sum"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 2,
+          "refId": "A"
+        }
+      ],
+      "title": "Current Network Device Stig Compliance",
+      "transformations": [],
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "{{ datasource_uid }}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 166
+              },
+              {
+                "id": "custom.hidden",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "care_stigs.device"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Device"
+              },
+              {
+                "id": "custom.filterable",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "care_stigs.Stigs passed"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 265
+              },
+              {
+                "id": "displayName",
+                "value": "Stigs Passed"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "care_stigs.Stigs failed"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "",
+                    "url": "http://{{ host_address }}:{{ grafana_port }}/d/{{ grafana_stig_fail_uid }}/?orgId=1&var-deviceName=${__data.fields[\"care_stigs.device\"]}&var-deviceTime=${__data.fields[\"care_stigs.device_time\"]}"
+                  }
+                ]
+              },
+              {
+                "id": "displayName",
+                "value": "Stigs Failed"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "care_stigs.device_time"
+            },
+            "properties": [
+              {
+                "id": "custom.hidden",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "care_stigs.Status"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Status"
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "0": {
+                        "color": "dark-red",
+                        "index": 0,
+                        "text": "Fail"
+                      },
+                      "1": {
+                        "color": "dark-green",
+                        "index": 1,
+                        "text": "Pass"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              },
+              {
+                "id": "custom.filterable",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Stigs Passed"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 151
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Device"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 110
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Status"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 122
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Stigs Failed"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 176
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 10,
+        "x": 14,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "enablePagination": true,
+          "fields": [],
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "frameIndex": 1,
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Stigs Passed"
+          }
+        ]
+      },
+      "pluginVersion": "10.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "{{ datasource_uid }}"
+          },
+          "hide": false,
+          "query": "SELECT\n \"device_name\" AS \"device\", FLOOR(\"pass_percentage\" - ($percentageVar / 100.0) + 1) as \"Status\", \"passes\" AS \"Stigs passed\", \"failures\" + \"cond_passes\" AS \"Stigs failed\", \"device_time\"\n FROM (SELECT *, LAST(\"pass_percentage\") AS \"pass_percentage\" FROM \"autogen\".\"care_stigs\" WHERE $timeFilter GROUP BY \"device_name\")\n",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series"
+        }
+      ],
+      "title": "All Devices",
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {}
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "{{ datasource_uid }}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      },
+      "id": 2,
+      "links": [],
+      "options": {
+        "buttonGroup": {
+          "orientation": "center",
+          "size": "md"
+        },
+        "elements": [
+          {
+            "id": "slider",
+            "labelWidth": 10,
+            "max": 100,
+            "min": 0,
+            "section": "",
+            "step": 1,
+            "title": "Percentage",
+            "tooltip": "",
+            "type": "slider",
+            "uid": null,
+            "unit": "%",
+            "value": 0
+          }
+        ],
+        "initial": {
+          "code": "\nconsole.log(\n  options,\n  data,\n  response,\n  elements,\n  locationService,\n  templateService\n);\n",
+          "contentType": "application/json",
+          "highlight": false,
+          "highlightColor": "red",
+          "method": "-"
+        },
+        "layout": {
+          "orientation": "horizontal",
+          "padding": 10,
+          "variant": "single"
+        },
+        "reset": {
+          "backgroundColor": "purple",
+          "foregroundColor": "yellow",
+          "icon": "process",
+          "text": "Reset",
+          "variant": "hidden"
+        },
+        "saveDefault": {
+          "icon": "save",
+          "text": "Save Default",
+          "variant": "hidden"
+        },
+        "submit": {
+          "backgroundColor": "purple",
+          "foregroundColor": "yellow",
+          "icon": "save",
+          "text": "Apply",
+          "variant": "primary"
+        },
+        "update": {
+          "code": "console.log(\n  options,\n  data,\n  response,\n  elements,\n  locationService,\n  templateService\n);\n\nconst slider_id = elements.find((element) => element.id === 'slider').value;\nconsole.log(slider_id);\nlocationService.partial({ \"var-percentageVar\": slider_id }, true);\n",
+          "confirm": false,
+          "contentType": "application/json",
+          "method": "-",
+          "updatedOnly": false
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "{{ datasource_uid }}"
+          },
+          "hide": false,
+          "query": "SELECT\n COUNT(DISTINCT(\"device_name\")) AS \"Pass\"\n FROM (SELECT \"device_name\", LAST(\"pass_percentage\") AS \"pass_percentage\" FROM \"autogen\".\"care_stigs\" WHERE $timeFilter GROUP BY \"device_name\")\n WHERE   \"pass_percentage\" > $percentageVar / 100",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "{{ datasource_uid }}"
+          },
+          "hide": false,
+          "query": "SELECT\n COUNT(DISTINCT(\"device_name\")) AS \"Fail\"\n FROM (SELECT \"device_name\", LAST(\"pass_percentage\") AS \"pass_percentage\" FROM \"autogen\".\"care_stigs\" WHERE $timeFilter GROUP BY \"device_name\")\n WHERE   \"pass_percentage\" < $percentageVar / 100",
+          "rawQuery": true,
+          "refId": "B",
+          "resultFormat": "time_series"
+        }
+      ],
+      "title": "Source Panel",
+      "type": "volkovlabs-form-panel"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "hide": 2,
+        "name": "percentageVar",
+        "query": "90",
+        "skipUrlSync": false,
+        "type": "constant"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Care Dashboard",
+  "uid": "{{ grafana_main_dashboard_uid }}",
+  "version": 123,
+  "weekStart": ""
+}

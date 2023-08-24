@@ -1,0 +1,39 @@
+---
+- name: Get username from extra vars
+  set_fact:
+    telemetry_sender_email: "{{ telemetry_sender_email }}"
+
+- name: Use host address
+  set_fact:
+    host_ip: "{{ telemetry_host_address }}"
+  when:  hostvars[telemetry_node]['influx_available'] is true and hostvars[telemetry_node]['influxDB_address'] is false
+  vars:
+    telemetry_node: "{{ telemetry_node_label }}"
+
+- name: Use custom address
+  set_fact:
+    host_ip: "{{  hostvars[telemetry_node]['influxDB_address'] }}"
+  when: hostvars[telemetry_node]['influxDB_address'] is not false
+  vars:
+    telemetry_node: "{{ telemetry_node_label }}"
+
+- name: Send validation report
+  send_telemetry:
+    report: "{{ validation_report }}"
+    host_ip: "{{ host_ip }}"
+    db_port: "{{ influxdb_port }}"
+    db_bucket_name: "{{ influxdb_bucket }}"
+    db_token: "{{ influxdb_token }}"
+    measurement_name: "{{ measurement_name }}"
+    telemetry_sender_email: "{{ telemetry_sender_email }}"
+    input: "validate"
+  when: hostvars[telemetry_node]['influx_available'] is true
+  vars:
+    telemetry_node: "{{ telemetry_node_label }}"
+  register: result
+
+- debug:
+    var: result.result
+  when: hostvars[telemetry_node]['influx_available'] is true
+  vars:
+    telemetry_node: "{{ telemetry_node_label }}"

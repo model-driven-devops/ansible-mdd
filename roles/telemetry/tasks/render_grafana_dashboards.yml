@@ -1,0 +1,26 @@
+---
+- name: Set file j2 name
+  set_fact:
+    j2_template_file: "{{ item.0 }}.j2"
+
+- name: Render Grafana dashboard files
+  set_fact:
+    grafana_dashboard_template: "{{ lookup('template', j2_template_file) }}"
+
+- name: Create Grafana dashboard file on {{ inventory_hostname }} node
+  copy:
+    content: "{{ grafana_dashboard_template }}"
+    dest: "{{ telemetry_base_dir }}/{{ item.0 }}"
+    force: true
+
+- name: Import Grafana dashboard
+  community.grafana.grafana_dashboard:
+    grafana_url: "http://{{ telemetry_host_address }}:{{ grafana_port }}"
+    grafana_user: "{{ grafana_username }}"
+    grafana_password: "{{ grafana_password }}"
+    folder: "{{ item.1 }}"
+    state: present
+    commit_message: Updated by ansible
+    overwrite: yes
+    path: "{{ telemetry_base_dir }}/{{ item.0 }}"
+  no_log: true
