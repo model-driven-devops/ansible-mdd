@@ -71,7 +71,8 @@
 #     dest: "{{ telemetry_telegraf_dir }}/telegraf.conf"
 #     force: true
 
-
+- name: execute command
+  shell: 'sysctl -w vm.max_map_count=262144' 
 
 - name: Create docker-compose config file
   copy:
