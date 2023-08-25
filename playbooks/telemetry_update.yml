@@ -1,0 +1,15 @@
+---
+- name: Update telemetry
+  hosts: telemetry
+  gather_facts: false
+  become: true
+  vars:
+    docker_is_present: true
+    directory_is_present: true
+  tasks:
+    - name: Wait for host to become reachable/usable
+      wait_for_connection:
+        timeout: 60
+      register: wait_connection
+      retries: 10
+      until: wait_connection is success

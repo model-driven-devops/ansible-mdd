@@ -1,0 +1,18 @@
+---
+- name: Check for docker presence
+  shell: which docker
+  failed_when: false
+  register: docker_result
+
+- name: Set docker presence
+  set_fact:
+    docker_is_present: "{{ docker_result.rc == 0 }}"
+
+- name: Check for directory presence
+  shell: test -d "{{ telemetry_base_dir }}"
+  failed_when: false
+  register: dir_result
+
+- name: Set directory presence
+  set_fact:
+    directory_is_present: "{{ dir_result.rc == 0 }}"
