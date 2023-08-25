@@ -1,0 +1,22 @@
+---
+- name: Install telemetry
+  hosts: telemetry
+  gather_facts: false
+  become: true
+  vars:
+    docker_is_present: false
+    directory_is_present: false
+    filebeat_template: "{{ lookup('template', 'filebeat.yml.j2') }}"
+    elastic_docker_template: "{{ lookup('template', 'elastic-docker-compose.yml.j2') }}"
+  tasks:
+    - name: Wait for host to become reachable/usable
+      wait_for_connection:
+        timeout: 60
+      register: wait_connection
+      retries: 10
+      until: wait_connection is success
+
+    - name: Install Telemetry stack
+      include_role:
+        name: ciscops.mdd.telemetry
+        tasks_from: install_elastic
