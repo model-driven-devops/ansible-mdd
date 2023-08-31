@@ -80,11 +80,17 @@
     dest: "{{ telemetry_base_dir }}/docker-compose.yml"
     force: true
 
-- name: Create filebeat config file
-  copy:
-    content: "{{ filebeat_template }}"
+- name: Copy filebeat file
+  ansible.builtin.template:
+    content: "{{ mdd_telemetry }}/elastic/filebeat.yml.j2"
     dest: "{{ telemetry_base_dir }}/filebeat.yml"
-    force: true
+    mode: 0600
+
+# - name: Create filebeat config file
+#   copy:
+#     content: "{{ filebeat_template }}"
+#     dest: "{{ telemetry_base_dir }}/filebeat.yml"
+#     force: true
 
 # Create docker containers
 - name: Docker Compose Up
