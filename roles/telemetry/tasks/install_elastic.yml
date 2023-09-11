@@ -82,7 +82,7 @@
 
 - name: Copy filebeat file
   ansible.builtin.template:
-    src: "{{ mdd_telemetry }}/elastic/filebeat.yml.j2"
+    src: "{{ mdd_telemetry }}/filebeat.yml.j2"
     dest: "{{ telemetry_base_dir }}/filebeat.yml"
     mode: 0600
 
