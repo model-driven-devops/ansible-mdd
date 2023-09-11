@@ -15,7 +15,7 @@ telegraf_port: "{{ lookup('env', 'TELEGRAF_PORT') | default ('57000', true) }}"
 
 # Elastic configs
 kibana_password: "{{ lookup('env', 'KIBANA_PASSWORD') | default ('changeme', true) }}"
-elastic_username: "{{ lookup('env', 'ELASTIC_USERNAME') | default ('elastic', true) }}"
+elastic_user: "{{ lookup('env', 'ELASTIC_USER') | default ('elastic', true) }}"
 elastic_password: "{{ lookup('env', 'ELASTIC_PASSWORD') | default ('changeme', true) }}"
 stack_version: "{{ lookup('env', 'STACK_VERSION') | default ('8.7.1', true) }}"
 cluster_name: "{{ lookup('env', 'CLUSTER_NAME') | default ('elastic', true) }}"
