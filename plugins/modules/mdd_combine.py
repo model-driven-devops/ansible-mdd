@@ -182,10 +182,10 @@ def merge_dicts(all_configs, module):
                 elif k in result_cfgs and hierarchy_level == result_cfgs[k][3] and result_cfgs[k][0] and weight > \
                         result_cfgs[k][4]:
                     result_cfgs[k] = (v, filepath, playbook_tags, hierarchy_level, weight)
-                # if key found multiple places at same hierarchy level and the new key's weight is lower, pass.
+                # if key found multiple places at same hierarchy level and the new key's weight is lower, skip.
                 elif k in result_cfgs and hierarchy_level == result_cfgs[k][3] and result_cfgs[k][0] and weight < \
                         result_cfgs[k][4]:
-                    pass
+                    continue
                 # if key found multiple places at same hierarchy level and if the weight is the same, error.
                 elif k in result_cfgs and hierarchy_level == result_cfgs[k][3] and result_cfgs[k][0] and weight == \
                         result_cfgs[k][4]:
