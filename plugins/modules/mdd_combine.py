@@ -175,18 +175,27 @@ def merge_dicts(all_configs, module):
                 else:
                     result_cfgs[k] = _merge({}, v, path + [str(k)], filepath, hierarchy_level, playbook_tags, weight)
             else:
-                # if key not there, add
+                # if key not there, add it
                 if k not in result_cfgs:
                     result_cfgs[k] = (v, filepath, playbook_tags, hierarchy_level, weight)
-                # if key found multiple places at same hierarchy level, error
-                elif k in result_cfgs and hierarchy_level == result_cfgs[k][3] and result_cfgs[k][0]:
+                # if key found multiple places at same hierarchy level and the new key's weight is higher, go with the highest weight.
+                elif k in result_cfgs and hierarchy_level == result_cfgs[k][3] and result_cfgs[k][0] and weight > \
+                        result_cfgs[k][4]:
+                    result_cfgs[k] = (v, filepath, playbook_tags, hierarchy_level, weight)
+                # if key found multiple places at same hierarchy level and the new key's weight is lower, pass.
+                elif k in result_cfgs and hierarchy_level == result_cfgs[k][3] and result_cfgs[k][0] and weight < \
+                        result_cfgs[k][4]:
+                    pass
+                # if key found multiple places at same hierarchy level and if the weight is the same, error.
+                elif k in result_cfgs and hierarchy_level == result_cfgs[k][3] and result_cfgs[k][0] and weight == \
+                        result_cfgs[k][4]:
                     if filepath == result_cfgs[k][1]:
                         module.fail_json(
-                            msg="Merge Error: key {1} was found multiple times at the same hierarchy level (level: {2}) in file {3}.".format(
+                            msg="Merge Error: key {0} was found multiple times at the same hierarchy level (level: {1}) in file {2}.".format(
                                 k, result_cfgs[k][3], filepath))
                     else:
                         module.fail_json(
-                            msg="Merge Error: key {1} was found multiple times at the same hierarchy level (level: {2}) in files {3} and {4}.".format(
+                            msg="Merge Error: key {0} was found multiple times at the same hierarchy level (level: {1}) in files {2} and {3}.".format(
                                 k, result_cfgs[k][3], filepath, result_cfgs[k][1]))
                     module.exit_json(changed=False, failed=True)
                 # if key exists but weight is higher, replace
@@ -378,7 +387,7 @@ def find_and_read_configs(top_dir, device_name, filespec_list, default_weight, t
                                         )
                             except yaml.YAMLError:
                                 module.fail_json(
-                                    msg="An error occurred loading file {1}".format(os.path.join(current_dir, filename)))
+                                    msg="An error occurred loading file {0}".format(os.path.join(current_dir, filename)))
                                 module.exit_json(changed=False, failed=True)
 
                 hierarchy_level += 1
