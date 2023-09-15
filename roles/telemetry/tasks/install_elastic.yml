@@ -65,12 +65,6 @@
   shell: mkdir -p "{{ telemetry_base_dir }}"
   when: directory_is_present is false
 
-# - name: Create telegraf config file
-#   copy:
-#     content: "{{ telegraf_template }}"
-#     dest: "{{ telemetry_telegraf_dir }}/telegraf.conf"
-#     force: true
-
 - name: execute command
   shell: 'sysctl -w vm.max_map_count=262144' 
 
@@ -112,59 +106,3 @@
     - filebeat
   register: container_info
   failed_when: container_info.container.State is not defined
-
-# - name: Configure Grafana datasource
-#   grafana_datasource:
-#     name: "{{ grafana_datasource_name }}"
-#     grafana_user: "{{ grafana_username }}"
-#     grafana_password: "{{ grafana_password }}"
-#     database: "{{ influxdb_bucket }}"
-#     ds_type: "{{ ds_type }}"
-#     ds_url: "http://{{ telemetry_host_address }}:{{ influxdb_port }}" # use influx db port
-#     grafana_url: "http://{{ telemetry_host_address }}:{{ grafana_port }}" # use grafana port
-#     state: "{{ item }}"
-#     tls_skip_verify: true
-#     additional_json_data:
-#       httpHeaderName1: "Authorization"
-#     additional_secure_json_data:
-#       httpHeaderValue1: "Token {{ influxdb_token }}"
-#   loop:
-#     - absent
-#     - present
-#   failed_when: false
-#   register: grafana_result
-#   no_log: true
-
-# - name: Collect UID
-#   set_fact:
-#     datasource_uid: "{{ item.datasource.uid }}"
-#   loop: "{{ grafana_result.results }}"
-#   when: item.datasource is defined and item.datasource is not none
-#   no_log: true
-
-# - name: Create Grafana folders
-#   community.grafana.grafana_folder:
-#       grafana_url: "http://{{ telemetry_host_address }}:{{ grafana_port }}"
-#       grafana_user: "{{ grafana_username }}"
-#       grafana_password: "{{ grafana_password }}"
-#       title: "{{ item }}"
-#       state: present
-#   no_log: true
-#   loop:
-#     - 'Validate'
-#     - 'Care'
-
-# - name: Render grafana dashboards
-#   include_role:
-#     name: ciscops.mdd.telemetry
-#     tasks_from: render_grafana_dashboards
-#   loop:
-#     - ['grafana_dash_validate.json', 'Validate']
-#     - ['grafana_dash_stig_main.json', 'Care']
-#     - ['grafana_dash_device_stig_fail.json', 'Care']
-
-# - debug:
-#     msg:
-#       - "Grafana url http://{{ telemetry_host_address }}:{{ grafana_port }}"
-#       - "InfluxDB url http://{{ telemetry_host_address }}:{{ influxdb_port }}"
-#       - "Edit your inventory file and set influx_available to true to log results"
