@@ -152,6 +152,15 @@ def intf_truncate(data, intf_dict=None):
                      [instance_index]["openconfig-network-instance:mpls"]["openconfig-network-instance:global"]
                      ["openconfig-network-instance:interface-attributes"]["openconfig-network-instance:interface"]) = temp_mpls_interface_list
 
+        # Truncate openconfig-acl interfaces
+        if "openconfig-acl:acl" in oc_data and "openconfig-acl:interfaces" in oc_data["openconfig-acl:acl"]:
+            temp_acl_interface_list = []
+            for interface in oc_data["openconfig-acl:acl"]["openconfig-acl:interfaces"]["openconfig-acl:interface"]:
+                if found_full_match(interface["openconfig-acl:id"].split(".")[0], intf_dict):
+                    temp_acl_interface_list.append(interface)
+
+            data_out["mdd:openconfig"]["openconfig-acl:acl"]["openconfig-acl:interfaces"]["openconfig-acl:interface"] = temp_acl_interface_list
+
     return data_out
 
 
