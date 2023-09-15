@@ -1,0 +1,31 @@
+---
+- name: Docker Compose Down
+  docker_compose:
+    project_src: "{{ telemetry_base_dir }}"
+    state: absent
+
+# Wait for 5 seconds for docker container to go down
+- name: Pause to allow containers to boot up
+  pause:
+    seconds: 5
+
+- name: Update filebeat config file
+  copy:
+    content: "{{ filebeat_template }}"
+    dest: "{{ telemetry_base_dir }}/filebeat.yml"
+    force: true
+
+- name: Docker Compose Up
+  docker_compose:
+    project_src: "{{ telemetry_base_dir }}"
+    state: present
+
+- name: Check container state
+  docker_container_info:
+    name: elastic
+  loop:
+    - es01
+    - kibana
+    - filebeat
+  register: container_info
+  failed_when: container_info.container.State is not defined
