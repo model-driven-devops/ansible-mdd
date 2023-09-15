@@ -1,0 +1,28 @@
+## This filebeat template is not used in the current playbook. 
+## The current playbook uses the filebeat template in the mdd-base
+## Telemetry directory. To pass this file, you need to change the
+## The install_elastic.yml in the tasks folder.
+filebeat.config.modules:
+  enabled: true
+  path: ${path.config}/modules.d/*.yml
+
+filebeat.modules:
+  - module: netflow
+    log:
+      enabled: true
+      var.netflow_host: "0.0.0.0"
+      var.netflow_port: 2055
+
+setup.kibana:
+  host: "http://kibana:5601"
+  username: "elastic"
+  password: "changeme"
+  dashboards:
+    enabled: true
+
+output.elasticsearch:
+  hosts: ["https://es01:9200"]
+  username: "elastic"
+  password: "changeme"
+  ssl.enabled: true
+  ssl.certificate_authorities: "certs/ca/ca.crt"
