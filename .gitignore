@@ -7,3 +7,4 @@ ansible_collections/
 collections/
 envvars
 *.gz
+.vscode/
