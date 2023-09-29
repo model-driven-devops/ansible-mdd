@@ -26,7 +26,10 @@ def nso_oc(config_data):
     }
     native_dict = copy.deepcopy(config_data)
     translation_notes = []
-    main_xe.build_xe_to_oc(config_data, native_dict, oc_dict, translation_notes)
+    oc_dict_clean = main_xe.build_xe_to_oc(config_data, native_dict, oc_dict, translation_notes)
+
+    if oc_dict_clean:
+        oc_dict = oc_dict_clean
 
     mdd_dict['mdd_data'] = {
         "mdd:openconfig": oc_dict['mdd:openconfig'],

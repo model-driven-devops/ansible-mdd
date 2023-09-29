@@ -1,4 +1,4 @@
-# Cisco Model Driven Devops Ansible Collection
+# Cisco Model-Driven Devops Ansible Collection
 
 This Ansible Collection is an implementation of Model-Driven DevOps and includes the following roles:
 * [oc](https://github.com/model-driven-devops/ansible-mdd/blob/main/roles/oc/README.md)
@@ -8,14 +8,14 @@ This Ansible Collection is an implementation of Model-Driven DevOps and includes
 * [netbox](https://github.com/model-driven-devops/ansible-mdd/blob/main/roles/netbox/README.md)
 * [nso](https://github.com/model-driven-devops/ansible-mdd/blob/main/roles/nso/README.md)
 
-## Dependancies
-### Environmnet Variables
+## Dependencies
+### Environment Variables
 If using NetBox:
 - `NETBOX_API`
 - `NETBOX_TOKEN`
 
-To use an external NSO (ie. not deployed in CML):
-- `NSO_URL` Protocol, FQDN or IP address and port (ex. `http://192.168.1.100:8080`)
+To use an external NSO (i.e. not deployed in CML):
+- `NSO_URL` Protocol, FQDN or IP address and port (e.g. `http://192.168.1.100:8080`)
 - `NSO_USERNAME`
 - `NSO_PASSWORD`
 

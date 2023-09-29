@@ -17,10 +17,10 @@
       when: ('oc' in mdd_data_types)
       throttle: "{{ workers }}"
       block:
-        - name: Translate and truncate interface names
+        - name: Translate/truncate interface names and truncate config
           set_fact:
-            mdd_data: "{{ mdd_data | ciscops.mdd.intf_xform(cml_intf_xlate) }}"
-          when: (cml_group is defined and cml_group in group_names) and (cml_intf_xlate is defined and cml_intf_xlate)
+            mdd_data: "{{ mdd_data | ciscops.mdd.config_xform(cml_intf_xlate | default(None), cml_truncate_list | default(None)) }}"
+          when: (cml_intf_xlate is defined and cml_intf_xlate) or (cml_truncate_list is defined and cml_truncate_list)
 
         - name: Update MDD Data
           ansible.builtin.include_role:
