@@ -32,7 +32,7 @@ publish: $(TARBALL_NAME) ## Publish Collection (set env:GALAXY_TOKEN)
 format: ## Format Python code
 	yapf --style=yapf.ini -i -r *.py $(PYDIRS)
 
-test: $(VENV) $(TARBALL_NAME) ## Run Sanity Tests
+test: clean build $(VENV) $(TARBALL_NAME) ## Run Sanity Tests
 	$(RM) -r ./ansible_collections
 	ansible-galaxy collection install --force $(TARBALL_NAME) -p ./ansible_collections
 	cd ./ansible_collections/ciscops/mdd && git init .
