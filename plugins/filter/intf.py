@@ -164,6 +164,89 @@ def intf_truncate(data, intf_dict=None):
     return data_out
 
 
+def vlan_truncate(data, vlan_list=None):
+    if not data:
+        return {}
+
+    if vlan_list is None:
+        return data
+
+    data_out = data.copy()
+
+    if "mdd:openconfig" in data:
+        oc_data = data["mdd:openconfig"]
+
+        # Truncate VLANs from network instances
+        try:
+            instances = oc_data["openconfig-network-instance:network-instances"]["openconfig-network-instance:network-instance"]
+            for (instance_index, instance) in enumerate(instances):
+                temp_vlan_list = []
+                try:
+                    vlans = instance["openconfig-network-instance:vlans"]["openconfig-network-instance:vlan"]
+                    for vlan in vlans:
+                        if vlan["openconfig-network-instance:vlan-id"] in vlan_list:
+                            temp_vlan_list.append(vlan)
+                    (data_out["mdd:openconfig"]["openconfig-network-instance:network-instances"]["openconfig-network-instance:network-instance"]
+                     [instance_index]["openconfig-network-instance:vlans"]["openconfig-network-instance:vlan"]) = temp_vlan_list
+                except KeyError:
+                    pass
+        except KeyError:
+            pass
+
+        # Truncate VLANs from STP
+        try:
+            rapid_pvst = oc_data["openconfig-spanning-tree:stp"]["openconfig-spanning-tree:rapid-pvst"]
+            try:
+                temp_stp_vlan_list = []
+                vlans = rapid_pvst["openconfig-spanning-tree:vlan"]
+                for vlan in vlans:
+                    if vlan["openconfig-spanning-tree:vlan-id"] in vlan_list:
+                        temp_stp_vlan_list.append(vlan)
+                (data_out["mdd:openconfig"]["openconfig-spanning-tree:stp"]["openconfig-spanning-tree:rapid-pvst"]
+                 ["openconfig-spanning-tree:vlan"]) = temp_stp_vlan_list
+            except KeyError:
+                pass
+        except KeyError:
+            pass
+
+        # Truncate VLANs from trunk interfaces
+        try:
+            interfaces = oc_data["openconfig-interfaces:interfaces"]["openconfig-interfaces:interface"]
+            for interface_index, interface in enumerate(interfaces):
+                # Check port-channel interfaces
+                try:
+                    temp_allowed_vlan_list = []
+                    allowed_vlans = (interface["openconfig-if-aggregate:aggregation"]["openconfig-vlan:switched-vlan"]
+                                     ["openconfig-vlan:config"]["openconfig-vlan:trunk-vlans"])
+                    for vlan in allowed_vlans:
+                        if vlan in vlan_list:
+                            temp_allowed_vlan_list.append(vlan)
+                    (data_out["mdd:openconfig"]["openconfig-interfaces:interfaces"]["openconfig-interfaces:interface"][interface_index]
+                     ["openconfig-if-aggregate:aggregation"]["openconfig-vlan:switched-vlan"]["openconfig-vlan:config"]
+                     ["openconfig-vlan:trunk-vlans"]) = temp_allowed_vlan_list
+                except KeyError:
+                    pass
+
+                # Check physical interfaces
+                try:
+                    temp_allowed_vlan_list = []
+                    allowed_vlans = (interface["openconfig-if-ethernet:ethernet"]["openconfig-vlan:switched-vlan"]
+                                     ["openconfig-vlan:config"]["openconfig-vlan:trunk-vlans"])
+                    for vlan in allowed_vlans:
+                        if vlan in vlan_list:
+                            temp_allowed_vlan_list.append(vlan)
+                    (data_out["mdd:openconfig"]["openconfig-interfaces:interfaces"]["openconfig-interfaces:interface"][interface_index]
+                     ["openconfig-if-ethernet:ethernet"]["openconfig-vlan:switched-vlan"]["openconfig-vlan:config"]
+                     ["openconfig-vlan:trunk-vlans"]) = temp_allowed_vlan_list
+                except KeyError:
+                    pass
+
+        except KeyError:
+            pass
+
+    return data_out
+
+
 def delete_key(data, key_list):
     if isinstance(data, dict):
         if key_list[0] in list(data):
@@ -190,10 +273,11 @@ def config_truncate(data, truncate_list=None):
     return data_out
 
 
-def config_xform(data, intf_dict=None, truncate_list=None):
+def config_xform(data, intf_dict=None, truncate_list=None, vlan_list=None):
     data = intf_truncate(data, intf_dict)
     data = intf_xlate(data, intf_dict)
     data = config_truncate(data, truncate_list)
+    data = vlan_truncate(data, vlan_list)
     return data
 
 

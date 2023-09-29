@@ -19,8 +19,8 @@
       block:
         - name: Translate/truncate interface names and truncate config
           set_fact:
-            mdd_data: "{{ mdd_data | ciscops.mdd.config_xform(cml_intf_xlate | default(None), cml_truncate_list | default(None)) }}"
-          when: (cml_intf_xlate is defined and cml_intf_xlate) or (cml_truncate_list is defined and cml_truncate_list)
+            mdd_data: "{{ mdd_data | ciscops.mdd.config_xform(cml_intf_xlate | default(None), cml_truncate_list | default(None), cml_vlan_list | default(None)) }}"
+          when: (cml_intf_xlate is defined and cml_intf_xlate) or (cml_truncate_list is defined and cml_truncate_list) or (cml_vlan_list is defined and cml_vlan_list)
 
         - name: Update MDD Data
           ansible.builtin.include_role:
