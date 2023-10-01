@@ -9,6 +9,8 @@ ENV ANSIBLE_COLLECTIONS_PATH /
 
 COPY requirements.txt /tmp/requirements.txt
 COPY requirements.yml /tmp/requirements.yml
+COPY ./ /tmp/ansible-mdd
+
 USER root
 RUN mkdir /root/.ssh && bash -c 'echo -e "Host *\n  KexAlgorithms +diffie-hellman-group-exchange-sha1,diffie-hellman-group14-sha1" > /root/.ssh/config'
 RUN mkdir /ansible_collections && chmod 777 /ansible_collections
