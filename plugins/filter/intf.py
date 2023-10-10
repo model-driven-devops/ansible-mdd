@@ -104,9 +104,9 @@ def intf_truncate(data, intf_dict=None):
                     for (prot_index, protocol) in enumerate(instance["openconfig-network-instance:protocols"]["openconfig-network-instance:protocol"]):
                         if "openconfig-network-instance:ospfv2" in protocol and ("openconfig-network-instance:areas" in
                                                                                  protocol["openconfig-network-instance:ospfv2"]):
-                            temp_ospf_interface_list = []
                             for (area_index, area) in enumerate(protocol["openconfig-network-instance:ospfv2"]["openconfig-network-instance:areas"]
                                                                 ["openconfig-network-instance:area"]):
+                                temp_ospf_interface_list = []
                                 if "openconfig-network-instance:interfaces" in area:
                                     for interface in area["openconfig-network-instance:interfaces"]["openconfig-network-instance:interface"]:
                                         if found_full_match(interface["openconfig-network-instance:id"].split(".")[0], intf_dict):
