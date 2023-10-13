@@ -57,14 +57,14 @@
         tasks_from: update_rollback_list
       when: rollback_id is defined and rollback_id and netbox_available | default(false)
 
-- name: Run update_report
+- name: Run update report
   hosts: network
   connection: local
   gather_facts: no
   vars:
     dry_run: true
   tasks:
-    - name: Update OC Data
+    - name: Generate report
       include_role:
         name: ciscops.mdd.nso
         tasks_from: update_report
