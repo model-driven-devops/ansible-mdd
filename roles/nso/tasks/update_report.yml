@@ -1,3 +1,11 @@
+- name: Write update report to file
+  copy:
+    content: "{{ hostvars[inventory_hostname].nso_config_result.commit_result[0].dry_run_result.native.device[0].data }}"
+    dest: "{{ lookup('env', 'PWD') }}/{{ inventory_hostname }}_result.txt"
+  when: log | bool
+  vars:
+    log: no
+
 - set_fact:
     update_report: "{{ lookup('template', 'update-report.yml.j2') | from_yaml }}"
 
