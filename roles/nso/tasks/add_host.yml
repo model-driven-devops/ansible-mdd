@@ -10,6 +10,7 @@
           description: CONFIGURED BY ANSIBLE!
           name: "{{ device_name | default(inventory_hostname) }}"
           authgroup: "{{ nso_auth_group | default('default') }}"
+          ned-settings: "{{ ned_settings | default(omit) }}"
           device-type:
             cli:
               ned-id: "{{ device_ned | default(nso_default_ned) }}"
