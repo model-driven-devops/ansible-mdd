@@ -11,6 +11,7 @@
             default-map:
               remote-name: "{{ item.value.remote_name }}"
               remote-password: "{{ item.value.remote_password }}"
+              remote-secondary-password: "{{ item.value.remote_secondary_password | default(omit)}}"
   loop: "{{ nso_auth_groups | dict2items }}"
   no_log: true
 
