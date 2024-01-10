@@ -13,6 +13,7 @@
     mdd_data: "{{ mdd_combine_output.mdd_data | default({}) }}"
 
 - block:
-  - include_role: ciscops.mdd.netbox
+  - include_role: 
+      name: ciscops.mdd.netbox
   - include_tasks: netbox.yml
   when: netbox_api is defined or lookup('env', 'NETBOX_API', default=false)
