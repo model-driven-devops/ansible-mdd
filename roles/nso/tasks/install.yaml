@@ -10,11 +10,16 @@
     path: "{{ nso_tmp_dir }}"
     state: directory
 
-- name: Get the NSO installer
-  get_url:
-    url: "{{ nso_installer_file }}"
-    dest: "{{ nso_tmp_dir }}"
-  register: copy_results
+- block: 
+  - name: Get the NSO installer
+    get_url:
+      url: "{{ nso_installer_file }}"
+      dest: "{{ nso_tmp_dir }}"
+    register: copy_results
+
+  - set_fact:
+      local_installer_file: "{{ copy_results.dest }}"
+    when: copy_results.changed
   when: nso_remote_src | bool
 
 - block:
@@ -31,7 +36,6 @@
       dest: "{{ nso_tmp_dir }}/{{ nso_installer_file | basename }}"
     connection: local
     become: no
-    register: copy_results
     vars:
       ansible_python_interpreter: "{{ hostvars['localhost'].ansible_python_interpreter}}"
 
@@ -40,21 +44,20 @@
       src: "{{ copy_results.dest }}"
       dest: "{{ copy_results.dest }}"
     register: copy_results
+  
+  - set_fact:
+      local_installer_file: "{{ copy_results.dest }}"
+    when: copy_results.changed
+
   when: not nso_remote_src | bool
 
 - block:
-  - set_fact:
-      local_installer_file: "{{ copy_results.dest }}"
+  # - set_fact:
+  #     local_installer_file: "{{ copy_results.dest }}"
 
   - block:
       - name: "Unpack '{{ local_installer_file }}'"
         shell: 'cd {{ nso_tmp_dir }}; sh {{ local_installer_file }} --skip-verification'
-
-      # - name: Find installer name
-      #   ansible.builtin.find:
-      #     paths: "{{ nso_tmp_dir }}"
-      #     patterns: 'nso-*.installer.bin'
-      #   register: find_results
 
       - set_fact:
           nso_installer_bin: '{{ local_installer_file | regex_replace("-freetrial", "") | regex_replace("signed.bin$","installer.bin") }}'
@@ -62,14 +65,19 @@
 
   - name: "Run {{ nso_installer_bin }}"
     shell: 'sh {{ nso_installer_bin }} --system-install'
-  when: copy_results.changed
+  when: local_installer_file is defined
 
-- name: Get the NSO packages
-  get_url:
-    url: "{{ item }}"
-    dest: "{{ nso_tmp_dir }}"
-  loop: "{{ nso_ned_files }}"
-  register: copy_results
+- block:
+  - name: Get the NSO packages
+    get_url:
+      url: "{{ item }}"
+      dest: "{{ nso_tmp_dir }}"
+    loop: "{{ nso_ned_files }}"
+    register: copy_results
+    when: nso_remote_src | bool
+
+  - set_fact:
+      results: "{{ copy_results.results }}"
   when: nso_remote_src | bool
 
 - block:
@@ -97,11 +105,14 @@
       dest: "{{ item.dest }}"
     loop: "{{ copy_results.results }}"
     register: copy_results
+  
+  - set_fact:
+      results: "{{ copy_results.results }}"
   when: not nso_remote_src | bool
 
 - name: Unpack NSO packages
   shell: 'cd {{ nso_tmp_dir }}; sh {{ item.dest }} --skip-verification'
-  loop: "{{ copy_results.results }}"
+  loop: "{{ results }}"
   when: item.changed
 
 - name: Extract packages into {{ nso_run_dir }}/packages
@@ -109,7 +120,7 @@
     src: "{{ item.dest | regex_replace('-freetrial', '') | regex_replace('signed.bin$', 'tar.gz') }}"
     dest: "{{ nso_run_dir }}/packages"
     remote_src: yes
-  loop: "{{ copy_results.results }}"
+  loop: "{{ results }}"
   when: item.changed
 
 - name: Create {{ nso_etc_dir }}/ncs.conf
