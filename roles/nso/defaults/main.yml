@@ -2,6 +2,7 @@
 nso_host_group: 'nso'
 nso_url: "{{ nso_rest_url }}/jsonrpc"
 nso_package_src: "{{ lookup('env', 'PWD') }}/packages"
+nso_remote_src: yes
 nso_installer_name: "nso-5.5.3.linux.x86_64.signed.bin"
 nso_install_dir: /opt/ncs/current
 nso_run_dir: /var/opt/ncs
@@ -9,6 +10,13 @@ nso_etc_dir: /etc/ncs
 nso_tmp_dir: /tmp/nso
 nso_upload_dir: /tmp/nso
 nso_java_opts: "-Xmx2G -Xms1G"
+nso_package_requirements:
+  - default-jdk
+  - openssh-client
+  - ant
+  - make
+  - libxml2-utils
+  - xsltproc
 # Default username/password for the NSO host
 # admin_user: ubuntu
 # admin_password: admin

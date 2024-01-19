@@ -1,53 +1,10 @@
 ---
 - name: Install prerequisites for NSO
   apt:
-    name:
-      - default-jdk
-      - openssh-client
-      - ant
-      - make
-      - libxml2-utils
-      - xsltproc
+    name: "{{ nso_package_requirements }}"
     update_cache: yes
     install-recommends: no
 
-# - name: Clean up any previous NSO installation
-#   hosts: nso_hosts
-#   connection: ssh
-#   vars:
-#     ansible_user: "{{ admin_user }}"
-#     ansible_ssh_private_key_file: "{{ admin_private_key_file }}"
-#     ansible_python_interpreter: "/usr/bin/python3"
-#   tags:
-#     - cleanup
-#     - nso
-#   any_errors_fatal: true
-#   gather_facts: no
-#   tasks:
-#     - name: Remove install directory
-#       file:
-#         path: '/home/{{ admin_user }}/{{ nso_install_dir }}'
-#         state: absent
-
-#     - name: Remove run directory
-#       file:
-#         path: '/home/{{ admin_user }}/{{ nso_run_dir }}'
-#         state: absent
-
-# - name: NSO install
-#   hosts: nso_hosts
-#   connection: ssh
-#   vars:
-#     ansible_user: "{{ admin_user }}"
-#     ansible_ssh_private_key_file: "{{ admin_private_key_file }}"
-#     ansible_python_interpreter: "/usr/bin/python3"
-#   tags:
-#     - setup
-#     - nso
-#   any_errors_fatal: true
-#   gather_facts: no
-#   tasks:
-#     - name: Remove install directory
 - name: Create temporary installer directory
   file:
     path: "{{ nso_tmp_dir }}"
@@ -57,10 +14,33 @@
   get_url:
     url: "{{ nso_installer_file }}"
     dest: "{{ nso_tmp_dir }}"
-  # copy:
-  #   src: "{{ nso_package_src }}/{{ nso_installer_name }}"
-  #   dest: "{{ nso_tmp_dir }}/{{ nso_installer_name }}"
   register: copy_results
+  when: nso_remote_src | bool
+
+- block:
+  - name: Create temporary installer directory
+    file:
+      path: "{{ nso_tmp_dir }}"
+      state: directory
+    connection: local
+    become: no
+
+  - name: Copy installer to {{ nso_tmp_dir }} directory
+    get_url:
+      url: "{{ nso_installer_file }}"
+      dest: "{{ nso_tmp_dir }}/{{ nso_installer_file | basename }}"
+    connection: local
+    become: no
+    register: copy_results
+    vars:
+      ansible_python_interpreter: "{{ hostvars['localhost'].ansible_python_interpreter}}"
+
+  - name: Copy installer to {{ inventory_hostname }}
+    copy:
+      src: "{{ copy_results.dest }}"
+      dest: "{{ copy_results.dest }}"
+    register: copy_results
+  when: not nso_remote_src | bool
 
 - block:
   - set_fact:
@@ -70,28 +50,54 @@
       - name: "Unpack '{{ local_installer_file }}'"
         shell: 'cd {{ nso_tmp_dir }}; sh {{ local_installer_file }} --skip-verification'
 
+      # - name: Find installer name
+      #   ansible.builtin.find:
+      #     paths: "{{ nso_tmp_dir }}"
+      #     patterns: 'nso-*.installer.bin'
+      #   register: find_results
+
       - set_fact:
-          nso_installer_bin: '{{ local_installer_file | regex_replace("signed.bin$","installer.bin") }}'
+          nso_installer_bin: '{{ local_installer_file | regex_replace("-freetrial", "") | regex_replace("signed.bin$","installer.bin") }}'
     when: '"signed.bin" in local_installer_file'
 
-  - name: Run the NSO installer
+  - name: "Run {{ nso_installer_bin }}"
     shell: 'sh {{ nso_installer_bin }} --system-install'
   when: copy_results.changed
 
-# - name: Find NSO packages
-#   find:
-#     paths: "{{ nso_package_src }}"
-#     patterns: 'ncs-*.signed.bin'
-#   delegate_to: localhost
-#   become: no
-#   register: find_results
-
-- name: Upload the NSO packages
+- name: Get the NSO packages
   get_url:
     url: "{{ item }}"
     dest: "{{ nso_tmp_dir }}"
   loop: "{{ nso_ned_files }}"
   register: copy_results
+  when: nso_remote_src | bool
+
+- block:
+  - name: Create temporary installer directory
+    file:
+      path: "{{ nso_tmp_dir }}"
+      state: directory
+    connection: local
+    become: no
+
+  - name: Copy NSO packages to {{ nso_tmp_dir }} directory
+    get_url:
+      url: "{{ item }}"
+      dest: "{{ nso_tmp_dir }}/{{ item | basename }}"
+    loop: "{{ nso_ned_files }}"
+    connection: local
+    become: no
+    register: copy_results
+    vars:
+      ansible_python_interpreter: "{{ hostvars['localhost'].ansible_python_interpreter}}"
+
+  - name: Copy NSO packages to {{ inventory_hostname }}
+    copy:
+      src: "{{ item.dest }}"
+      dest: "{{ item.dest }}"
+    loop: "{{ copy_results.results }}"
+    register: copy_results
+  when: not nso_remote_src | bool
 
 - name: Unpack NSO packages
   shell: 'cd {{ nso_tmp_dir }}; sh {{ item.dest }} --skip-verification'
@@ -100,7 +106,7 @@
 
 - name: Extract packages into {{ nso_run_dir }}/packages
   ansible.builtin.unarchive:
-    src: "{{ item.dest | regex_replace('signed.bin$', 'tar.gz') }}"
+    src: "{{ item.dest | regex_replace('-freetrial', '') | regex_replace('signed.bin$', 'tar.gz') }}"
     dest: "{{ nso_run_dir }}/packages"
     remote_src: yes
   loop: "{{ copy_results.results }}"
@@ -145,53 +151,3 @@
     name: ncs.service
     state: started
     enabled: yes
-
-# - name: Clean up installer
-#   file:
-#     path: '{{ tempdir.path }}'
-#     state: absent
-
-#     - name: Tweak bash profile
-#       blockinfile:
-#         path: '/home/{{ admin_user }}/.bashrc'
-#         insertafter: EOF
-#         block: |
-#           if [ -f ~/{{ nso_install_dir }}/ncsrc ]; then
-#               . ~/{{ nso_install_dir }}/ncsrc
-#           fi
-#           export NCS_JAVA_VM_OPTIONS="{{ nso_java_opts }}"
-
-#     - name: Initial NSO setup
-#       shell: '$HOME/{{ nso_install_dir }}/bin/ncs-setup --dest $HOME/{{ nso_run_dir }}'
-
-# - name: Install additional NSO packages/NEDs
-#   hosts: nso_hosts
-#   connection: ssh
-#   vars:
-#     ansible_user: "{{ admin_user }}"
-#     ansible_ssh_private_key_file: "{{ admin_private_key_file }}"
-#     ansible_python_interpreter: "/usr/bin/python3"
-#   tags:
-#     - setup
-#     - nso_packages
-#     - nso
-#   any_errors_fatal: true
-#   gather_facts: no
-#   tasks:
-#     - name: Process package list
-#       block:
-#         - name: Create temporary package holding directory
-#           tempfile:
-#             state: directory
-#             suffix: pkg
-#           register: tempdir
-
-#         - name: Process each package
-#           include_tasks: nso-installNSOPackage.yaml
-#           loop: "{{ nso_package_list }}"
-
-#         - name: Remove temporary package holding directory
-#           file:
-#             path: '{{ tempdir.path }}'
-#             state: absent
-#       when: nso_package_list is defined

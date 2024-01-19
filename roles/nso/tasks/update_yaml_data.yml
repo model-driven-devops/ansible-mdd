@@ -4,7 +4,8 @@
 
 - name: Write Config Data to Device Directory
   copy:
-    content: "{{ data | ciscops.mdd.to_even_nicer_yaml }}"
+    # content: "{{ data | ciscops.mdd.to_even_nicer_yaml }}"
+    content: "{{ data | to_nice_yaml(2) }}"
     dest: "{{ mdd_device_dir }}/config-data.yml"
   vars:
     data: "{{ { 'mdd_data': { 'config': nso_device_config['config'] } } }}"
