@@ -1,0 +1,16 @@
+- name: Update Netbox with CSV
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  roles:
+    - ciscops.mdd.netbox
+  tasks:
+    - name: update sites
+      include_role:
+        name: ciscops.mdd.netbox
+        tasks_from: add_sites_from_csv
+    
+    - name: update devices
+      include_role:
+        name: ciscops.mdd.netbox
+        tasks_from: add_devices_from_csv

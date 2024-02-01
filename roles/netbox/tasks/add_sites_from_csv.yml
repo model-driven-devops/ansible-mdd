@@ -1,0 +1,17 @@
+- name: Read sites from CSV
+  community.general.read_csv:
+    path: "{{ lookup('env', 'PWD') }}/templates/netbox_sites.csv"
+    key: name
+  register: sites_data
+
+- name: Ensure sites from CSV exist in NetBox
+  netbox.netbox.netbox_site:
+    netbox_url: "{{ netbox_api }}"
+    netbox_token: "{{ netbox_token }}"
+    data:
+      name: "{{ item.value.name }}"
+      slug: "{{ item.value.slug }}"
+      status: "{{ item.value.status }}"
+    state: present
+  loop: "{{ sites_data.dict | dict2items }}"
+  when: netbox_available

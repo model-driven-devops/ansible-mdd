@@ -1,0 +1,19 @@
+- name: Read sites from CSV
+  community.general.read_csv:
+    path: "{{ lookup('env', 'PWD') }}/templates/netbox_devices.csv"
+    key: name
+  register: devices_data
+
+- name: Ensure devices from CSV exist in NetBox
+  netbox.netbox.netbox_device:
+    netbox_url: "{{ netbox_api }}"
+    netbox_token: "{{ netbox_token }}"
+    data:
+      name: "{{ item.value.name }}"
+      device_role: "{{ item.value.device_role }}"
+      device_type: "{{ item.value.device_type }}"
+      status: "{{ item.value.status }}"
+      site: "{{ item.value.site }}"
+    state: present
+  loop: "{{ devices_data.dict | dict2items }}"
+  when: netbox_available
