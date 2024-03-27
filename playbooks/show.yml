@@ -10,4 +10,9 @@
       when: (cml_intf_xlate is defined and cml_intf_xlate) or (cml_truncate_list is defined and cml_truncate_list) or (cml_vlan_list is defined and cml_vlan_list)
        
     - debug:
+        var: mdd_data[key]
+      when: key is defined
+
+    - debug:
         var: mdd_data
+      when: key is not defined
