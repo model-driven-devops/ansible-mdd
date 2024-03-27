@@ -115,6 +115,7 @@ import re
 import traceback
 import fnmatch
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.common import yaml
 
 YAML_IMPORT_ERROR = 0
 
@@ -135,6 +136,16 @@ except ImportError:
     JINJA2_IMPORT_ERROR = traceback.format_exc()
 else:
     HAS_JINJA2 = True
+
+J2IPADDR_IMPORT_ERROR = 0
+
+try:
+    from j2ipaddr import filters as j2ipaddr
+except ImportError:
+    HAS_J2IPADDR = False
+    J2IPADDR_IMPORT_ERROR = traceback.format_exc()
+else:
+    HAS_J2IPADDR = True
 
 default_list_key_map = {
     'mdd:openconfig:openconfig-acl:acl:openconfig-acl:acl-sets:openconfig-acl:acl-set$': 'openconfig-acl:name',
@@ -366,6 +377,8 @@ def find_and_read_configs(top_dir, device_name, filespec_list, default_weight, t
                 for filename in os.listdir(current_dir):
                     if matches_filespec(filename, filespec_list):
                         env = Environment(loader=FileSystemLoader(current_dir))
+                        f = j2ipaddr.load_all()
+                        env.filters.update(f)
                         with open(os.path.join(current_dir, filename), 'r') as f:
                             try:
                                 template = env.from_string(f.read())
@@ -416,6 +429,10 @@ def main():
     if not HAS_JINJA2:
         # Needs: from ansible.module_utils.basic import missing_required_lib
         module.fail_json(msg=missing_required_lib('jinja2'), exception=JINJA2_IMPORT_ERROR)
+
+    if not HAS_J2IPADDR:
+        # Needs: from ansible.module_utils.basic import missing_required_lib
+        module.fail_json(msg=missing_required_lib('j2ipaddr'), exception=J2IPADDR_IMPORT_ERROR)
 
     mdd_root = module.params['mdd_root']
     host = module.params['host']
