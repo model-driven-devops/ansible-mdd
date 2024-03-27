@@ -10,7 +10,7 @@ from ansible.errors import AnsibleError, AnsibleFilterError
 from json import dumps
 import re
 
-# This is a mapping of regex, keys that is used to fing the key used to merge
+# This is a mapping of regex, keys that is used to find the key used to merge
 # list.  If the regex patches the full path, then that key is used to convert
 # the list to a hash, then merge the hash.  If there is not match, the list
 # is replaced.
