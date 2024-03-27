@@ -321,11 +321,6 @@ def cml_topology_create_initial(devices_with_interface_dict, remote_device_info_
                 "l3switch": '''
     hostname {0}
     !
-    vrf definition Mgmt-intf
-    !
-     address-family ipv4
-     exit-address-family
-    !
     ip domain name mdd.cisco.com
     !
     crypto key generate rsa modulus 2048
@@ -336,80 +331,10 @@ def cml_topology_create_initial(devices_with_interface_dict, remote_device_info_
     !
     interface GigabitEthernet0/0
      no switchport
-     vrf forwarding Mgmt-intf
      ip address dhcp
      no shutdown
     !
-    interface GigabitEthernet1/0/1
-     no switchport
-    !
-    interface GigabitEthernet1/0/2
-     no switchport
-    !
-    interface GigabitEthernet1/0/3
-     no switchport
-    !
-    interface GigabitEthernet1/0/4
-     no switchport
-    !
-    interface GigabitEthernet1/0/5
-     no switchport
-    !
-    interface GigabitEthernet1/0/6
-     no switchport
-    !
-    interface GigabitEthernet1/0/7
-     no switchport
-    !
-    interface GigabitEthernet1/0/8
-     no switchport
-    !
-    interface GigabitEthernet1/0/9
-     no switchport
-    !
-    interface GigabitEthernet1/0/10
-     no switchport
-    !
-    interface GigabitEthernet1/0/11
-     no switchport
-    !
-    interface GigabitEthernet1/0/12
-     no switchport
-    !
-    interface GigabitEthernet1/0/13
-     no switchport
-    !
-    interface GigabitEthernet1/0/14
-     no switchport
-    !
-    interface GigabitEthernet1/0/15
-     no switchport
-    !
-    interface GigabitEthernet1/0/16
-     no switchport
-    !
-    interface GigabitEthernet1/0/17
-     no switchport
-    !
-    interface GigabitEthernet1/0/18
-     no switchport
-    !
-    interface GigabitEthernet1/0/19
-     no switchport
-    !
-    interface GigabitEthernet1/0/20
-     no switchport
-    !
-    interface GigabitEthernet1/0/21
-     no switchport
-    !
-    interface GigabitEthernet1/0/22
-     no switchport
-    !
-    interface GigabitEthernet1/0/23
-     no switchport
-    !
-    interface GigabitEthernet1/0/24
+    interface range GigabitEthernet1/0/1-24
      no switchport
     !
     no ip http server
