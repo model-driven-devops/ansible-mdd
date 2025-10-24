@@ -105,7 +105,6 @@ from re import search, findall, IGNORECASE
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.display import Display
-from ansible.module_utils.six import raise_from
 
 try:
     import pynetbox
@@ -560,16 +559,10 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
         if PYNETBOX_LIBRARY_IMPORT_ERROR:
-            raise_from(
-                AnsibleError("pynetbox must be installed to use this plugin"),
-                PYNETBOX_LIBRARY_IMPORT_ERROR,
-            )
+            raise AnsibleError("pynetbox must be installed to use this plugin") from PYNETBOX_LIBRARY_IMPORT_ERROR
 
         if REQUESTS_LIBRARY_IMPORT_ERROR:
-            raise_from(
-                AnsibleError("requests must be installed to use this plugin"),
-                REQUESTS_LIBRARY_IMPORT_ERROR,
-            )
+            raise AnsibleError("requests must be installed to use this plugin") from REQUESTS_LIBRARY_IMPORT_ERROR
 
         netbox_api_token = (
             kwargs.get("token")
