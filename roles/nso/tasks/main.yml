@@ -10,7 +10,7 @@
 # the inventory
 #
 - set_fact:
-    nso_rest_url: "http://{{ hostvars[nso_hostname].ansible_host }}:8080"
+    nso_rest_url: "http://{{ hostvars[nso_hostname].ansible_host }}:{{ hostvars[nso_hostname].nso_api_port | default(8080) }}"
   when: "not nso_rest_url and nso_host_group in groups"
   vars:
     nso_hostname: "{{ groups[nso_host_group] | first }}"

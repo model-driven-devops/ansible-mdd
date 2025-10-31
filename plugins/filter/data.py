@@ -1,16 +1,14 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.six import iteritems
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils._text import to_native
-from ansible.template import recursive_check_defined
 from ansible.module_utils.common._collections_compat import MutableMapping, MutableSequence
 from ansible.errors import AnsibleError, AnsibleFilterError
 from json import dumps
 import re
 
-# This is a mapping of regex, keys that is used to fing the key used to merge
+# This is a mapping of regex, keys that is used to find the key used to merge
 # list.  If the regex patches the full path, then that key is used to convert
 # the list to a hash, then merge the hash.  If there is not match, the list
 # is replaced.
@@ -51,7 +49,7 @@ def _validate_mutable_mappings(a, b):
 
 
 def get_merge_key(path):
-    for key, value in iteritems(list_key_map):
+    for key, value in list_key_map.items():
         if re.search(key, path):
             return value
     return None
@@ -72,7 +70,7 @@ def merge_list_by_key(x, y, path, key):
         else:
             raise AnsibleError("Cannot find key {0} for path {1}".format(key, path))
     merged_hash = merge_hash(x_hash, y_hash, path, recursive=True, list_merge='replace')
-    for key, value in iteritems(merged_hash):
+    for key, value in merged_hash.items():
         merged_list.append(value)
     return merged_list
 
@@ -136,7 +134,7 @@ def merge_hash(x, y, path, recursive=True, list_merge='replace'):
     # there is a high probability x will be the "default" dict the user
     # want to "patch" with y
     # therefore x will have much more elements than y
-    for key, y_value in iteritems(y):
+    for key, y_value in y.items():
         # if `key` isn't in x
         # update x and move on to the next element of y
         if key not in x:
@@ -209,9 +207,6 @@ def mdd_combine(*terms, **kwargs):
 
     # allow the user to do `[dict1, dict2, ...] | combine`
     dictionaries = flatten(terms, levels=1)
-
-    # recursively check that every elements are defined (for jinja2)
-    recursive_check_defined(dictionaries)
 
     if not dictionaries:
         return {}

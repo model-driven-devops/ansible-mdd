@@ -6,6 +6,7 @@
     filespec_list: "{{ mdd_data_patterns }}"
     tags: "{{ tags }}"
     hostvars: "{{ hostvars[inventory_hostname] }}"
+    list_key_map: "{{ mdd_list_key_map | default(omit) }}"
   register: mdd_combine_output
 
 - name: Assign mdd_data

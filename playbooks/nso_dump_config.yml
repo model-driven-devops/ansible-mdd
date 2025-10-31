@@ -20,5 +20,5 @@
         nso_device_config: "{ 'mdd_data': { 'config': {{ nso_device_config['config'] }} } }"
 
     - copy:
-        content: "{{ nso_device_config | ciscops.mdd.to_even_nicer_yaml }}"
+        content: "{{ nso_device_config | ansible.builtin.to_nice_yaml(indent=2, sort_keys=False) }}"
         dest: "{{ current_dir }}/device_config_data/{{ inventory_hostname }}.yml"

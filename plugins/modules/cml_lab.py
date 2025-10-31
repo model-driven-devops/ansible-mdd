@@ -50,21 +50,16 @@ options:
         description: Default interface mappings to apply to all devices
         required: true
         type: dict
+    node_definitions:
+        description: List of node definitions configured in CML
+        required: true
+        type: list
+        elements: dict
     ext_conn:
         description: Whether to add external connectors to lab
         required: false
         type: bool
         default: true
-    start_from:
-        description: Which physical interface to start mapping to simulated interface
-        required: false
-        type: int
-        default: 2
-    use_cat9kv:
-        description: Whether or not to use the cat9kv as the l3switch in CML
-        required: no
-        type: bool
-        default: false
 """
 
 EXAMPLES = r"""
@@ -89,13 +84,13 @@ def create_node(node_input):
         "boot_disk_size": 0,
         "configuration": node_input["configuration"],
         "cpu_limit": 100,
-        "cpus": node_input.get("cpus", 1),
+        "cpus": node_input.get("cpus", 0),
         "data_volume": 0,
         "hide_links": False,
         "id": node_input["id"],
         "label": node_input["hostname"],
         "node_definition": node_input["node_definition"],
-        "ram": node_input["ram"],
+        "ram": node_input.get("ram", 0),
         "tags": node_input["tags"],
         "x": node_input["x_position"],
         "y": node_input.get("y_position", 0),
@@ -112,76 +107,45 @@ def create_node(node_input):
     return device
 
 
-def switch_generate_interface(c, m, s):
+def get_interfaces_from_node_definition(device_info, node_definitions):
     """
-    Increments module and interface numbering for switches using modules of 4 interfaces, e.g.
-        Gig0/0, Gig0/1, Gig0/2, Gig0/3, Gig1/0...
-    :param c: int, interface number
-    :param m: int, module number
-    :param s: int, CML topo slot number
-    :return: tuple, if-counter, module number, slot number
+    Get the interfaces from the node definition
     """
-    if c == 3:
-        m += 1
-        c = 0
-    else:
-        c += 1
-    s += 1
-    return c, m, s
+    for node_definition in node_definitions:
+        if node_definition["id"] == device_info["node_definition"]:
+            return node_definition["device"]["interfaces"]["physical"]
 
 
-def add_interfaces_to_topology(topo_node, device_info, physical_interfaces, use_cat9kv=False):
+def add_interfaces_to_topology(topo_node, device_info, physical_interfaces, node_definitions):
     """
     Adds interfaces to the devices in the CML topology
     """
     number_of_interfaces = len(physical_interfaces) + 3  # initial + 2 spares
     number_of_interfaces += 4 - (number_of_interfaces % 4)  # interfaces come in sets of 4
-    if device_info["type"] == "l3switch" and use_cat9kv is True:
-        topo_node["interfaces"].append({
-            "id": "i1",
-            "label": "GigabitEthernet0/0",
-            "slot": 0,
-            "type": "physical"
-        })
-        counter = 1
-        # cat9kv *requires* that 24 ports be configured for the 24-port version
-        for i in range(24):
-            topo_node["interfaces"].append({
-                "id": "i{0}".format(counter + 1),
-                "label": "GigabitEthernet1/0/{0}".format(counter),
-                "slot": counter,
-                "type": "physical"
-            })
-            counter += 1
-    elif device_info["type"] == "switch" or (device_info["type"] == "l3switch" and use_cat9kv is not True):
-        slot = 0
-        mod = 0
-        counter = 0
+    interfaces = get_interfaces_from_node_definition(device_info, node_definitions)
+    if device_info["type"] == "switch" or (device_info["type"] == "l3switch"):
         if_id = 1
         for i in range(number_of_interfaces):
             topo_node["interfaces"].append({
                 "id": "i{0}".format(if_id),
-                "label": "GigabitEthernet{0}/{1}".format(mod, counter),
-                "slot": slot,
+                "label": interfaces[if_id - 1],
+                "slot": if_id - 1,
                 "type": "physical"
             })
-            counter, mod, slot = switch_generate_interface(counter, mod, slot)
             if_id += 1
     elif device_info["type"] == "router":
-        slot = 0
-        counter = 1
+        if_id = 1
         for i in range(number_of_interfaces):
             topo_node["interfaces"].append({
-                "id": "i{0}".format(counter),
-                "label": "GigabitEthernet{0}".format(counter),
-                "slot": slot,
+                "id": "i{0}".format(if_id),
+                "label": interfaces[if_id - 1],
+                "slot": if_id - 1,
                 "type": "physical"
             })
-            slot += 1
-            counter += 1
+            if_id += 1
 
 
-def map_physical_interfaces_to_logical_interfaces(topo_node, physical_interfaces, start_from):
+def map_physical_interfaces_to_logical_interfaces(topo_node, physical_interfaces, mgmt_interface):
     """
     Creates a dict of devices with dicts of interfaces with dicts of physical interface names containing dicts of
     virtual interfaces and ids. Device dict also contains node-id, e.g.
@@ -194,21 +158,26 @@ def map_physical_interfaces_to_logical_interfaces(topo_node, physical_interfaces
     :return: dict
     """
     mapping = {}
-
-    # If start_from > 1, find mgmt interface and make sure we map that as well, otherwise it will be truncated
-    if start_from > 1:
-        for interface in topo_node["interfaces"]:
-            if interface["id"] == "i1":
-                mapping[interface["label"]] = {"if-name": interface["label"], "id": interface["id"]}
-        start_from = start_from - 1
+    offset = 1
+    # If mgmt interface is defined, map it to the first physical interface
+    if mgmt_interface is not None:
+        mapping[mgmt_interface] = {"if-name": topo_node["interfaces"][1]["label"], "id": topo_node["interfaces"][1]["id"]}
+        offset = 2
     for i in range(len(physical_interfaces)):
-        mapping[physical_interfaces[i]] = {"if-name": topo_node["interfaces"][start_from + i + 1]["label"],
-                                           "id": topo_node["interfaces"][start_from + i + 1]["id"]}
+        # Don't remap the mgmt interface
+        if physical_interfaces[i] == mgmt_interface:
+            continue
+        mapping[physical_interfaces[i]] = {"if-name": topo_node["interfaces"][i + offset]["label"],
+                                           "id": topo_node["interfaces"][i + offset]["id"]}
     return mapping
 
 
-def cml_topology_create_initial(devices_with_interface_dict, remote_device_info_full, start_from, device_template,
-                                use_cat9kv=False, devices=None):
+def get_device_names(devices):
+    return [d['hostname'] for d in devices]
+
+
+def cml_topology_create_initial(devices_with_interface_dict, remote_device_info_full, device_template,
+                                node_definitions, devices):
     """
     Creates CML topology file and adds nodes
     :param devices_with_interface_dict:
@@ -228,9 +197,10 @@ def cml_topology_create_initial(devices_with_interface_dict, remote_device_info_
     }
     node_counter = 0
     x_position = 0
-    for device in devices_with_interface_dict:
+    device_names = get_device_names(devices)
+    for device_name in devices_with_interface_dict:
         # # Only add devices that were included in devices list
-        if device in devices:
+        if device_name in device_names:
             configs = {
                 "router": '''
     hostname {0}
@@ -262,7 +232,7 @@ def cml_topology_create_initial(devices_with_interface_dict, remote_device_info_
      exit
     netconf ssh
     end
-    '''.format(device),
+    '''.format(device_name),
                 "switch": '''
     "hostname {0}
     !
@@ -317,14 +287,9 @@ def cml_topology_create_initial(devices_with_interface_dict, remote_device_info_
      exit
      netconf ssh
      end"
-    '''.format(device),
+    '''.format(device_name),
                 "l3switch": '''
     hostname {0}
-    !
-    vrf definition Mgmt-intf
-    !
-     address-family ipv4
-     exit-address-family
     !
     ip domain name mdd.cisco.com
     !
@@ -336,80 +301,10 @@ def cml_topology_create_initial(devices_with_interface_dict, remote_device_info_
     !
     interface GigabitEthernet0/0
      no switchport
-     vrf forwarding Mgmt-intf
      ip address dhcp
      no shutdown
     !
-    interface GigabitEthernet1/0/1
-     no switchport
-    !
-    interface GigabitEthernet1/0/2
-     no switchport
-    !
-    interface GigabitEthernet1/0/3
-     no switchport
-    !
-    interface GigabitEthernet1/0/4
-     no switchport
-    !
-    interface GigabitEthernet1/0/5
-     no switchport
-    !
-    interface GigabitEthernet1/0/6
-     no switchport
-    !
-    interface GigabitEthernet1/0/7
-     no switchport
-    !
-    interface GigabitEthernet1/0/8
-     no switchport
-    !
-    interface GigabitEthernet1/0/9
-     no switchport
-    !
-    interface GigabitEthernet1/0/10
-     no switchport
-    !
-    interface GigabitEthernet1/0/11
-     no switchport
-    !
-    interface GigabitEthernet1/0/12
-     no switchport
-    !
-    interface GigabitEthernet1/0/13
-     no switchport
-    !
-    interface GigabitEthernet1/0/14
-     no switchport
-    !
-    interface GigabitEthernet1/0/15
-     no switchport
-    !
-    interface GigabitEthernet1/0/16
-     no switchport
-    !
-    interface GigabitEthernet1/0/17
-     no switchport
-    !
-    interface GigabitEthernet1/0/18
-     no switchport
-    !
-    interface GigabitEthernet1/0/19
-     no switchport
-    !
-    interface GigabitEthernet1/0/20
-     no switchport
-    !
-    interface GigabitEthernet1/0/21
-     no switchport
-    !
-    interface GigabitEthernet1/0/22
-     no switchport
-    !
-    interface GigabitEthernet1/0/23
-     no switchport
-    !
-    interface GigabitEthernet1/0/24
+    interface range GigabitEthernet1/0/1-24
      no switchport
     !
     no ip http server
@@ -434,44 +329,39 @@ def cml_topology_create_initial(devices_with_interface_dict, remote_device_info_
     license boot level network-advantage addon dna-advantage
     license boot level network-advantage
     end
-    '''.format(device)
+    '''.format(device_name)
             }
-            device_type = remote_device_info_full.get(device, {}).get("type", "router")
+            device_type = remote_device_info_full.get(device_name, {}).get("type", "router")
             device_info = copy.deepcopy(device_template.get(device_type))
-            device_info["hostname"] = device
+            device_info["hostname"] = device_name
             device_info["x_position"] = x_position
             device_info["id"] = "n{0}".format(node_counter)
             device_info["configuration"] = configs[device_type]
             node_counter += 1
             x_position += 150
             topo_node = create_node(device_info)
-            add_interfaces_to_topology(topo_node, device_info, devices_with_interface_dict[device], use_cat9kv)
+            add_interfaces_to_topology(topo_node, device_info, devices_with_interface_dict, node_definitions)
+            mgmt_interface = None
+            for device in devices:
+                if device["hostname"] == device_name:
+                    mgmt_interface = device.get("mgmt_interface", None)
             physical_virtual_map = map_physical_interfaces_to_logical_interfaces(topo_node,
-                                                                                 devices_with_interface_dict[device],
-                                                                                 start_from)
-            mappings.update({device: {"interfaces": physical_virtual_map,
-                                      "node_id": device_info["id"]}})
+                                                                                 devices_with_interface_dict[device_name],
+                                                                                 mgmt_interface)
+            mappings.update({device_name: {"interfaces": physical_virtual_map, "node_id": device_info["id"]}})
             topology["nodes"].append(topo_node)
 
     return topology, mappings
 
 
-def find_capabilities(device, cdp_line):
+def find_capabilities(device, capability):
     """
     Find capabilites advertised from the remote device. Used to find the best CML image
     :param device:
-    :param cdp_line:
-    :return: dict of {remote_name, {"platform": hw_platform, "type": ("switch", "router", or "l3switch")}
+    :param capabilities:
+    :return: dict of {remote_name, {"type": ("switch", "router", or "l3switch")}
     """
-    rev = copy.deepcopy(cdp_line)
-    rev.reverse()
-    capabilities = []
-    for r in rev[3:]:
-        if r.isdigit():
-            break
-        else:
-            if r == "R" or r == "S":
-                capabilities.append(r)
+    capabilities = capability.split()
     if "R" in capabilities and "S" in capabilities:
         device_type = "l3switch"
     elif "R" in capabilities:
@@ -480,13 +370,13 @@ def find_capabilities(device, cdp_line):
         device_type = "switch"
     else:
         device_type = None
-    platform = cdp_line[-3]
-    return {device: {"platform": platform, "type": device_type}}
+
+    return {device: {"type": device_type}}
 
 
 def parse_cdp_output(cdp_data, dev):
     """
-    Find local interface, remote name, remote interface, remote platform, remote capabilities
+    Find local interface, remote name, remote interface, remote capabilities
 
     return tuple
         [0] links, e.g.
@@ -494,53 +384,30 @@ def parse_cdp_output(cdp_data, dev):
             "router1": "Ten1/2,
             "router2": "Ten1/1",
             }]
-        [1]ldict of devices, platform, and capabilities to be used
-        [{"router10": {"platform": "c6509", "type": "l3switch"}}
+        [1] dict of devices and capabilities to be used "router10": {"type": "l3switch"}}
     """
     device_links_list = []
     device_info = {}
-    cdp_split = cdp_data.split('\r\n')  # split all csv data on carriage returns
-    cdp_split.pop(0)  # RESTCONF results has an extra blank line
-    # Find the first break list index
-    for c, i in enumerate(cdp_split):
-        if len(i.split()) == 0:
-            index = cdp_split.index(i)
-            break
-
-    index = index + 2  # skip to first device name
-
-    # new_list = [a for a in cdp_split[index:]]  # break single csv line into elements
-    new_list = list(cdp_split[index:])  # break single csv line into elements
-
-    for i in new_list:
-        if len(i.split()) == 1 and "." in i.split()[0]:  # a line with only a name
-            remote = i.split('.')[0]
-        elif len(i.split()) == 1:
-            remote = i.split()[0]
-        elif len(i.split()) == 0:  # blank line is end of cdp neighbors
-            break
-        if i.split()[-1] == "eth0":  # not adding hosts
-            pass
-        elif len(i.split()) > 1 and i.split()[1] in interface_types_list:  # in case hostname is in line with data
-            if "." in i.split()[0]:
-                remote = i.split('.')[0]
+    if "index" in cdp_data:
+        for id, neighbor in cdp_data['index'].items():
+            remote = neighbor['device_id'].split('.')[0]
+            # Work around bug in pyATS when parsing data from IOSvL2 devices
+            if neighbor['platform'] == "Gig":
+                device_links_list.append({dev['hostname']: neighbor['local_interface'], remote: "GigabitEthernet" + neighbor['port_id']})
             else:
-                remote = i.split()[0]
-            line_list = i.split()
-            local_interface = line_list[1] + line_list[2]
-            remote_interface = line_list[-2] + line_list[-1]
-            device_links_list.append({dev['hostname']: local_interface, remote: remote_interface})
-            device_info.update(find_capabilities(remote, line_list))
-        elif len(i.split()) > 1:  # line with data below the device name line
-            line_list = i.split()
-            local_interface = line_list[0] + line_list[1]
-            remote_interface = line_list[-2] + line_list[-1]
-            device_links_list.append({dev['hostname']: local_interface, remote: remote_interface})
-            device_info.update(find_capabilities(remote, line_list))
+                device_links_list.append({dev['hostname']: neighbor['local_interface'], remote: neighbor['port_id']})
+            device_info.update(find_capabilities(remote, neighbor['capability']))
     return device_links_list, device_info
 
 
-def check_for_and_remove_error_links(dls):
+def get_device(device_name, devices):
+    for device in devices:
+        if device['hostname'] == device_name:
+            return device
+    return None
+
+
+def check_for_and_remove_error_links(device_links, devices):
     """
     In case there is a case such as this:
     Router1   Ten 3/4           155              S I   C9300-24P Ten 1/1/4
@@ -552,17 +419,22 @@ def check_for_and_remove_error_links(dls):
     """
     devices_with_links = {}  # track each devices' interfaces
     redundant_links_to_remove = []  # redundant links to be removed from device_links
-    for link_full in dls:
+
+    for link_full in device_links:
         for device_name in link_full:
             if device_name not in devices_with_links:
                 devices_with_links[device_name] = []
-            if link_full[device_name] not in devices_with_links[device_name]:
+            device = get_device(device_name, devices)
+            # Don't add a link if it's the mgmt interface
+            if device and link_full[device_name] == device.get("mgmt_interface", None):
+                redundant_links_to_remove.append(link_full)
+            elif link_full[device_name] not in devices_with_links[device_name]:
                 devices_with_links[device_name].append(link_full[device_name])
             else:
                 redundant_links_to_remove.append(link_full)
     for link_to_del in redundant_links_to_remove:
-        if link_to_del in dls:
-            dls.remove(link_to_del)
+        if link_to_del in device_links:
+            device_links.remove(link_to_del)
     return devices_with_links
 
 
@@ -696,18 +568,13 @@ def cml_topology_add_external_connectors_and_links(topo, device_template):
     ext_conn_links_create(topo, new_topo, link_node_start, link_start)
 
 
-def get_device_names(devices):
-    return [d['hostname'] for d in devices]
-
-
 def main():
     arguments = dict(
         devices=dict(required=True, type='list', elements='dict'),
         device_template=dict(required=True, type='dict'),
         default_mappings=dict(required=True, type='dict'),
-        ext_conn=dict(required=False, type='bool', default=True),
-        start_from=dict(required=False, type='int', default=2),
-        use_cat9kv=dict(required=False, type='bool', default=False)
+        node_definitions=dict(required=True, type='list', elements='dict'),
+        ext_conn=dict(required=False, type='bool', default=True)
     )
 
     module = AnsibleModule(argument_spec=arguments, supports_check_mode=False)
@@ -718,8 +585,7 @@ def main():
     devices = module.params['devices']
     device_template = module.params['device_template']
     default_mappings = module.params['default_mappings']
-    start_from = module.params['start_from']
-    use_cat9kv = module.params['use_cat9kv']
+    node_definitions = module.params['node_definitions']
 
     device_names = get_device_names(devices)
 
@@ -729,12 +595,16 @@ def main():
         for link in temp_device_links:  # add any newly found links to device links
             if link not in device_links:
                 device_links.append(link)  # now saved newly discovered links
-    devices_with_interface_dict = check_for_and_remove_error_links(device_links)
+    devices_with_interface_dict = check_for_and_remove_error_links(device_links, devices)
     sort_device_interfaces(devices_with_interface_dict)
     topology_cml, mappings_cml = cml_topology_create_initial(devices_with_interface_dict, remote_device_info_full,
-                                                             start_from, device_template, use_cat9kv, device_names)
+                                                             device_template, node_definitions, devices)
     cml_topology_add_links(topology_cml, mappings_cml, device_links, device_names)
     if module.params['ext_conn']:
+        # If creating external connectors, ensure that a mgmt_interface is defined for each device in ansible inventory
+        for device in devices:
+            if device.get("mgmt_interface") is None:
+                module.fail_json(msg="Enabling external connectors requires a mgmt_interface to be defined for each device in ansible inventory.")
         cml_topology_add_external_connectors_and_links(topology_cml, device_template)
     mappings = create_interface_mapping_dict(mappings_cml, default_mappings)
 

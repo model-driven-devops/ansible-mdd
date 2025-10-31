@@ -1,7 +1,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.six import raise_from
 from ansible.errors import AnsibleError
 try:
     import networkx as nx
@@ -13,7 +12,7 @@ else:
 
 def graph(topology_data, layout='kamada_kawai', scale=500):
     if NETWORKX_IMPORT_ERROR:
-        raise_from(AnsibleError('networkx must be installed to use this plugin'), NETWORKX_IMPORT_ERROR)
+        raise AnsibleError('networkx must be installed to use this plugin') from NETWORKX_IMPORT_ERROR
 
     pos = {}
     g = nx.Graph()

@@ -1,7 +1,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.six import PY3, raise_from
 from ansible.errors import AnsibleError, AnsibleFilterError
 
 
@@ -26,18 +25,12 @@ ansible_os_map = {
 
 
 def pyats_parser(cli_output, command, os):
-    if not PY3:
-        raise AnsibleFilterError("Genie requires Python 3")
 
     if GENIE_IMPORT_ERROR:
-        raise_from(
-            AnsibleError('genie must be installed to use this plugin'),
-            GENIE_IMPORT_ERROR)
+        raise AnsibleError('genie must be installed to use this plugin') from GENIE_IMPORT_ERROR
 
     if PYATS_IMPORT_ERROR:
-        raise_from(
-            AnsibleError('pyats must be installed to use this plugin'),
-            PYATS_IMPORT_ERROR)
+        raise AnsibleError('pyats must be installed to use this plugin') from PYATS_IMPORT_ERROR
 
     # Translate from ansible_network_os values to pyATS
     if os in ansible_os_map.keys():

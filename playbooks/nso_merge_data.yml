@@ -12,13 +12,24 @@
         name: ciscops.mdd.nso
         tasks_from: check_sync
 
-    - name: Merge MDD Data
-      include_role:
-        name: ciscops.mdd.nso
-        tasks_from: update_data
-      vars:
-        mode: merge
-      when: mdd_data is defined
+    - name: Translate/truncate interface names and truncate config
+      set_fact:
+        mdd_data: "{{ mdd_data | ciscops.mdd.config_xform(cml_intf_xlate | default(None), cml_truncate_list | default(None), cml_vlan_list | default(None)) }}"
+      when: (cml_intf_xlate is defined and cml_intf_xlate) or (cml_truncate_list is defined and cml_truncate_list) or (cml_vlan_list is defined and cml_vlan_list)
+
+    - name: Merge Config Data
+      when: ('config' in mdd_data_types)
+      block:
+      - set_fact:
+          mdd_data: "{{ mdd_data | ansible.utils.remove_keys(target=['mdd:openconfig']) }}"
+
+      - name: Merge Data
+        include_role:
+          name: ciscops.mdd.nso
+          tasks_from: update_data
+        vars:
+          mode: merge
+        when: mdd_data is defined and 'config' in mdd_data
 
     - include_role:
         name: ciscops.mdd.netbox
