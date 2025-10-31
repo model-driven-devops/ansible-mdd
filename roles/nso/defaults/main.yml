@@ -17,6 +17,8 @@ nso_package_requirements:
   - make
   - libxml2-utils
   - xsltproc
+  - python3
+  - python3-venv
 # Default username/password for the NSO host
 # admin_user: ubuntu
 # admin_password: admin

@@ -162,3 +162,19 @@
     name: ncs.service
     state: started
     enabled: yes
+
+- name: Install cisco-nso-mcp-server package
+  pip:
+    name: cisco-nso-mcp-server
+    state: present
+    extra_args: --break-system-packages
+    virtualenv_command: /usr/bin/python3 -m venv
+    virtualenv: /opt/cisco/nso/mcp-server/venv
+
+- name: Start cisco-nso-mcp-server
+  shell: |
+    nohup /opt/cisco/nso/mcp-server/venv/bin/cisco-nso-mcp-server --nso-username {{ nso_username }} --nso-password {{ nso_password }} --transport sse > /var/log/cisco-nso-mcp-server.log 2>&1 &
+  args:
+    executable: /bin/bash
+  async: 10
+  poll: 0
