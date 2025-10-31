@@ -37,6 +37,9 @@ test: clean build $(VENV) $(TARBALL_NAME) ## Run Sanity Tests
 	ansible-galaxy collection install --force $(TARBALL_NAME) -p ./ansible_collections
 	cd ./ansible_collections/ciscops/mdd && git init .
 	$(VENV_BIN)/pip uninstall -y ansible-base
+	$(VENV_BIN)/pip install https://github.com/ansible/ansible/archive/stable-2.18.tar.gz --disable-pip-version-check
+	cd ./ansible_collections/ciscops/mdd && ../../../$(VENV_BIN)/ansible-test sanity --docker -v --color
+	$(VENV_BIN)/pip uninstall -y ansible-base
 	$(VENV_BIN)/pip install https://github.com/ansible/ansible/archive/stable-2.19.tar.gz --disable-pip-version-check
 	cd ./ansible_collections/ciscops/mdd && ../../../$(VENV_BIN)/ansible-test sanity --docker -v --color
 	$(VENV_BIN)/pip uninstall -y ansible-base
