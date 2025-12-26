@@ -5,6 +5,7 @@
   roles:
     - ciscops.mdd.data
     - ciscops.mdd.nso
+    - ciscops.mdd.netbox
   tasks:
 
     - name: Harvest Native Config
